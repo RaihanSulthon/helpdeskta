@@ -38,9 +38,12 @@ function Login() {
 
     try {
       setIsLoading(true);
+      console.log("Attempting login with:", { email: credentials.email });
 
       const userData = await login(credentials.email, credentials.password);
+      console.log("Login successful:", userData);
 
+      // Navigate berdasarkan role
       switch (userData.role) {
         case "student":
           navigate("/student");
@@ -49,10 +52,13 @@ function Login() {
           navigate("/admin");
           break;
         default:
-          throw new Error("Role tidak valid");
+          console.warn("Unknown role:", userData.role);
+          setError(`Role tidak dikenal: ${userData.role}`);
+          return;
       }
     } catch (error) {
-      setError(error.message);
+      console.error("Login failed:", error);
+      setError(error.message || "Login gagal. Silakan coba lagi.");
     } finally {
       setIsLoading(false);
     }
@@ -61,6 +67,14 @@ function Login() {
   // Fungsi untuk kembali ke landing page
   const handleBackToHome = () => {
     navigate("/");
+  };
+
+  // Fungsi untuk mengisi form dengan data test
+  const fillTestData = () => {
+    setCredentials({
+      email: "john@student.telkomuniversity.ac.id",
+      password: "password123",
+    });
   };
 
   const backgroundStyle = {
@@ -98,9 +112,11 @@ function Login() {
             />
             <p className="text-xs text-gray-500 mt-1">
               Format email:
-              <span className="text-blue-600"> @student.co.id</span>,
-              <span className="text-green-600"> @admin.co.id</span>, or
-              <span className="text-purple-600"> @disposition.co.id</span>
+              <span className="text-blue-600">
+                {" "}
+                @student.telkomuniversity.ac.id
+              </span>
+              ,<span className="text-green-600"> @admin.co.id</span>
             </p>
           </div>
 
@@ -124,6 +140,17 @@ function Login() {
                 <Icon name={showPassword ? "eyeOff" : "eye"} />
               </button>
             </div>
+          </div>
+
+          {/* Test Data Button - Hanya untuk development */}
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={fillTestData}
+              className="text-xs text-gray-600 hover:text-blue-600 underline"
+            >
+              Isi dengan data test
+            </button>
           </div>
 
           {/* Forgot Password */}

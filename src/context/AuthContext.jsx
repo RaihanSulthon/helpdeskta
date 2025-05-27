@@ -10,12 +10,16 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const userData = localStorage.getItem("userData");
-    if (userData) {
+    const token = localStorage.getItem("token");
+
+    if (userData && token) {
       try {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
       } catch (error) {
         console.error("Gagal memuat userData:", error);
         localStorage.removeItem("userData");
+        localStorage.removeItem("token");
       }
     }
     setLoading(false);
@@ -30,12 +34,13 @@ export const AuthProvider = ({ children }) => {
       const result = await loginAPI(email, password);
 
       const userData = {
+        id: result.user.id,
         email: result.user.email,
         name: result.user.name,
         role: result.user.role,
-        token: result.token,
       };
 
+      // Simpan data user dan token
       localStorage.setItem("userData", JSON.stringify(userData));
       localStorage.setItem("token", result.token);
 
@@ -43,6 +48,7 @@ export const AuthProvider = ({ children }) => {
 
       return userData;
     } catch (error) {
+      console.error("Login error:", error);
       throw new Error(error.message);
     }
   };
@@ -55,6 +61,7 @@ export const AuthProvider = ({ children }) => {
 
   const isAuthenticated = () => !!user;
   const getUserRole = () => user?.role || null;
+  const getToken = () => localStorage.getItem("token");
 
   return (
     <AuthContext.Provider
@@ -64,6 +71,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         isAuthenticated,
         getUserRole,
+        getToken,
         loading,
       }}
     >
