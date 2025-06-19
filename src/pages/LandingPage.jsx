@@ -40,7 +40,19 @@ function LandingPage() {
     // Reload page to reset state
     window.location.reload();
   };
+  const handleDashboardClick = () => {
+    const userRole = localStorage.getItem("userRole") || userType;
 
+    switch (userRole) {
+      case "admin":
+        navigate("/admin/tickets");
+        break;
+      case "student":
+        navigate("/student/tickets");
+        break;
+      // fallback to student
+    }
+  };
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -127,7 +139,7 @@ function LandingPage() {
               <nav className="hidden md:flex space-x-4 text-sm font-medium text-blue-700">
                 <Button
                   className="px-4 py-2 bg-blue-100 rounded hover:bg-blue-200"
-                  onClick={() => navigate("/student/tickets")}
+                  onClick={handleDashboardClick}
                 >
                   Dashboard
                 </Button>
