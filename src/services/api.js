@@ -1,37 +1,47 @@
-// src/services/api.js
+// src/services/api.js - UPDATED VERSION with better ticket detail handling
 
-const BASE_URL =
-  "https://sturdy-couscous-6754px5r75pc5xpx-8000.app.github.dev/api";
+const BASE_URL = "https://apibackendtio.mynextskill.com/api";
 
+// Helper function untuk retry logic
+const retryFetch = async (url, options, maxRetries = 3) => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (error) {
+      console.log(`Attempt ${i + 1} failed:`, error.message);
+      if (i === maxRetries - 1) throw error;
+      // Wait before retry (exponential backoff)
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.pow(2, i) * 1000)
+      );
+    }
+  }
+};
+
+// Login API
 export const loginAPI = async (email, password) => {
   try {
-    const response = await fetch(`${BASE_URL}/auth/login`, {
+    const options = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
+      mode: "cors",
+      credentials: "omit",
       body: JSON.stringify({
         email: email,
         password: password,
       }),
-    });
+    };
 
+    const response = await retryFetch(`${BASE_URL}/auth/login`, options);
     const result = await response.json();
 
     if (!response.ok) {
       throw new Error(result.message || "Login gagal");
     }
-
-    // Response dari API Anda memiliki struktur:
-    // {
-    //   "status": "success",
-    //   "message": "Login successful",
-    //   "data": {
-    //     "user": { "id": "...", "name": "...", "email": "...", "role": "..." },
-    //     "token": "..."
-    //   }
-    // }
 
     return {
       user: result.data.user,
@@ -39,6 +49,404 @@ export const loginAPI = async (email, password) => {
     };
   } catch (error) {
     console.error("Login API Error:", error);
+    if (error.name === "TypeError" && error.message.includes("fetch")) {
+      throw new Error(
+        "Tidak dapat terhubung ke server. Pastikan server berjalan dan coba lagi."
+      );
+    }
     throw new Error(error.message || "Terjadi kesalahan saat login");
+  }
+};
+
+// FIXED Submit Ticket API
+export const submitTicketAPI = async (formData) => {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    console.log("=== API SUBMISSION DEBUG ===");
+    console.log("Input form data:", formData);
+
+    // Validate required fields before sending
+    if (!formData.judul || formData.judul.trim() === "") {
+      throw new Error("Judul laporan harus diisi");
+    }
+
+    if (!formData.deskripsi || formData.deskripsi.trim() === "") {
+      throw new Error("Deskripsi harus diisi");
+    }
+
+    if (!formData.category_id || isNaN(parseInt(formData.category_id))) {
+      throw new Error("Kategori harus dipilih");
+    }
+
+    if (
+      !formData.sub_category_id ||
+      isNaN(parseInt(formData.sub_category_id))
+    ) {
+      throw new Error("Sub kategori harus dipilih");
+    }
+
+    // Prepare request body with EXACT field names expected by API
+    const requestBody = {
+      judul: formData.judul.trim(),
+      deskripsi: formData.deskripsi.trim(),
+      category_id: parseInt(formData.category_id),
+      sub_category_id: parseInt(formData.sub_category_id),
+      anonymous: Boolean(formData.anonymous),
+    };
+
+    // Add identity fields - send even if empty for anonymous users
+    requestBody.nama = formData.nama ? formData.nama.trim() : "";
+    requestBody.nim = formData.nim ? formData.nim.trim() : "";
+    requestBody.prodi = formData.prodi ? formData.prodi.trim() : "";
+    requestBody.semester = formData.semester
+      ? formData.semester.toString()
+      : "";
+    requestBody.email = formData.email ? formData.email.trim() : "";
+    requestBody.no_hp = formData.no_hp ? formData.no_hp.trim() : "";
+
+    // Remove empty fields for anonymous users except required ones
+    if (formData.anonymous) {
+      requestBody.nama = "";
+      requestBody.nim = "";
+      requestBody.prodi = "";
+      requestBody.semester = "";
+      requestBody.email = "";
+      requestBody.no_hp = "";
+    }
+
+    console.log("Final request body:", requestBody);
+
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+      body: JSON.stringify(requestBody),
+    };
+
+    console.log("Making API request to:", `${BASE_URL}/tickets`);
+    const response = await retryFetch(`${BASE_URL}/tickets`, options, 3);
+
+    console.log("Response status:", response.status);
+    console.log("Response headers:", Object.fromEntries(response.headers));
+
+    // Handle non-200 responses
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+
+      try {
+        const errorResult = await response.json();
+        console.log("Error response body:", errorResult);
+
+        // Handle Laravel validation errors (422 status)
+        if (response.status === 422 && errorResult.errors) {
+          const validationErrors = Object.entries(errorResult.errors)
+            .map(([field, messages]) => `${field}: ${messages.join(", ")}`)
+            .join("; ");
+          errorMessage = `Validation failed - ${validationErrors}`;
+        } else if (response.status === 422 && errorResult.message) {
+          errorMessage = `Validation failed: ${errorResult.message}`;
+        } else if (errorResult.message) {
+          errorMessage = errorResult.message;
+        }
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+        errorMessage = `HTTP ${response.status}: Server error occurred`;
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Success response body:", result);
+
+    return {
+      success: true,
+      message: result.message || "Tiket berhasil dikirim",
+      data: result.data || result,
+      id: result.data?.id || result.id || null,
+    };
+  } catch (error) {
+    console.error("Submit Ticket API Error:", error);
+
+    // Handle network errors
+    if (error.name === "TypeError" && error.message.includes("fetch")) {
+      throw new Error(
+        "Koneksi ke server gagal. Periksa koneksi internet Anda."
+      );
+    }
+
+    if (error.message.includes("CORS")) {
+      throw new Error("Server tidak mengizinkan akses. Hubungi administrator.");
+    }
+
+    if (error.message.includes("Failed to fetch")) {
+      throw new Error(
+        "Tidak dapat terhubung ke server. Periksa koneksi internet Anda."
+      );
+    }
+
+    // Re-throw with original message for specific errors
+    throw error;
+  }
+};
+
+// Get Tickets API - COMPLETELY CLEAN VERSION
+export const getTicketsAPI = async (filters = {}) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    const queryParams = new URLSearchParams();
+    if (filters.status) queryParams.append("status", filters.status);
+    if (filters.category) queryParams.append("category", filters.category);
+    if (filters.date) queryParams.append("date", filters.date);
+    queryParams.append("per_page", "100"); // Adjust number as needed
+    queryParams.append("page", "1");
+    const queryString = queryParams.toString();
+    const url = `${BASE_URL}/tickets${queryString ? `?${queryString}` : ""}`;
+
+    const response = await retryFetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Get Tickets API response:", result);
+
+    // Extract tickets from response
+    if (result?.data?.tickets) {
+      return result.data.tickets;
+    }
+    if (result?.data && Array.isArray(result.data)) {
+      return result.data;
+    }
+    if (Array.isArray(result)) {
+      return result;
+    }
+
+    return [];
+  } catch (error) {
+    console.error("Get Tickets API Error:", error);
+    if (error.name === "TypeError" && error.message.includes("fetch")) {
+      throw new Error(
+        "Koneksi ke server gagal. Pastikan server berjalan dan coba lagi."
+      );
+    }
+    throw new Error(
+      error.message || "Terjadi kesalahan saat mengambil data tiket"
+    );
+  }
+};
+
+// Get Ticket Detail API - UPDATED to handle the correct response structure
+export const getTicketDetailAPI = async (ticketId) => {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    if (!ticketId) {
+      throw new Error("ID tiket tidak valid");
+    }
+
+    console.log("Fetching ticket detail for ID:", ticketId);
+
+    const options = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    };
+
+    const response = await retryFetch(
+      `${BASE_URL}/tickets/${ticketId}`,
+      options
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error("Tiket tidak ditemukan");
+      }
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Ticket detail API response:", result);
+
+    // Handle the response structure based on the Postman response
+    // The API returns: { status: "success", data: { ticket: {...} } }
+    if (result.status === "success" && result.data && result.data.ticket) {
+      console.log("Extracted ticket data:", result.data.ticket);
+      return result.data.ticket;
+    } else if (result.data) {
+      console.log("Using result.data:", result.data);
+      return result.data;
+    } else {
+      console.log("Using full result:", result);
+      return result;
+    }
+  } catch (error) {
+    console.error("Get Ticket Detail API Error:", error);
+
+    if (error.name === "TypeError" && error.message.includes("fetch")) {
+      throw new Error(
+        "Koneksi ke server gagal. Pastikan server berjalan dan coba lagi."
+      );
+    }
+
+    throw new Error(
+      error.message || "Terjadi kesalahan saat mengambil detail tiket"
+    );
+  }
+};
+
+// Get Categories API
+export const getCategoriesAPI = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    const options = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    };
+
+    const response = await retryFetch(`${BASE_URL}/categories`, options);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Categories API response:", result);
+
+    // Handle the response structure: { status, message, data: [...] }
+    const categories = result.data || result || [];
+
+    // Ensure each category has the expected structure
+    const processedCategories = categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      sub_categories: category.sub_categories || [],
+      created_at: category.created_at,
+      updated_at: category.updated_at,
+    }));
+
+    console.log("Processed categories:", processedCategories);
+    return processedCategories;
+  } catch (error) {
+    console.error("Get Categories API Error:", error);
+
+    if (error.name === "TypeError" && error.message.includes("fetch")) {
+      // Return fallback categories if API fails
+      console.warn("Using fallback categories due to connection error");
+      return [
+        {
+          id: 1,
+          name: "Pendidikan",
+          sub_categories: [
+            { id: 1, name: "Kurikulum", category_id: 1 },
+            { id: 2, name: "Tenaga Pengajar", category_id: 1 },
+            { id: 3, name: "Fasilitas Pendidikan", category_id: 1 },
+            { id: 4, name: "Lainnya", category_id: 1 },
+          ],
+        },
+        {
+          id: 2,
+          name: "Kesehatan",
+          sub_categories: [
+            { id: 5, name: "Fasilitas Kesehatan", category_id: 2 },
+            { id: 6, name: "Layanan Kesehatan", category_id: 2 },
+            { id: 7, name: "Lainnya", category_id: 2 },
+          ],
+        },
+        {
+          id: 3,
+          name: "Infrastruktur",
+          sub_categories: [
+            { id: 8, name: "Jalan", category_id: 3 },
+            { id: 9, name: "Bangunan", category_id: 3 },
+            { id: 10, name: "Air Bersih", category_id: 3 },
+            { id: 11, name: "Lainnya", category_id: 3 },
+          ],
+        },
+        {
+          id: 4,
+          name: "Pelayanan Publik",
+          sub_categories: [
+            { id: 12, name: "Layanan Administrasi", category_id: 4 },
+            { id: 13, name: "Layanan Online", category_id: 4 },
+            { id: 14, name: "Lainnya", category_id: 4 },
+          ],
+        },
+        {
+          id: 5,
+          name: "Lainnya",
+          sub_categories: [{ id: 15, name: "Lainnya", category_id: 5 }],
+        },
+      ];
+    }
+
+    throw new Error(
+      error.message || "Terjadi kesalahan saat mengambil data kategori"
+    );
   }
 };

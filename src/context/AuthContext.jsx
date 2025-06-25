@@ -1,4 +1,4 @@
-// src/context/AuthContext.jsx
+// src/context/AuthContext.jsx - Updated to store userRole separately
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { loginAPI } from "../services/api";
 
@@ -11,15 +11,22 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const userData = localStorage.getItem("userData");
     const token = localStorage.getItem("token");
+    const userRole = localStorage.getItem("userRole");
 
     if (userData && token) {
       try {
         const parsedUser = JSON.parse(userData);
         setUser(parsedUser);
+
+        // Ensure userRole is set if not already in localStorage
+        if (!userRole && parsedUser.role) {
+          localStorage.setItem("userRole", parsedUser.role);
+        }
       } catch (error) {
         console.error("Gagal memuat userData:", error);
         localStorage.removeItem("userData");
         localStorage.removeItem("token");
+        localStorage.removeItem("userRole");
       }
     }
     setLoading(false);
@@ -32,20 +39,27 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const result = await loginAPI(email, password);
+      console.log("Login API result:", result);
 
       const userData = {
         id: result.user.id,
         email: result.user.email,
         name: result.user.name,
         role: result.user.role,
+        // Add additional fields if they exist
+        nim: result.user.nim || null,
+        prodi: result.user.prodi || null,
+        semester: result.user.semester || null,
       };
 
-      // Simpan data user dan token
+      // Simpan data user, token, dan role secara terpisah
       localStorage.setItem("userData", JSON.stringify(userData));
       localStorage.setItem("token", result.token);
+      localStorage.setItem("userRole", result.user.role); // Store role separately for easy access
 
       setUser(userData);
 
+      console.log("User logged in successfully:", userData);
       return userData;
     } catch (error) {
       console.error("Login error:", error);
@@ -56,12 +70,50 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("userData");
     localStorage.removeItem("token");
+    localStorage.removeItem("userRole");
     setUser(null);
+    console.log("User logged out successfully");
   };
 
-  const isAuthenticated = () => !!user;
-  const getUserRole = () => user?.role || null;
+  const isAuthenticated = () => {
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("userData");
+    return !!(user && token && userData);
+  };
+
+  const getUserRole = () => {
+    // Try multiple sources for role
+    if (user?.role) return user.role;
+
+    const storedRole = localStorage.getItem("userRole");
+    if (storedRole) return storedRole;
+
+    const userData = localStorage.getItem("userData");
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        return parsedUser.role;
+      } catch (error) {
+        console.error("Error parsing userData for role:", error);
+      }
+    }
+
+    return null;
+  };
+
   const getToken = () => localStorage.getItem("token");
+
+  // Helper function to check if user has specific role
+  const hasRole = (role) => {
+    const userRole = getUserRole();
+    return userRole === role;
+  };
+
+  // Helper function to check if user is admin
+  const isAdmin = () => hasRole("admin");
+
+  // Helper function to check if user is student
+  const isStudent = () => hasRole("student");
 
   return (
     <AuthContext.Provider
@@ -72,6 +124,9 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         getUserRole,
         getToken,
+        hasRole,
+        isAdmin,
+        isStudent,
         loading,
       }}
     >

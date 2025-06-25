@@ -70,14 +70,6 @@ const Navbar = () => {
       {/* Right section - Actions and Profile */}
       <div className="flex items-center space-x-2 relative">
         <div className="relative">
-          <Button
-            className="text-white hover:bg-red-700 px-3 py-1.5 rounded text-sm font-medium"
-            onClick={handleStudentClick}
-          >
-            Student
-            <Icon name="chevron-down" size={16} className="ml-1 text-white" />
-          </Button>
-
           {/* Student Dropdown */}
           {showStudentDropdown && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border">
