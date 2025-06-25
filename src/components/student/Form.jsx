@@ -4,7 +4,6 @@ import Button from "../Button";
 import TextField from "../TextField";
 import TextArea from "../TextArea";
 import Label from "../Label";
-import RadioCard from "../RadioCard";
 import Select from "../Select";
 import Icon from "../Icon";
 
@@ -144,68 +143,18 @@ function Form() {
   );
 
   return (
-    <div className="bg-white rounded-lg w-full max-w-4xl p-6 shadow-lg">
-      {/* Header Form */}
-      <div className="bg-blue-600 p-6 text-white -mx-6 -mt-6 mb-6 rounded-t-lg">
-        <h1 className="text-xl font-semibold text-center">
-          Sampaikan Laporan Anda
-        </h1>
-        <p className="mt-2 text-center text-sm">
-          Silakan isi formulir di bawah ini untuk menyampaikan pengaduan atau
-          aspirasi Anda
-        </p>
-      </div>
-
+    <div className="bg-white rounded-lg w-full max-w-full mx-auto">
       {isSubmitted && <SuccessAlert />}
 
-      <form onSubmit={handleSubmit}>
-        {/* Bagian 1: Pilih Klasifikasi Laporan */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-gray-200">
-            Klasifikasi Laporan
-          </h2>
-          <div className="mb-4">
-            <Label htmlFor="jenis">Pilih Klasifikasi Laporan</Label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <RadioCard
-                value="PENGADUAN"
-                selectedValue={formData.jenis}
-                onChange={handleJenisChange}
-                label="PENGADUAN"
-              />
-              <RadioCard
-                value="ASPIRASI"
-                selectedValue={formData.jenis}
-                onChange={handleJenisChange}
-                label="ASPIRASI"
-              />
-              <RadioCard
-                value="PERMINTAAN INFORMASI"
-                selectedValue={formData.jenis}
-                onChange={handleJenisChange}
-                label="PERMINTAAN INFORMASI"
-              />
-            </div>
-          </div>
-
-          <div className="mb-4 text-sm">
-            <p className="text-gray-700">
-              Perhatikan Cara Menyampaikan Pengaduan Yang Baik dan Benar
-            </p>
-            <a href="#" className="text-blue-500 hover:underline ml-2">
-              Lihat Panduan
-            </a>
-          </div>
-        </div>
-
-        {/* Bagian 2: Identitas Pelapor */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-gray-200">
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Bagian 1: Identitas Pelapor */}
+        <div>
+          <h2 className="text-lg font-semibold mb-6 text-gray-900">
             Identitas Pelapor
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
               <Label htmlFor="nama" required>
                 Nama Lengkap
               </Label>
@@ -216,10 +165,11 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan nama lengkap Anda"
                 disabled={formData.anonymous}
+                className="mt-1"
               />
             </div>
 
-            <div className="mb-4">
+            <div>
               <Label htmlFor="nim" required>
                 NIM/NIK
               </Label>
@@ -230,10 +180,11 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan NIM atau NIK Anda"
                 disabled={formData.anonymous}
+                className="mt-1"
               />
             </div>
 
-            <div className="mb-4">
+            <div>
               <Label htmlFor="prodi">Program Studi</Label>
               <TextField
                 id="prodi"
@@ -242,10 +193,11 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan program studi Anda"
                 disabled={formData.anonymous}
+                className="mt-1"
               />
             </div>
 
-            <div className="mb-4">
+            <div>
               <Label htmlFor="semester">Semester</Label>
               <Select
                 id="semester"
@@ -257,10 +209,11 @@ function Form() {
                 )}
                 placeholder="Pilih Semester"
                 disabled={formData.anonymous}
+                className="mt-1"
               />
             </div>
 
-            <div className="mb-4">
+            <div>
               <Label htmlFor="email" required>
                 Email
               </Label>
@@ -271,10 +224,11 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan email Anda"
                 disabled={formData.anonymous}
+                className="mt-1"
               />
             </div>
 
-            <div className="mb-4">
+            <div>
               <Label htmlFor="noHp">Nomor HP</Label>
               <TextField
                 id="noHp"
@@ -283,36 +237,37 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan nomor HP Anda"
                 disabled={formData.anonymous}
+                className="mt-1"
               />
             </div>
           </div>
 
-          <div className="mt-2">
+          <div className="mt-6">
             <label className="inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 name="anonymous"
                 checked={formData.anonymous}
                 onChange={handleChange}
-                className="h-5 w-5 text-blue-600"
+                className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
               />
-              <span className="ml-2 text-gray-700">
+              <span className="ml-3 text-sm text-gray-700">
                 Kirim sebagai Anonim (Identitas tidak akan ditampilkan)
               </span>
             </label>
           </div>
         </div>
 
-        {/* Bagian 3: Detail Laporan */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-gray-200">
+        {/* Bagian 2: Detail Laporan */}
+        <div>
+          <h2 className="text-lg font-semibold mb-6 text-gray-900">
             Detail Laporan
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
               <Label htmlFor="kategori" required>
-                Kategori Laporan
+                Kategori
               </Label>
               <Select
                 id="kategori"
@@ -320,11 +275,12 @@ function Form() {
                 value={formData.kategori}
                 onChange={handleChange}
                 options={kategoriOptions}
-                placeholder="Pilih Kategori Laporan"
+                placeholder="Pilih Kategori"
+                className="mt-1"
               />
             </div>
 
-            <div className="mb-4">
+            <div>
               <Label htmlFor="subKategori" required>
                 Sub Kategori
               </Label>
@@ -343,11 +299,12 @@ function Form() {
                 }
                 placeholder="Pilih Sub Kategori"
                 disabled={!formData.kategori}
+                className="mt-1"
               />
             </div>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-6">
             <Label htmlFor="judul" required>
               Judul Laporan
             </Label>
@@ -357,101 +314,113 @@ function Form() {
               value={formData.judul}
               onChange={handleChange}
               placeholder="Berikan judul yang singkat dan jelas"
+              className="mt-1"
             />
           </div>
 
-          <div className="mb-4">
+          <div className="mb-6">
             <Label htmlFor="isi" required>
-              Isi Laporan
+              Deskripsi
             </Label>
             <TextArea
               id="isi"
               name="isi"
               value={formData.isi}
               onChange={handleChange}
-              placeholder="Jelaskan secara detail pengaduan atau aspirasi Anda..."
-              rows={5}
+              placeholder="Sampaikan secara detail keluhan atau laporan Anda..."
+              rows={6}
+              className="mt-1"
             />
           </div>
 
-          <div className="mb-4">
-            <Label htmlFor="tanggal" required>
-              Tanggal Kejadian
-            </Label>
-            <TextField
-              id="tanggal"
-              name="tanggal"
-              type="date"
-              value={formData.tanggal}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="mb-4">
-            <Label htmlFor="lokasi" required>
-              Lokasi Kejadian
-            </Label>
-            <TextField
-              id="lokasi"
-              name="lokasi"
-              value={formData.lokasi}
-              onChange={handleChange}
-              placeholder="Sebutkan lokasi kejadian"
-            />
-          </div>
-
-          <div className="mb-4">
+          <div className="mb-6">
             <Label>
               Lampiran (opsional)
-              <span className="text-sm text-gray-500 ml-2">
+              <span className="text-sm text-gray-500 font-normal">
                 Maksimal 5 MB (.jpg, .png, .pdf)
               </span>
             </Label>
-            <div className="flex items-center justify-center w-full mt-2">
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Icon name="upload" className="w-8 h-8 mb-4 text-gray-500" />
-                  <p className="mb-2 text-sm text-gray-500">
-                    <span className="font-semibold">Klik untuk upload</span>{" "}
-                    atau drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    JPG, PNG atau PDF (Maks. 5MB)
-                  </p>
-                </div>
-                <input type="file" className="hidden" />
-              </label>
+            <div className="mt-2">
+              <div className="flex items-center justify-center w-full">
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <svg
+                      className="w-8 h-8 mb-3 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      />
+                    </svg>
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold">Klik untuk Upload</span>{" "}
+                      atau drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      JPG, PNG atau PDF (Maks. 5MB)
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                  />
+                </label>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="mt-6 flex justify-end">
-          <Button
-            type="primary"
-            className="px-6 py-3 w-full md:w-auto"
-            onClick={handleSubmit}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center">
-                <Icon name="loading" className="animate-spin mr-2" />
-                Mengirim...
-              </span>
-            ) : (
-              "Kirim Laporan"
-            )}
-          </Button>
-        </div>
+        {/* Catatan dan Submit */}
+        <div className="border-t pt-6">
+          <div className="text-sm text-gray-600 mb-6">
+            <p className="mb-2">
+              <span className="font-medium">Catatan:</span> Kolom bertanda{" "}
+              <span className="text-red-500">*</span> wajib diisi
+            </p>
+            <p>Laporan Anda akan ditindaklanjuti dalam waktu 3x24 jam kerja.</p>
+          </div>
 
-        <div className="mt-4 text-sm text-gray-600">
-          <p>
-            Catatan: Kolom bertanda <span className="text-red-500">*</span>{" "}
-            wajib diisi
-          </p>
-          <p className="mt-1">
-            Laporan Anda akan ditindaklanjuti dalam waktu 3x24 jam kerja.
-          </p>
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Mengirim...
+                </span>
+              ) : (
+                "Kirim Laporan"
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </div>
