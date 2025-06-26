@@ -1,6 +1,6 @@
 // src/context/AuthContext.jsx - Updated to store userRole separately
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { loginAPI } from "../services/api";
+import { loginAPI, logoutAPI } from "../services/api";
 
 const AuthContext = createContext(null);
 

@@ -26,12 +26,19 @@ const StudentDashboard = () => {
       const filters = {};
       if (statusFilter !== "Semua") {
         // Map display status to API status
-        const statusMapping = {
-          "Tiket Baru": "open",
-          "Sedang Diproses": "in_progress",
-          Selesai: "completed",
-        };
-        filters.status = statusMapping[statusFilter];
+        // const statusMapping = {
+        //   "Tiket Baru": "open",
+        //   "Sedang Diproses": "in_progress",
+        //   Selesai: "completed",
+        // };
+        switch (statusFilter !== "semua") {
+          case "Tiket Baru":
+            break;
+          case "Sedang Diproses":
+            break;
+          case "Selesai":
+            break;
+        }
       }
 
       console.log("Loading tickets with filters:", filters);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 // Komponen Button sederhana
 function Button({ children, className = "", onClick }) {
@@ -15,44 +16,50 @@ function Button({ children, className = "", onClick }) {
 
 function LandingPage() {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userType, setUserType] = useState("");
+  const { user, logout, isAuthenticated, getUserRole } = useAuth();
+  const [userRole, setUserRole] = useState(null);
 
-  // Check login status on component mount
+  // Check login status using AuthContext
   useEffect(() => {
-    const loginStatus =
-      sessionStorage.getItem("isLoggedIn") || localStorage.getItem("userRole");
-    const storedUserType =
-      sessionStorage.getItem("userType") || localStorage.getItem("userRole");
-
-    if (loginStatus === "true" || loginStatus) {
-      setIsLoggedIn(true);
-      setUserType(storedUserType || "student");
+    if (isAuthenticated() && user) {
+      const role = getUserRole();
+      setUserRole(role);
+      console.log("Landing page - User authenticated:", { user, role });
+    } else {
+      setUserRole(null);
+      console.log("Landing page - User not authenticated");
     }
-  }, []);
+  }, [user, isAuthenticated, getUserRole]);
 
-  const handleLogout = () => {
-    // Clear all login data
-    sessionStorage.clear();
-    localStorage.clear();
-    setIsLoggedIn(false);
-    setUserType("");
-    // Reload page to reset state
-    window.location.reload();
+  const handleLogout = async () => {
+    try {
+      console.log("Logout initiated from landing page");
+      await logout(); // This will handle API call and redirect
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Fallback: force reload to clear state
+      window.location.href = "/";
+    }
   };
-  const handleDashboardClick = () => {
-    const userRole = localStorage.getItem("userRole") || userType;
 
-    switch (userRole) {
+  const handleDashboardClick = () => {
+    const currentRole = getUserRole();
+    console.log("Dashboard click - Current role:", currentRole);
+
+    switch (currentRole) {
       case "admin":
         navigate("/admin/tickets");
         break;
       case "student":
         navigate("/student/tickets");
         break;
-      // fallback to student
+      default:
+        console.warn("Unknown role, defaulting to student dashboard");
+        navigate("/student/tickets");
+        break;
     }
   };
+
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -60,38 +67,8 @@ function LandingPage() {
     }
   };
 
-  const contacts = [
-    {
-      id: 1,
-      name: "Dr. ARFIVE GANDHI, S.T., M.T.I.",
-      department:
-        "Keamanan Informasi, Auditor Sistem Informasi, Penelitian Kualitatif",
-      email: "arfivegandhi@telkomuniversity.ac.id",
-      imageSrc: "/api/placeholder/80/80",
-    },
-    {
-      id: 2,
-      name: "ARIO HARRY PRAYOGO, S.Kom., M.Kom.",
-      department: "Software Engineering",
-      email: "ariohp@telkomuniversity.ac.id",
-      imageSrc: "/api/placeholder/80/80",
-    },
-    {
-      id: 3,
-      name: "AAZ MUHAMMAD HAFIDZ AZIS, S.T.,M.T.",
-      department: "Data Science, Artificial Intelligence, Speech Processing",
-      email: "aazmuhammad@telkomuniversity.ac.id",
-      imageSrc: "/api/placeholder/80/80",
-    },
-    {
-      id: 4,
-      name: "DANA SULISTYO KUSUMO, S.T., M.T., Ph.D.",
-      department:
-        "Software Engineering, Process-Aware Information Systems, Human Computer Interaction",
-      email: "danakusumo@telkomuniversity.ac.id",
-      imageSrc: "/api/placeholder/80/80",
-    },
-  ];
+  // Determine if user is logged in
+  const isLoggedIn = isAuthenticated() && user && userRole;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -119,9 +96,12 @@ function LandingPage() {
             >
               AskedUs
             </button>
-            <a href="#" className="text-white hover:text-gray-200 font-medium">
+            <button
+              onClick={() => scrollToSection("reach-us-section")}
+              className="text-white hover:text-gray-200 font-medium"
+            >
               ReachUs
-            </a>
+            </button>
           </nav>
 
           {/* Right section - Login/User Menu */}
@@ -136,20 +116,22 @@ function LandingPage() {
             </div>
           ) : (
             <div className="flex items-center space-x-4">
-              <nav className="hidden md:flex space-x-4 text-sm font-medium text-blue-700">
-                <Button
-                  className="px-4 py-2 bg-blue-100 rounded hover:bg-blue-200"
-                  onClick={handleDashboardClick}
-                >
-                  Dashboard
-                </Button>
-              </nav>
+              <Button
+                className="px-4 py-2 bg-white text-red-600 hover:bg-gray-100 rounded font-medium"
+                onClick={handleDashboardClick}
+              >
+                Dashboard
+              </Button>
               <div className="text-white text-sm">
                 Welcome,{" "}
-                <span className="font-medium capitalize">{userType}</span>
+                <span className="font-medium capitalize">
+                  {user?.name || userRole}
+                </span>
               </div>
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-medium text-sm">U</span>
+              <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <span className="text-white font-medium text-sm">
+                  {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                </span>
               </div>
               <Button
                 className="bg-white text-red-600 hover:bg-gray-100 px-4 py-2 font-medium"
@@ -184,12 +166,42 @@ function LandingPage() {
               terkait layanan akademik dan non-akademik.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button className="bg-white text-red-600 hover:bg-gray-100 px-8 py-3 text-lg font-medium">
-                Get Started
-              </Button>
-              <Button className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium">
-                Learn More
-              </Button>
+              {!isLoggedIn ? (
+                <>
+                  <Button
+                    className="bg-white text-red-600 hover:bg-gray-100 px-8 py-3 text-lg font-medium"
+                    onClick={() => navigate("/login")}
+                  >
+                    Get Started
+                  </Button>
+                  <Button className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium">
+                    Learn More
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    className="bg-white text-red-600 hover:bg-gray-100 px-8 py-3 text-lg font-medium"
+                    onClick={handleDashboardClick}
+                  >
+                    Go to Dashboard
+                  </Button>
+                  <Button
+                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
+                    onClick={() =>
+                      navigate(
+                        userRole === "student"
+                          ? "/student/sampaikan"
+                          : "/admin/tickets"
+                      )
+                    }
+                  >
+                    {userRole === "student"
+                      ? "Create Ticket"
+                      : "Manage Tickets"}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
@@ -379,8 +391,6 @@ function LandingPage() {
         </div>
       </div>
 
-      {/* Contact List */}
-      {/* Reach Us Section */}
       {/* Reach Us Section */}
       <div id="reach-us-section" className="bg-red-600 py-16">
         <div className="container mx-auto px-4">
@@ -396,8 +406,6 @@ function LandingPage() {
 
           {/* White Container */}
           <div className="bg-white rounded-2xl p-8 max-w-6xl mx-auto">
-            {/* Category Tabs */}
-
             {/* Contact Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {/* Contact Card 1 */}
@@ -651,14 +659,6 @@ function LandingPage() {
       <footer className="bg-gray-800 text-white py-8 mt-auto">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap">
-            <div className="w-full md:w-1/3 mb-6 md:mb-0">
-              <h3 className="text-xl font-bold mb-4">Universitas Example</h3>
-              <p className="text-sm text-gray-300">
-                Jl. Contoh No. 123, Kota Bandung
-                <br />
-                Jawa Barat, Indonesia 40123
-              </p>
-            </div>
             <div className="w-full md:w-1/3 mb-6 md:mb-0">
               <h3 className="text-lg font-semibold mb-4">Link Cepat</h3>
               <ul className="space-y-2 text-sm">

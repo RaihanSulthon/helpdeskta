@@ -1,4 +1,4 @@
-// src/services/api.js - UPDATED VERSION with better ticket detail handling
+// src/services/api.js - FIXED VERSION with proper logout API
 
 const BASE_URL = "https://apibackendtio.mynextskill.com/api";
 
@@ -16,6 +16,139 @@ const retryFetch = async (url, options, maxRetries = 3) => {
         setTimeout(resolve, Math.pow(2, i) * 1000)
       );
     }
+  }
+};
+
+// Update Ticket Status API - NEW for Admin
+export const updateTicketStatusAPI = async (ticketId, newStatus) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    if (!ticketId) {
+      throw new Error("ID tiket tidak valid");
+    }
+
+    const requestBody = {
+      status: newStatus, // e.g. "open", "in_progress", "completed"
+    };
+
+    console.log("Updating ticket status:", { ticketId, newStatus });
+
+    const options = {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+      body: JSON.stringify(requestBody),
+    };
+
+    const response = await retryFetch(
+      `${BASE_URL}/tickets/${ticketId}/status`,
+      options
+    );
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Update status response:", result);
+
+    return {
+      success: true,
+      message: result.message || "Status tiket berhasil diupdate",
+      data: result.data || result,
+    };
+  } catch (error) {
+    console.error("Update Ticket Status API Error:", error);
+    throw new Error(error.message || "Gagal mengupdate status tiket");
+  }
+};
+
+// Get Admin Tickets API - for all tickets from all users
+export const getAdminTicketsAPI = async (filters = {}) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    const queryParams = new URLSearchParams();
+    if (filters.status) queryParams.append("status", filters.status);
+    if (filters.category) queryParams.append("category", filters.category);
+    if (filters.date) queryParams.append("date", filters.date);
+    if (filters.user_id) queryParams.append("user_id", filters.user_id);
+
+    // Get more data for admin view
+    queryParams.append("per_page", "200");
+    queryParams.append("page", "1");
+
+    const queryString = queryParams.toString();
+    const url = `${BASE_URL}/tickets${queryString ? `?${queryString}` : ""}`;
+
+    console.log("Fetching admin tickets from:", url);
+
+    const response = await retryFetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Get Admin Tickets API response:", result);
+
+    // Extract tickets from response
+    if (result?.data?.tickets) {
+      return result.data.tickets;
+    }
+    if (result?.data && Array.isArray(result.data)) {
+      return result.data;
+    }
+    if (Array.isArray(result)) {
+      return result;
+    }
+
+    return [];
+  } catch (error) {
+    console.error("Get Admin Tickets API Error:", error);
+    if (error.name === "TypeError" && error.message.includes("fetch")) {
+      throw new Error(
+        "Koneksi ke server gagal. Pastikan server berjalan dan coba lagi."
+      );
+    }
+    throw new Error(
+      error.message || "Terjadi kesalahan saat mengambil data tiket admin"
+    );
   }
 };
 
@@ -58,7 +191,53 @@ export const loginAPI = async (email, password) => {
   }
 };
 
-// FIXED Submit Ticket API
+// Logout API
+export const logoutAPI = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      // If no token, consider it already logged out
+      return { success: true, message: "Already logged out" };
+    }
+
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    };
+
+    const response = await retryFetch(`${BASE_URL}/auth/logout`, options);
+    const result = await response.json();
+
+    if (!response.ok) {
+      // Even if logout fails on server, we should still clear local data
+      console.warn(
+        "Server logout failed, but clearing local data:",
+        result.message
+      );
+    }
+
+    return {
+      success: true,
+      message: result.message || "Logged out successfully",
+    };
+  } catch (error) {
+    console.error("Logout API Error:", error);
+    // Don't throw error for logout - always clear local data
+    return {
+      success: true,
+      message: "Logged out locally (server may be unreachable)",
+    };
+  }
+};
+
+// Submit Ticket API
 export const submitTicketAPI = async (formData) => {
   try {
     const token = localStorage.getItem("token");
@@ -200,7 +379,7 @@ export const submitTicketAPI = async (formData) => {
   }
 };
 
-// Get Tickets API - COMPLETELY CLEAN VERSION
+// Get Tickets API
 export const getTicketsAPI = async (filters = {}) => {
   try {
     const token = localStorage.getItem("token");
@@ -212,8 +391,9 @@ export const getTicketsAPI = async (filters = {}) => {
     if (filters.status) queryParams.append("status", filters.status);
     if (filters.category) queryParams.append("category", filters.category);
     if (filters.date) queryParams.append("date", filters.date);
-    queryParams.append("per_page", "100"); // Adjust number as needed
+    queryParams.append("per_page", "100");
     queryParams.append("page", "1");
+
     const queryString = queryParams.toString();
     const url = `${BASE_URL}/tickets${queryString ? `?${queryString}` : ""}`;
 
@@ -267,7 +447,7 @@ export const getTicketsAPI = async (filters = {}) => {
   }
 };
 
-// Get Ticket Detail API - UPDATED to handle the correct response structure
+// Get Ticket Detail API
 export const getTicketDetailAPI = async (ticketId) => {
   try {
     const token = localStorage.getItem("token");
