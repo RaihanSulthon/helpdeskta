@@ -66,8 +66,6 @@ const Sidebar = ({ onMenuClick }) => {
       }
     } else if (menuId === "users" && userRole === "admin") {
       navigate("/admin/users"); // ManageUsers - admin only
-    } else if (menuId === "reachus" && userRole === "student") {
-      navigate("/student/reachus"); // ReachUs - student only
     } else if (menuId === "sampaikan" && userRole === "student") {
       navigate("/student/sampaikan"); // Sampaikan - student only
     }
@@ -358,37 +356,6 @@ const Sidebar = ({ onMenuClick }) => {
                       }`}
                     >
                       AskedUs
-                    </span>
-                  </div>
-                </button>
-
-                {/* ReachUs Menu - STUDENT ONLY */}
-                <button
-                  onClick={() => handleMenuClick("reachus")}
-                  className={`w-full flex items-center p-4 rounded-lg transition-colors ${
-                    activeMenuItem === "reachus"
-                      ? "bg-red-100 text-red-800 border-l-4 border-red-600"
-                      : "bg-white border border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className={
-                        activeMenuItem === "reachus"
-                          ? "text-red-600"
-                          : "text-gray-600"
-                      }
-                    >
-                      <ReachUsIcon />
-                    </div>
-                    <span
-                      className={`text-base font-medium ${
-                        activeMenuItem === "reachus"
-                          ? "text-red-800"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      ReachUs
                     </span>
                   </div>
                 </button>
