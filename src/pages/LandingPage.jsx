@@ -33,7 +33,6 @@ function LandingPage() {
 
   const handleLogout = async () => {
     try {
-      console.log("Logout initiated from landing page");
       await logout(); // This will handle API call and redirect
     } catch (error) {
       console.error("Logout error:", error);

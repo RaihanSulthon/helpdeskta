@@ -34,7 +34,6 @@ function Login() {
 
     try {
       setIsLoading(true);
-      console.log("Attempting login with:", { email: credentials.email });
 
       const userData = await login(credentials.email, credentials.password);
       console.log("Login successful:", userData);

@@ -8,6 +8,7 @@ import Label from "../Label";
 import Select from "../Select";
 import Icon from "../Icon";
 import { submitTicketAPI, getCategoriesAPI } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 function Form() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ function Form() {
   const [subCategories, setSubCategories] = useState([]);
   const [submittedTicketId, setSubmittedTicketId] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     jenis: "PENGADUAN",
     judul: "",
@@ -30,7 +32,7 @@ function Form() {
     nim: "",
     prodi: "",
     semester: "",
-    email: "",
+    email: user?.email || "",
     noHp: "",
     anonymous: false,
   });
@@ -40,10 +42,18 @@ function Form() {
     loadCategories();
   }, []);
 
+  useEffect(() => {
+    if (user?.email && !formData.anonymous) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.email
+      }));
+    }
+  }, [user]);
+
   const loadCategories = async () => {
     try {
       const categoriesData = await getCategoriesAPI();
-      console.log("Categories received:", categoriesData);
       setCategories(categoriesData);
     } catch (error) {
       console.error("Error loading categories:", error);
@@ -125,18 +135,23 @@ function Form() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
+  
     if (type === "checkbox") {
       setFormData({
         ...formData,
         [name]: checked,
       });
     } else {
+      // Mencegah perubahan email jika user sudah login dan tidak anonymous
+      if (name === "email" && user?.email && !formData.anonymous) {
+        return; // Tidak mengizinkan perubahan email
+      }
+  
       setFormData({
         ...formData,
         [name]: value,
       });
-
+  
       // Reset sub-kategori jika kategori berubah
       if (name === "kategori") {
         setFormData((prev) => ({
@@ -536,10 +551,11 @@ function Form() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Masukkan email Anda"
-                disabled={formData.anonymous}
-                className="mt-1"
+                disabled={formData.anonymous || !!user?.email} // Disabled
+                className={`mt-1 ${(formData.anonymous || !!user?.email) ? 'bg-gray-100' : ''}`}
                 required={!formData.anonymous}
               />
+              {user?.email && !formData.anonymous}
             </div>
 
             <div>

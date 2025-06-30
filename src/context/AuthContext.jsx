@@ -39,7 +39,6 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const result = await loginAPI(email, password);
-      console.log("Login API result:", result);
 
       const userData = {
         id: result.user.id,
@@ -59,7 +58,6 @@ export const AuthProvider = ({ children }) => {
 
       setUser(userData);
 
-      console.log("User logged in successfully:", userData);
       return userData;
     } catch (error) {
       console.error("Login error:", error);

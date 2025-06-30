@@ -869,8 +869,6 @@ export const getCategoriesAPI = async () => {
       created_at: category.created_at,
       updated_at: category.updated_at,
     }));
-
-    console.log("Processed categories:", processedCategories);
     return processedCategories;
   } catch (error) {
     console.error("Get Categories API Error:", error);
