@@ -984,7 +984,8 @@ export const getChatMessagesAPI = async (ticketId) => {
 
 
 // Send Chat Message API
-export const sendChatMessageAPI = async (ticketId, message) => {
+// Send Chat Message API - Updated untuk mendukung file upload
+export const sendChatMessageAPI = async (ticketId, message, file = null) => {
   try {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -999,23 +1000,55 @@ export const sendChatMessageAPI = async (ticketId, message) => {
       throw new Error("Pesan tidak boleh kosong");
     }
 
-    const requestBody = {
-      message: message.trim(),
-      is_system_message: false,
+    // Validasi file jika ada
+    if (file) {
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+      const maxSize = 10 * 1024 * 1024; // 10MB
+
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error("Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.");
+      }
+
+      if (file.size > maxSize) {
+        throw new Error("Ukuran file terlalu besar. Maksimal 10MB.");
+      }
+    }
+
+    let requestBody;
+    let headers = {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
     };
 
-    console.log("Sending chat message:", { ticketId, requestBody });
+    if (file) {
+      // Gunakan FormData untuk upload file
+      requestBody = new FormData();
+      requestBody.append('message', message.trim());
+      requestBody.append('is_system_message', 'false');
+      requestBody.append('file', file);
+      // Jangan set Content-Type untuk FormData, browser akan set otomatis
+    } else {
+      // Gunakan JSON untuk pesan biasa
+      headers['Content-Type'] = 'application/json';
+      requestBody = JSON.stringify({
+        message: message.trim(),
+        is_system_message: false,
+      });
+    }
+
+    console.log("Sending chat message:", { 
+      ticketId, 
+      message, 
+      hasFile: !!file,
+      fileName: file?.name 
+    });
 
     const response = await retryFetch(`${BASE_URL}/tickets/${ticketId}/chat`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       mode: "cors",
       credentials: "omit",
-      body: JSON.stringify(requestBody),
+      body: requestBody,
     });
 
     if (!response.ok) {

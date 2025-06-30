@@ -1,12 +1,14 @@
-// components/Sidebar.jsx - Fixed role-based navigation with proper role detection
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { SPLManager } from "../config/splConfig";
+import { getTicketsAPI, getAdminTicketsAPI } from "../services/api";
 
 const Sidebar = ({ onMenuClick }) => {
   const [activeMenuItem, setActiveMenuItem] = useState("tickets");
   const [userRole, setUserRole] = useState(null);
+  const [ticketCount, setTicketCount] = useState(0);
+  const [loadingCount, setLoadingCount] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,6 +49,43 @@ const Sidebar = ({ onMenuClick }) => {
       setActiveMenuItem("reachus");
     }
   }, [location.pathname]);
+
+  // Load ticket count when role changes
+  useEffect(() => {
+    if (userRole) {
+      loadTicketCount();
+    }
+  }, [userRole]);
+
+  const loadTicketCount = async () => {
+    try {
+      setLoadingCount(true);
+      let tickets = [];
+      
+      console.log(`Loading ticket count for role: ${userRole}`);
+      
+      if (userRole === "admin") {
+        tickets = await getAdminTicketsAPI();
+      } else {
+        tickets = await getTicketsAPI();
+      }
+      
+      setTicketCount(tickets.length);
+      console.log(`Loaded ${tickets.length} tickets for ${userRole}`);
+    } catch (error) {
+      console.error("Error loading ticket count:", error);
+      setTicketCount(0);
+    } finally {
+      setLoadingCount(false);
+    }
+  };
+
+  // Refresh ticket count function - can be called from parent components
+  const refreshTicketCount = () => {
+    if (userRole) {
+      loadTicketCount();
+    }
+  };
 
   const handleMenuClick = (menuId) => {
     setActiveMenuItem(menuId);
@@ -237,15 +276,36 @@ const Sidebar = ({ onMenuClick }) => {
                   {userRole === "admin" ? "Manage Ticket" : "My Ticket"}
                 </span>
               </div>
-              <span
-                className={`font-semibold text-sm ${
-                  activeMenuItem === "tickets"
-                    ? "text-red-800"
-                    : "text-gray-600"
-                }`}
-              >
-                2.053
-              </span>
+              <div className="flex items-center">
+                {loadingCount ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                ) : (
+                  <span
+                    className={`font-semibold text-sm ${
+                      activeMenuItem === "tickets"
+                        ? "text-red-800"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    {ticketCount.toLocaleString()}
+                  </span>
+                )}
+                {/* Refresh button - only show when not loading */}
+                {!loadingCount && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      refreshTicketCount();
+                    }}
+                    className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Refresh ticket count"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </button>
           </div>
         </div>
@@ -375,9 +435,12 @@ const Sidebar = ({ onMenuClick }) => {
             User Role:{" "}
             <span className="font-bold text-blue-600">{userRole}</span>
           </div>
-          {/* <div>Auth User: {JSON.stringify(user?.role || "none")}</div>
-          <div>LocalStorage: {localStorage.getItem("userRole") || "none"}</div>
-          <div>Current Route: {location.pathname}</div> */}
+          <div>
+            Ticket Count:{" "}
+            <span className="font-bold text-green-600">
+              {loadingCount ? "Loading..." : ticketCount}
+            </span>
+          </div>
           <div>Active Menu: {activeMenuItem}</div>
         </div>
       )}

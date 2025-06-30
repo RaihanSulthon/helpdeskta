@@ -12,6 +12,8 @@ const StudentDashboard = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ticketsPerPage] = useState(10);
 
   // Load tickets on component mount and when filter changes
   useEffect(() => {
@@ -203,6 +205,39 @@ const StudentDashboard = () => {
       e.target.checked ? filteredTickets.map((t) => t.id) : []
     );
   };
+
+  // Handler untuk pagination
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+  
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Pagination
+  const totalPages = Math.ceil(filteredTickets.length / ticketsPerPage);
+  const startIndex = (currentPage - 1) * ticketsPerPage;
+  const endIndex = startIndex + ticketsPerPage;
+  const currentTickets = filteredTickets.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
+  useEffect(() => {
+    setSelectedTickets([]);
+  }, [currentPage]);
 
   const handleSelectTicket = (ticketId, e) => {
     e.stopPropagation();
@@ -471,46 +506,46 @@ const StudentDashboard = () => {
 
       {/* Ticket List Header */}
       <div className="bg-white rounded-lg shadow">
-        <div className="flex items-center px-4 py-3 border-b bg-gray-50 rounded-t-lg">
-          <input
-            type="checkbox"
-            checked={
-              selectedTickets.length === filteredTickets.length &&
-              filteredTickets.length > 0
-            }
-            onChange={handleSelectAll}
-            className="w-4 h-4 mr-4"
-          />
-          <span className="text-sm font-medium text-gray-700">
-            {selectedTickets.length > 0
-              ? `${selectedTickets.length} tiket dipilih`
-              : `${filteredTickets.length} tiket`}
-          </span>
-          {filteredTickets.length > 0 && (
-            <button
-              onClick={loadTickets}
-              className="ml-auto p-1 text-gray-500 hover:text-gray-700"
-              title="Refresh"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50 rounded-t-lg">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              checked={
+                selectedTickets.length === currentTickets.length &&
+                currentTickets.length > 0
+              }
+              onChange={handleSelectAll}
+              className="w-4 h-4 mr-4"
+            />
+            <span className="text-sm font-medium text-gray-700">
+              {selectedTickets.length > 0
+                ? `${selectedTickets.length} tiket dipilih`
+                : `Menampilkan ${startIndex + 1}-${Math.min(endIndex, filteredTickets.length)} dari ${filteredTickets.length} tiket`}
+            </span>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            {/* Page Info */}
+            <span className="text-sm text-gray-500">
+              Halaman {currentPage} dari {totalPages}
+            </span>
+
+            {filteredTickets.length > 0 && (
+              <button
+                onClick={loadTickets}
+                className="p-1 text-gray-500 hover:text-gray-700"
+                title="Refresh"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            </button>
-          )}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Ticket List */}
-        {filteredTickets.map((ticket, index) => (
+        {currentTickets.map((ticket, index) => (
           <div
             key={`${ticket.id}-${index}`}
             className={`flex items-start gap-4 px-4 py-4 border-b hover:bg-gray-50 cursor-pointer transition-colors ${
@@ -630,18 +665,8 @@ const StudentDashboard = () => {
         {/* Empty state */}
         {filteredTickets.length === 0 && !loading && (
           <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-            <svg
-              className="w-12 h-12 mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414-2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-              />
+            <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414-2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
             <p className="text-lg font-medium">Tidak ada tiket</p>
             <p className="text-sm">
@@ -649,6 +674,112 @@ const StudentDashboard = () => {
                 ? "Belum ada tiket yang dibuat"
                 : `Belum ada tiket untuk kategori ${statusFilter}`}
             </p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {filteredTickets.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center text-sm text-gray-700">
+              <span>
+                Menampilkan <span className="font-medium">{startIndex + 1}</span> sampai{" "}
+                <span className="font-medium">{Math.min(endIndex, filteredTickets.length)}</span> dari{" "}
+                <span className="font-medium">{filteredTickets.length}</span> hasil
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {/* Previous Button */}
+              <button
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+                className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Sebelumnya
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex space-x-1">
+                {(() => {
+                  const pages = [];
+                  const showEllipsisStart = currentPage > 3;
+                  const showEllipsisEnd = currentPage < totalPages - 2;
+                  
+                  // First page
+                  if (showEllipsisStart) {
+                    pages.push(
+                      <button
+                        key={1}
+                        onClick={() => handlePageChange(1)}
+                        className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                      >
+                        1
+                      </button>
+                    );
+                    
+                    if (currentPage > 4) {
+                      pages.push(
+                        <span key="ellipsis-start" className="px-3 py-1 text-sm font-medium text-gray-500">
+                          ...
+                        </span>
+                      );
+                    }
+                  }
+                  
+                  // Current page range
+                  const start = Math.max(1, currentPage - 2);
+                  const end = Math.min(totalPages, currentPage + 2);
+                  
+                  for (let pageNum = start; pageNum <= end; pageNum++) {
+                    pages.push(
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-1 text-sm font-medium rounded-md ${
+                          pageNum === currentPage
+                            ? "text-white bg-red-600 border border-red-600"
+                            : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  }
+                  
+                  // Last page
+                  if (showEllipsisEnd) {
+                    if (currentPage < totalPages - 3) {
+                      pages.push(
+                        <span key="ellipsis-end" className="px-3 py-1 text-sm font-medium text-gray-500">
+                          ...
+                        </span>
+                      );
+                    }
+                    
+                    pages.push(
+                      <button
+                        key={totalPages}
+                        onClick={() => handlePageChange(totalPages)}
+                        className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                      >
+                        {totalPages}
+                      </button>
+                    );
+                  }
+                  
+                  return pages;
+                })()}
+              </div>
+              
+              {/* Next Button */}
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Berikutnya
+              </button>
+            </div>
           </div>
         )}
       </div>
