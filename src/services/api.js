@@ -19,6 +19,249 @@ const retryFetch = async (url, options, maxRetries = 3) => {
   }
 };
 
+// FAQ API Functions - NEW for AskedUs Management
+
+// Get All FAQs API
+export const getFAQsAPI = async (filters = {}) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    const queryParams = new URLSearchParams();
+    if (filters.category_id)
+      queryParams.append("category_id", filters.category_id);
+    if (filters.search) queryParams.append("search", filters.search);
+    queryParams.append("per_page", "100");
+    queryParams.append("page", "1");
+
+    const queryString = queryParams.toString();
+    const url = `${BASE_URL}/faqs${queryString ? `?${queryString}` : ""}`;
+
+    console.log("Fetching FAQs from:", url);
+
+    const response = await retryFetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Get FAQs API response:", result);
+
+    // Extract FAQs from response
+    if (result?.data?.data) {
+      return result.data.data;
+    }
+    if (result?.data && Array.isArray(result.data)) {
+      return result.data;
+    }
+    if (Array.isArray(result)) {
+      return result;
+    }
+
+    return [];
+  } catch (error) {
+    console.error("Get FAQs API Error:", error);
+    throw new Error(
+      error.message || "Terjadi kesalahan saat mengambil data FAQ"
+    );
+  }
+};
+
+// Create FAQ API
+export const createFAQAPI = async (faqData) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    if (!faqData.question || faqData.question.trim() === "") {
+      throw new Error("Pertanyaan harus diisi");
+    }
+
+    if (!faqData.answer || faqData.answer.trim() === "") {
+      throw new Error("Jawaban harus diisi");
+    }
+
+    const requestBody = {
+      question: faqData.question.trim(),
+      answer: faqData.answer.trim(),
+      category_id: parseInt(faqData.category_id) || 1,
+      is_public: Boolean(faqData.is_public !== false), // default true
+    };
+
+    console.log("Creating FAQ:", requestBody);
+
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+      body: JSON.stringify(requestBody),
+    };
+
+    const response = await retryFetch(`${BASE_URL}/faqs`, options);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Create FAQ response:", result);
+
+    return {
+      success: true,
+      message: result.message || "FAQ berhasil dibuat",
+      data: result.data || result,
+    };
+  } catch (error) {
+    console.error("Create FAQ API Error:", error);
+    throw new Error(error.message || "Gagal membuat FAQ");
+  }
+};
+
+// Update FAQ API
+export const updateFAQAPI = async (faqId, faqData) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    if (!faqId) {
+      throw new Error("ID FAQ tidak valid");
+    }
+
+    const requestBody = {};
+    if (faqData.question) requestBody.question = faqData.question.trim();
+    if (faqData.answer) requestBody.answer = faqData.answer.trim();
+    if (faqData.category_id)
+      requestBody.category_id = parseInt(faqData.category_id);
+    if (faqData.hasOwnProperty("is_public"))
+      requestBody.is_public = Boolean(faqData.is_public);
+
+    console.log("Updating FAQ:", { faqId, requestBody });
+
+    const options = {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+      body: JSON.stringify(requestBody),
+    };
+
+    const response = await retryFetch(`${BASE_URL}/faqs/${faqId}`, options);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Update FAQ response:", result);
+
+    return {
+      success: true,
+      message: result.message || "FAQ berhasil diupdate",
+      data: result.data || result,
+    };
+  } catch (error) {
+    console.error("Update FAQ API Error:", error);
+    throw new Error(error.message || "Gagal mengupdate FAQ");
+  }
+};
+
+// Delete FAQ API
+export const deleteFAQAPI = async (faqId) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    if (!faqId) {
+      throw new Error("ID FAQ tidak valid");
+    }
+
+    console.log("Deleting FAQ:", faqId);
+
+    const options = {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    };
+
+    const response = await retryFetch(`${BASE_URL}/faqs/${faqId}`, options);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Delete FAQ response:", result);
+
+    return {
+      success: true,
+      message: result.message || "FAQ berhasil dihapus",
+    };
+  } catch (error) {
+    console.error("Delete FAQ API Error:", error);
+    throw new Error(error.message || "Gagal menghapus FAQ");
+  }
+};
+
 // Update Ticket Status API - NEW for Admin
 export const updateTicketStatusAPI = async (ticketId, newStatus) => {
   try {
@@ -446,7 +689,64 @@ export const getTicketsAPI = async (filters = {}) => {
     );
   }
 };
+// Add this function to your api.js file:
 
+// Get FAQ Categories API
+export const getFAQCategoriesAPI = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    console.log("Fetching FAQ categories...");
+
+    const response = await retryFetch(`${BASE_URL}/faqs/categories`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Get FAQ Categories API response:", result);
+
+    // Extract categories from response
+    if (result?.data && Array.isArray(result.data)) {
+      return result.data;
+    }
+    if (Array.isArray(result)) {
+      return result;
+    }
+
+    return [];
+  } catch (error) {
+    console.error("Get FAQ Categories API Error:", error);
+
+    // Return fallback categories if API fails
+    console.warn("Using fallback FAQ categories due to API error");
+    return [
+      { id: 1, name: "Facilities" },
+      { id: 2, name: "Academic" },
+      { id: 3, name: "General" },
+    ];
+  }
+};
 // Get Ticket Detail API
 export const getTicketDetailAPI = async (ticketId) => {
   try {
