@@ -43,6 +43,7 @@ const Layout = ({ children, requiredRole }) => {
   // Get current page title based on route
   const getPageTitle = () => {
     const path = location.pathname;
+    if (path.includes("/emails")) return "Email Management";
     if (path.includes("/askedus")) return "AskedUs";
     if (path.includes("/reachus")) return "ReachUs";
     if (path.includes("/users")) return "Manage Users";

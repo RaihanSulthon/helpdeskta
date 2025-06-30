@@ -1,10 +1,14 @@
 // Navbar.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Icon from "./Icon";
 import Button from "./Button";
 import TextField from "./TextField";
+import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
 
@@ -41,9 +45,19 @@ const Navbar = () => {
         <Button className="text-white hover:bg-red-700 p-2 rounded">
           <Icon name="menu" size={20} className="text-white" />
         </Button>
-        <div className="bg-white rounded px-3 py-1">
-          <span className="text-red-600 font-medium text-sm">Gmail</span>
-        </div>
+        {isAdmin() && (
+          <button
+            onClick={() => navigate("/admin/emails")}
+            className="bg-white rounded px-3 py-1 hover:bg-gray-100 transition-colors"
+          >
+            <span className="text-red-600 font-medium text-sm">Gmail</span>
+          </button>
+        )}
+        {!isAdmin() && (
+          <div className="bg-white rounded px-3 py-1">
+            <span className="text-red-600 font-medium text-sm">HELPDESK</span>
+          </div>
+        )}
       </div>
 
       {/* Center section - Search */}

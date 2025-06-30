@@ -1155,3 +1155,188 @@ export const deleteMultipleTicketsAPI = async (ticketIds) => {
     throw new Error(error.message || "Gagal menghapus tiket");
   }
 };
+
+// Send Email API - Dynamic format detection
+export const sendEmailAPI = async (emailData) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    if (!emailData.to_email || emailData.to_email.trim() === "") {
+      throw new Error("Email tujuan harus diisi");
+    }
+
+    if (!emailData.subject || emailData.subject.trim() === "") {
+      throw new Error("Subject email harus diisi");
+    }
+
+    if (!emailData.body || emailData.body.trim() === "") {
+      throw new Error("Isi email harus diisi");
+    }
+
+    // Try different formats based on common API patterns
+    const requestFormats = [
+      // Format 1: Based on validation error
+      {
+        email: emailData.to_email.trim(),
+        subject: emailData.subject.trim(),
+        body: emailData.body.trim(),
+      },
+      // Format 2: Alternative naming
+      {
+        to_email: emailData.to_email.trim(),
+        subject: emailData.subject.trim(),
+        content: emailData.body.trim(),
+      },
+      // Format 3: Another common pattern
+      {
+        recipient: emailData.to_email.trim(),
+        subject: emailData.subject.trim(),
+        message: emailData.body.trim(),
+      }
+    ];
+
+    let lastError = null;
+
+    // Try each format until one works
+    for (let i = 0; i < requestFormats.length; i++) {
+      const requestBody = requestFormats[i];
+
+      try {
+        const options = {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          mode: "cors",
+          credentials: "omit",
+          body: JSON.stringify(requestBody),
+        };
+
+        const response = await retryFetch(`${BASE_URL}/emails/send`, options);
+
+        if (response.ok) {
+          const result = await response.json();
+          return {
+            success: true,
+            message: result.message || "Email berhasil dikirim",
+            data: result.data || result,
+          };
+        } else {
+          // Store error but continue trying other formats
+          const errorResult = await response.json().catch(() => ({}));
+          lastError = {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorResult,
+            format: i + 1
+          };
+          
+          // If it's not a validation error, stop trying other formats
+          if (response.status !== 422) {
+            break;
+          }
+        }
+      } catch (error) {
+        lastError = { error, format: i + 1 };
+      }
+    }
+
+    // If all formats failed, throw the last error
+    if (lastError) {
+      let errorMessage = "Gagal mengirim email";
+      
+      if (lastError.status === 422) {
+        if (lastError.body?.errors) {
+          const validationErrors = Object.entries(lastError.body.errors)
+            .map(([field, messages]) => `${field}: ${messages.join(", ")}`)
+            .join("; ");
+          errorMessage = `Validation failed - ${validationErrors}`;
+        } else if (lastError.body?.message) {
+          errorMessage = `Validation failed: ${lastError.body.message}`;
+        }
+      } else if (lastError.body?.message) {
+        errorMessage = lastError.body.message;
+      } else if (lastError.error?.message) {
+        errorMessage = lastError.error.message;
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    throw new Error("Semua format request gagal");
+
+  } catch (error) {
+    console.error("Send Email API Error:", error);
+    throw new Error(error.message || "Gagal mengirim email");
+  }
+};
+
+// Get Email Logs API
+export const getEmailLogsAPI = async (filters = {}) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    const queryParams = new URLSearchParams();
+    if (filters.page) queryParams.append("page", filters.page);
+    if (filters.per_page) queryParams.append("per_page", filters.per_page);
+    if (filters.to_email) queryParams.append("to_email", filters.to_email);
+    if (filters.subject) queryParams.append("subject", filters.subject);
+
+    // Default pagination
+    if (!filters.per_page) queryParams.append("per_page", "50");
+    if (!filters.page) queryParams.append("page", "1");
+
+    const queryString = queryParams.toString();
+    const url = `${BASE_URL}/emails/logs${queryString ? `?${queryString}` : ""}`;
+
+    const response = await retryFetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+
+    // Extract logs from response
+    if (result?.data?.data) {
+      return result.data.data;
+    }
+    if (result?.data && Array.isArray(result.data)) {
+      return result.data;
+    }
+    if (Array.isArray(result)) {
+      return result;
+    }
+
+    return [];
+  } catch (error) {
+    console.error("Get Email Logs API Error:", error);
+    throw new Error(
+      error.message || "Terjadi kesalahan saat mengambil data log email"
+    );
+  }
+};

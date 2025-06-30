@@ -45,6 +45,8 @@ const Sidebar = ({ onMenuClick }) => {
       setActiveMenuItem("askedus");
     } else if (path.includes("/users")) {
       setActiveMenuItem("users");
+    } else if (path.includes("/emails")) {
+      setActiveMenuItem("emails");
     } else if (path.includes("/reachus")) {
       setActiveMenuItem("reachus");
     }
@@ -89,7 +91,7 @@ const Sidebar = ({ onMenuClick }) => {
 
   const handleMenuClick = (menuId) => {
     setActiveMenuItem(menuId);
-
+  
     // Handle navigation based on role and menu
     if (menuId === "tickets") {
       if (userRole === "admin") {
@@ -105,10 +107,12 @@ const Sidebar = ({ onMenuClick }) => {
       }
     } else if (menuId === "users" && userRole === "admin") {
       navigate("/admin/users"); // ManageUsers - admin only
+    } else if (menuId === "emails" && userRole === "admin") {
+      navigate("/admin/emails"); // Email Management - admin only
     } else if (menuId === "sampaikan" && userRole === "student") {
       navigate("/student/sampaikan"); // Sampaikan - student only
     }
-
+  
     if (onMenuClick) {
       onMenuClick(menuId);
     }
@@ -156,6 +160,12 @@ const Sidebar = ({ onMenuClick }) => {
       <path d="M16 3.13a4 4 0 010 7.75" />
     </svg>
   );
+  
+  const EmailIcon = () => (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+    </svg>
+  );
 
   // Show loading if role is not determined yet
   if (!userRole) {
@@ -188,9 +198,9 @@ const Sidebar = ({ onMenuClick }) => {
           </div>
 
           {/* User Info */}
-          <div className="text-sm font-semibold text-gray-800 mb-1">
+          {/* <div className="text-sm font-semibold text-gray-800 mb-1">
             {user?.nim || user?.id || "1302213109"}
-          </div>
+          </div> */}
           <div className="text-sm font-medium text-gray-700 uppercase tracking-wide">
             {user?.name || user?.email?.split("@")[0] || "MUHAMMAD BURHAN"}
           </div>
@@ -380,6 +390,37 @@ const Sidebar = ({ onMenuClick }) => {
                       }`}
                     >
                       AskedUs
+                    </span>
+                  </div>
+                </button>
+
+                {/* Email Management Menu - ADMIN ONLY */}
+                <button
+                  onClick={() => handleMenuClick("emails")}
+                  className={`w-full flex items-center p-4 rounded-lg transition-colors ${
+                    activeMenuItem === "emails"
+                      ? "bg-red-100 text-red-800 border-l-4 border-red-600"
+                      : "bg-white border border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={
+                        activeMenuItem === "emails"
+                          ? "text-red-600"
+                          : "text-gray-600"
+                      }
+                    >
+                      <EmailIcon />
+                    </div>
+                    <span
+                      className={`text-base font-medium ${
+                        activeMenuItem === "emails"
+                          ? "text-red-800"
+                          : "text-gray-800"
+                      }`}
+                    >
+                      Email Management
                     </span>
                   </div>
                 </button>

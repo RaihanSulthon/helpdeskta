@@ -13,6 +13,7 @@ import Form from "./components/student/Form";
 import DetailTicket from "./pages/student/TicketDetail";
 import TicketFeedback from "./pages/student/TicketFeedback";
 import { SPLManager } from "./config/splConfig";
+import AdminEmailManagement from "./pages/admin/AdminEmailManagement";
 import "./index.css";
 
 // Import AskedUs components
@@ -139,6 +140,17 @@ createRoot(document.getElementById("root")).render(
               </Layout>
             }
           />
+
+          {/* Admin email management */}
+          <Route
+            path="/admin/emails"
+            element={
+              <Layout>
+                <AdminEmailManagement />
+              </Layout>
+            }
+          />
+
           {/* Admin ReachUs - untuk mengelola kontak */}
           {/* <Route
             path="/admin/reachus"
