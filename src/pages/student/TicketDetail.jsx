@@ -283,9 +283,9 @@ const DetailTicket = () => {
   }
 
   return (
-    <div className="h-full bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       {/* Fixed Header */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4">
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between max-w-6xl mx-auto">
           <div className="flex items-center space-x-4">
             {/* Back Button */}
