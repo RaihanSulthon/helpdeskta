@@ -182,7 +182,7 @@ const Sidebar = ({ onMenuClick }) => {
                 e.target.nextSibling.style.display = "flex";
               }}
             />
-            <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white font-semibold text-lg hidden">
+            <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white font-semibold text-lg">
               {user?.name?.charAt(0) || user?.email?.charAt(0) || "U"}
             </div>
           </div>

@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { getTicketsAPI } from "../../services/api";
+import { getTicketsAPI, deleteTicketAPI, deleteMultipleTicketsAPI } from "../../services/api";
+import Modal from "../../components/Modal";
+import { ToastContainer } from "../../components/Toast";
 
 const StudentDashboard = () => {
   const { user } = useAuth();
@@ -14,6 +16,9 @@ const StudentDashboard = () => {
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [ticketsPerPage] = useState(10);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [toasts, setToasts] = useState([]);
 
   // Load tickets on component mount and when filter changes
   useEffect(() => {
@@ -108,6 +113,16 @@ const StudentDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const addToast = (message, type = 'info', duration = 3000) => {
+    const id = Date.now() + Math.random();
+    const newToast = { id, message, type, duration };
+    setToasts(prev => [...prev, newToast]);
+  };
+  
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
   // Helper function to format date
@@ -262,10 +277,58 @@ const StudentDashboard = () => {
     setSelectedTickets([]);
   };
 
-  const handleDeleteTickets = async () => {
-    // Implement delete functionality
-    console.log("Delete tickets:", selectedTickets);
-    setSelectedTickets([]);
+  const handleDeleteTickets = () => {
+    if (selectedTickets.length === 0) {
+      addToast("Pilih tiket yang ingin dihapus", "warning");
+      return;
+    }
+    setShowDeleteModal(true);
+  };
+  
+  const confirmDeleteTickets = async () => {
+    try {
+      setDeleteLoading(true);
+      
+      const ticketCount = selectedTickets.length;
+      console.log(`Deleting ${ticketCount} tickets:`, selectedTickets);
+  
+      if (ticketCount === 1) {
+        // Single ticket delete
+        await deleteTicketAPI(selectedTickets[0]);
+        addToast("Tiket berhasil dihapus", "success");
+      } else {
+        // Multiple tickets delete
+        const result = await deleteMultipleTicketsAPI(selectedTickets);
+        
+        if (result.success) {
+          addToast(`${result.deletedCount} tiket berhasil dihapus`, "success");
+        } else {
+          addToast(
+            `${result.deletedCount} tiket berhasil dihapus, ${result.errorCount} gagal`, 
+            "warning"
+          );
+        }
+      }
+  
+      // Refresh tickets data
+      await loadTickets();
+      
+      // Clear selection
+      setSelectedTickets([]);
+      
+    } catch (error) {
+      console.error("Error deleting tickets:", error);
+      addToast("Gagal menghapus tiket: " + error.message, "error");
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+    }
+  };
+  
+  const handleCloseDeleteModal = () => {
+    if (!deleteLoading) {
+      setShowDeleteModal(false);
+    }
   };
 
   const FilterButton = ({ label, count, active, onClick, badgeColor }) => (
@@ -828,6 +891,37 @@ const StudentDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={handleCloseDeleteModal}
+        onConfirm={confirmDeleteTickets}
+        title="Hapus Tiket"
+        type="danger"
+        confirmText="Ya, Hapus"
+        cancelText="Batal"
+        loading={deleteLoading}
+      >
+        <div className="mt-2">
+          <p className="text-sm text-gray-500">
+            Apakah Anda yakin ingin menghapus{" "}
+            <span className="font-semibold text-gray-900">
+              {selectedTickets.length}
+            </span>{" "}
+            tiket yang dipilih?
+          </p>
+          <div className="mt-3 p-3 bg-yellow-50 rounded-md border border-yellow-200">
+            <p className="text-xs text-yellow-800">
+              <strong>Catatan:</strong> Tiket akan dihapus secara permanen dari dashboard Anda, 
+              tetapi data akan tetap tersimpan untuk keperluan administrasi.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

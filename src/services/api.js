@@ -1075,3 +1075,83 @@ export const sendChatMessageAPI = async (ticketId, message, file = null) => {
     throw new Error(error.message || "Gagal mengirim pesan");
   }
 };
+
+// Delete Ticket API - Soft delete for students
+export const deleteTicketAPI = async (ticketId) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    if (!ticketId) {
+      throw new Error("ID tiket tidak valid");
+    }
+
+    console.log("Deleting ticket:", ticketId);
+
+    const options = {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    };
+
+    const response = await retryFetch(`${BASE_URL}/tickets/${ticketId}`, options);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Delete ticket response:", result);
+
+    return {
+      success: true,
+      message: result.message || "Tiket berhasil dihapus",
+      data: result.data || result,
+    };
+  } catch (error) {
+    console.error("Delete Ticket API Error:", error);
+    throw new Error(error.message || "Gagal menghapus tiket");
+  }
+};
+
+// Delete Multiple Tickets API
+export const deleteMultipleTicketsAPI = async (ticketIds) => {
+  try {
+    const results = [];
+    const errors = [];
+
+    for (const ticketId of ticketIds) {
+      try {
+        const result = await deleteTicketAPI(ticketId);
+        results.push({ ticketId, success: true, ...result });
+      } catch (error) {
+        errors.push({ ticketId, error: error.message });
+      }
+    }
+
+    return {
+      success: errors.length === 0,
+      results,
+      errors,
+      deletedCount: results.length,
+      errorCount: errors.length,
+    };
+  } catch (error) {
+    console.error("Delete Multiple Tickets API Error:", error);
+    throw new Error(error.message || "Gagal menghapus tiket");
+  }
+};
