@@ -68,9 +68,9 @@ const Layout = ({ children, requiredRole }) => {
         </div>
 
         {/* Main Content with left margin for fixed sidebar */}
-        <div className="flex-1 flex flex-col overflow-hidden ml-80">
+        <div className="flex-1 flex flex-col ml-80 h-full">
           {/* Header */}
-          <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+          <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
@@ -106,11 +106,11 @@ const Layout = ({ children, requiredRole }) => {
 
           {/* Page Content - Background FORCE untuk semua halaman */}
           <main
-            className="flex-1 overflow-y-auto min-h-screen"
+            className="flex-1 overflow-y-auto bg-slate-200"
             style={{ backgroundColor: "#f1f5f9" }}
           >
             <div
-              className="w-full min-h-full"
+              className="w-full h-full bg-slate-200 p-0"
               style={{ backgroundColor: "#f1f5f9" }}
             >
               {children}

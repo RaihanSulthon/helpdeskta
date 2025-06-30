@@ -85,9 +85,9 @@ const TicketFeedback = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="h-full bg-white flex flex-col">
       {/* Fixed Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-12 py-4">
+      <div className="flex-shrink-0 bg-white border-b border-gray-200 px-12 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Back Button */}
@@ -168,7 +168,7 @@ const TicketFeedback = () => {
       </div>
 
       {/* Content */}
-      <div className="px-12 py-6">
+      <div className="flex-1 overflow-y-auto px-12 py-6">
         {/* Orange left border */}
         <div className="border-l-4 border-orange-400 pl-6">
           {/* Title */}
