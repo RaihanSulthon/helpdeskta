@@ -200,11 +200,16 @@ const StudentDashboard = () => {
       ? tickets
       : tickets.filter((ticket) => ticket.category === statusFilter);
 
-  const handleSelectAll = (e) => {
-    setSelectedTickets(
-      e.target.checked ? filteredTickets.map((t) => t.id) : []
-    );
-  };
+      const handleSelectAll = (e) => {
+        e.stopPropagation();
+        
+        if (e.target.checked) {
+          const currentTicketIds = currentTickets.map((t) => t.id);
+          setSelectedTickets(currentTicketIds);
+        } else {
+          setSelectedTickets([]);
+        }
+      };
 
   // Handler untuk pagination
   const handlePageChange = (page) => {
@@ -239,8 +244,7 @@ const StudentDashboard = () => {
     setSelectedTickets([]);
   }, [currentPage]);
 
-  const handleSelectTicket = (ticketId, e) => {
-    e.stopPropagation();
+  const handleSelectTicket = (ticketId) => {
     setSelectedTickets((prev) =>
       prev.includes(ticketId)
         ? prev.filter((id) => id !== ticketId)
@@ -510,11 +514,14 @@ const StudentDashboard = () => {
           <div className="flex items-center">
             <input
               type="checkbox"
-              checked={
-                selectedTickets.length === currentTickets.length &&
-                currentTickets.length > 0
-              }
+              checked={selectedTickets.length === currentTickets.length && currentTickets.length > 0}
+              ref={(el) => {
+                if (el) {
+                  el.indeterminate = selectedTickets.length > 0 && selectedTickets.length < currentTickets.length;
+                }
+              }}
               onChange={handleSelectAll}
+              onClick={(e) => e.stopPropagation()}
               className="w-4 h-4 mr-4"
             />
             <span className="text-sm font-medium text-gray-700">
@@ -548,19 +555,28 @@ const StudentDashboard = () => {
         {currentTickets.map((ticket, index) => (
           <div
             key={`${ticket.id}-${index}`}
-            className={`flex items-start gap-4 px-4 py-4 border-b hover:bg-gray-50 cursor-pointer transition-colors ${
+            className={`flex items-start gap-4 px-4 py-4 border-b hover:bg-gray-50 transition-colors ${
               !ticket.isRead ? "bg-blue-50" : ""
             } ${selectedTickets.includes(ticket.id) ? "bg-blue-100" : ""}`}
-            onClick={() => handleTicketClick(ticket.id)}
           >
+            {/* Checkbox - Simplified handling */}
             <input
               type="checkbox"
               checked={selectedTickets.includes(ticket.id)}
-              onChange={(e) => handleSelectTicket(ticket.id, e)}
-              className="mt-1 w-4 h-4"
+              onChange={(e) => {
+                e.stopPropagation();
+                handleSelectTicket(ticket.id);
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              className="w-4 h-4 cursor-pointer mt-1"
             />
 
-            <div className="flex-1">
+            <div 
+              className="flex-1 cursor-pointer"
+              onClick={() => handleTicketClick(ticket.id)}
+            >
               {/* Ticket Header */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-3">
