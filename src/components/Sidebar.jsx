@@ -22,12 +22,12 @@ const Sidebar = ({ onMenuClick }) => {
     const currentRole =
       roleFromAuth || roleFromLocalStorage || roleFromUser || "student";
 
-    console.log("🔍 Role Detection:", {
-      roleFromAuth,
-      roleFromLocalStorage,
-      roleFromUser,
-      finalRole: currentRole,
-    });
+    // console.log("🔍 Role Detection:", {
+    //   roleFromAuth,
+    //   roleFromLocalStorage,
+    //   roleFromUser,
+    //   finalRole: currentRole,
+    // });
 
     setUserRole(currentRole);
   }, [user]);
@@ -369,15 +369,15 @@ const Sidebar = ({ onMenuClick }) => {
       {process.env.NODE_ENV === "development" && (
         <div className="p-4 text-xs text-gray-500 border-t">
           <div>
-            <strong>Debug Info:</strong>
+            <strong>Session Info:</strong>
           </div>
           <div>
             User Role:{" "}
             <span className="font-bold text-blue-600">{userRole}</span>
           </div>
-          <div>Auth User: {JSON.stringify(user?.role || "none")}</div>
+          {/* <div>Auth User: {JSON.stringify(user?.role || "none")}</div>
           <div>LocalStorage: {localStorage.getItem("userRole") || "none"}</div>
-          <div>Current Route: {location.pathname}</div>
+          <div>Current Route: {location.pathname}</div> */}
           <div>Active Menu: {activeMenuItem}</div>
         </div>
       )}

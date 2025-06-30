@@ -930,3 +930,117 @@ export const getCategoriesAPI = async () => {
     );
   }
 };
+
+export const getChatMessagesAPI = async (ticketId) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    if (!ticketId) {
+      throw new Error("ID tiket tidak valid");
+    }
+
+    console.log("Fetching chat messages for ticket:", ticketId);
+
+    const response = await retryFetch(`${BASE_URL}/tickets/${ticketId}/chat`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Get Chat Messages API response:", result);
+
+    // Extract messages from response
+    let messages = [];
+    if (result?.data && Array.isArray(result.data)) {
+      messages = result.data;
+    } else if (Array.isArray(result)) {
+      messages = result;
+    }
+
+    return messages;
+  } catch (error) {
+    console.error("Get Chat Messages API Error:", error);
+    throw new Error(error.message || "Gagal memuat pesan chat");
+  }
+};
+
+
+// Send Chat Message API
+export const sendChatMessageAPI = async (ticketId, message) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    if (!ticketId) {
+      throw new Error("ID tiket tidak valid");
+    }
+
+    if (!message || message.trim() === "") {
+      throw new Error("Pesan tidak boleh kosong");
+    }
+
+    const requestBody = {
+      message: message.trim(),
+      is_system_message: false,
+    };
+
+    console.log("Sending chat message:", { ticketId, requestBody });
+
+    const response = await retryFetch(`${BASE_URL}/tickets/${ticketId}/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Send Chat Message API response:", result);
+
+    return {
+      success: true,
+      message: result.message || "Pesan berhasil dikirim",
+      data: result.data || result,
+    };
+  } catch (error) {
+    console.error("Send Chat Message API Error:", error);
+    throw new Error(error.message || "Gagal mengirim pesan");
+  }
+};

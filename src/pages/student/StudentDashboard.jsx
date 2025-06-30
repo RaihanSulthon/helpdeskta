@@ -41,9 +41,9 @@ const StudentDashboard = () => {
         }
       }
 
-      console.log("Loading tickets with filters:", filters);
+      // console.log("Loading tickets with filters:", filters);
       const response = await getTicketsAPI(filters);
-      console.log("API Response:", response);
+      // console.log("API Response:", response);
 
       // Handle API response structure
       let ticketsData = [];
@@ -57,11 +57,11 @@ const StudentDashboard = () => {
           : response.data.tickets || [];
       }
 
-      console.log("Extracted tickets data:", ticketsData);
+      // console.log("Extracted tickets data:", ticketsData);
 
       // Transform API data to match component expectations
       const transformedTickets = ticketsData.map((ticket) => {
-        console.log("Processing ticket:", ticket);
+        // console.log("Processing ticket:", ticket);
 
         return {
           id: ticket.id,
@@ -97,7 +97,7 @@ const StudentDashboard = () => {
         };
       });
 
-      console.log("Transformed tickets:", transformedTickets);
+      // console.log("Transformed tickets:", transformedTickets);
       setTickets(transformedTickets);
     } catch (error) {
       console.error("Error loading tickets:", error);
