@@ -1,5 +1,5 @@
 // pages/Layout.jsx - Updated with clean menu navigation
-import React from "react";
+import React, {useState} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
@@ -9,6 +9,7 @@ const Layout = ({ children, requiredRole }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
 
   // Handle menu clicks from sidebar - BERSIHKAN INI!
   const handleMenuClick = (menuId) => {
@@ -58,64 +59,27 @@ const Layout = ({ children, requiredRole }) => {
     <div className="flex flex-col min-h-screen">
       {/* Fixed Navbar */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <Navbar />
+        <Navbar 
+          onMenuToggle={() => setSidebarExpanded(!sidebarExpanded)}
+          sidebarExpanded={sidebarExpanded}
+          user={user}
+        />
       </div>
-
+  
       {/* Main content with top padding for fixed navbar */}
       <div className="flex h-screen bg-slate-200 pt-16">
-        {/* Fixed Sidebar */}
-        <div className="fixed left-0 top-16 bottom-0 z-40">
-          <Sidebar onMenuClick={handleMenuClick} />
+        {/* Sidebar - tidak fixed, mengikuti flow layout */}
+        <div className="transition-all duration-300 z-40">
+          <Sidebar 
+            onMenuClick={handleMenuClick} 
+            forceExpanded={sidebarExpanded}
+          />
         </div>
-
-        {/* Main Content with left margin for fixed sidebar */}
-        <div className="flex-1 flex flex-col ml-80 h-full">
-          {/* Header */}
-          <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {getPageTitle()}
-                </h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  Welcome back, {user?.name || user?.email}
-                </p>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                {/* User Role Badge */}
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    user?.role === "admin"
-                      ? "bg-red-100 text-red-800"
-                      : "bg-green-100 text-green-800"
-                  }`}
-                >
-                  {user?.role?.toUpperCase()}
-                </span>
-
-                {/* Logout Button */}
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
-          </header>
-
-          {/* Page Content - Background FORCE untuk semua halaman */}
-          <main
-            className="flex-1 overflow-y-auto bg-slate-200"
-            style={{ backgroundColor: "#f1f5f9" }}
-          >
-            <div
-              className="w-full h-full bg-slate-200 p-0"
-              style={{ backgroundColor: "#f1f5f9" }}
-            >
-              {children}
-            </div>
+  
+        {/* Main Content - otomatis menyesuaikan */}
+        <div className="flex-1 flex flex-col transition-all duration-300 h-full">
+          <main className="flex-1 p-6 overflow-auto">
+            {children}
           </main>
         </div>
       </div>

@@ -1,4 +1,3 @@
-// src/components/user-specific/ticket-management/TicketColumn.jsx
 import React, { useState } from "react";
 import TicketCard from "./TiketCard";
 
