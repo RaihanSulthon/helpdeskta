@@ -71,7 +71,7 @@ const Navbar = ({ onMenuToggle, sidebarExpanded }) => {
             <img 
               src={appLogo} 
               alt="App Logo" 
-              className="h-8 w-auto"
+              className="h-8 w-auto ml-4"
             />
           </div>
         </div>

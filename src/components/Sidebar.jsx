@@ -174,7 +174,7 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
               <div className="text-gray-800 font-bold text-sm mb-1">
                 {user?.name || user?.displayName || user?.email?.split('@')[0] || "User"}
               </div>
-              <div className="text-xs text-gray-600 mb-2 bg-red-100 px-2 py-1 rounded">
+              <div className="text-xs text-red-800 font-bold mb-2 bg-red-100 px-2 py-1 rounded">
                 {userRole?.toUpperCase()}
               </div>
             </div>
