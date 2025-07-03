@@ -14,6 +14,7 @@ import DetailTicket from "./pages/student/TicketDetail";
 import TicketFeedback from "./pages/student/TicketFeedback";
 import { SPLManager } from "./config/splConfig";
 import AdminEmailManagement from "./pages/admin/AdminEmailManagement";
+import AdminTicketStatistics from "./pages/admin/AdminTicketStatistics";
 import "./index.css";
 
 // Import AskedUs components
@@ -119,6 +120,15 @@ createRoot(document.getElementById("root")).render(
             element={
               <Layout>
                 <AdminDashboard />
+              </Layout>
+            }
+          />
+          {/* Admin Ticket Statistics */}
+          <Route
+            path="/admin/statistics"
+            element={
+              <Layout>
+                <AdminTicketStatistics />
               </Layout>
             }
           />

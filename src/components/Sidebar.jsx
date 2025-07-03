@@ -43,6 +43,10 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
       setActiveMenuItem("users");
     } else if (path.includes("/emails")) {
       setActiveMenuItem("emails");
+    } else if (path.includes("/statistics")) {
+      setActiveMenuItem("statistics");
+    } else if (path.includes("/reachus")) {
+      setActiveMenuItem("reachus");
     }
   }, [location.pathname]);
 
@@ -76,7 +80,13 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
     setActiveMenuItem(menuId);
 
     if (menuId === "tickets") {
-      navigate(`/${userRole}/tickets`);
+      if (userRole === "admin") {
+        navigate("/admin/tickets"); // AdminDashboard
+      } else {
+        navigate("/student/tickets"); // StudentDashboard
+      }
+    } else if (menuId === "statistics" && userRole === "admin") {
+      navigate("/admin/statistics"); // AdminTicketStatistics - admin only
     } else if (menuId === "askedus") {
       navigate(`/${userRole}/askedus`);
     } else if (menuId === "users" && userRole === "admin") {
@@ -86,7 +96,7 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
     } else if (menuId === "sampaikan" && userRole === "student") {
       navigate("/student/sampaikan"); // Sampaikan - student only
     }
-  
+
     if (onMenuClick) {
       onMenuClick(menuId);
     }
@@ -139,6 +149,24 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
     </svg>
   );
 
+  const StatisticsIcon = () => (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+      <path
+        d="M3 3v18h18M7 14l4-4 4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        stroke="currentColor"
+        strokeWidth="1"
+        fill="none"
+      />
+    </svg>
+  );
   // Show loading if role is not determined yet
   if (!userRole) {
     return (
@@ -270,6 +298,36 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
             {/* ADMIN ONLY MENUS */}
             {userRole === "admin" && (
               <>
+                {/* Statistics Menu - ADMIN ONLY */}
+                <button
+                  onClick={() => handleMenuClick("statistics")}
+                  className={`w-full flex items-center p-4 rounded-lg transition-colors ${
+                    activeMenuItem === "statistics"
+                      ? "bg-red-100 text-red-800 border-l-4 border-red-600"
+                      : "bg-white border border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={
+                        activeMenuItem === "statistics"
+                          ? "text-red-600"
+                          : "text-gray-600"
+                      }
+                    >
+                      <StatisticsIcon />
+                    </div>
+                    <span
+                      className={`text-base font-medium ${
+                        activeMenuItem === "statistics"
+                          ? "text-red-800"
+                          : "text-gray-800"
+                      }`}
+                    >
+                      Statistics
+                    </span>
+                  </div>
+                </button>
                 {/* Users Menu - ADMIN ONLY */}
                 <button
                   onClick={() => handleMenuClick("users")}

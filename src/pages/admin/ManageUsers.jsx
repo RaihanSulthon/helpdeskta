@@ -1,36 +1,118 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const ManageUsers = () => {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      username: "Muhammad Burhan",
-      email: "muhammadburhan@student.telkomuniversity.ac.id",
-      role: "Student",
-      registered: "19 Mei 2025",
-      avatar: "/api/placeholder/40/40",
-      isChecked: false,
-    },
-    {
-      id: 2,
-      username: "Admin LAAK FIF",
-      email: "Lorem ipsum dolor amet consectetur@admin.telkom...",
-      role: "Admin",
-      registered: "19 Mei 2025",
-      avatar: "/api/placeholder/40/40",
-      isChecked: false,
-    },
-  ]);
-
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState("Semua Status");
+  const [roleFilter, setRoleFilter] = useState("Semua Role");
   const [selectAll, setSelectAll] = useState(false);
+  const [statistics, setStatistics] = useState({
+    total_users: 0,
+    admin_users: 0,
+    student_users: 0,
+    disposisi_users: 0,
+  });
 
-  // Summary data
-  const summaryData = {
-    totalUsers: 30,
-    admins: 3,
-    students: 25,
+  // API base URL
+  const BASE_URL = "https://apibackendtio.mynextskill.com/api";
+
+  // Helper function for API calls
+  const makeAPICall = async (endpoint, options = {}) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+      ...options,
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
   };
+
+  // Fetch statistics
+  const fetchStatistics = async () => {
+    try {
+      const result = await makeAPICall("/users/statistics");
+      if (result.status === "success") {
+        setStatistics(result.data);
+      }
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+    }
+  };
+
+  // Fetch users
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result = await makeAPICall("/users");
+
+      if (result.status === "success") {
+        const usersWithCheckbox = result.data.map((user) => ({
+          ...user,
+          isChecked: false,
+          // Format created_at for display
+          registered: new Date(user.created_at).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }),
+          // Create avatar URL or placeholder
+          avatar: `/api/placeholder/40/40`,
+        }));
+
+        setUsers(usersWithCheckbox);
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchStatistics();
+    fetchUsers();
+  }, []);
+
+  // Filter users based on status and role
+  const filteredUsers = users.filter((user) => {
+    const statusMatch =
+      statusFilter === "Semua Status" ||
+      (statusFilter === "Active" && user.email_verified_at) ||
+      (statusFilter === "Inactive" && !user.email_verified_at);
+
+    const roleMatch =
+      roleFilter === "Semua Role" ||
+      user.role.toLowerCase() === roleFilter.toLowerCase();
+
+    return statusMatch && roleMatch;
+  });
 
   // Handle individual checkbox
   const handleCheckboxChange = (id) => {
@@ -59,19 +141,104 @@ const ManageUsers = () => {
   // Handle reset filter
   const handleResetFilter = () => {
     setStatusFilter("Semua Status");
+    setRoleFilter("Semua Role");
     setSelectAll(false);
     setUsers((prev) => prev.map((user) => ({ ...user, isChecked: false })));
   };
+
+  // Handle delete selected users
+  const handleDeleteSelected = () => {
+    const selectedUsers = users.filter((user) => user.isChecked);
+    if (selectedUsers.length === 0) return;
+
+    if (
+      confirm(
+        `Apakah Anda yakin ingin menghapus ${selectedUsers.length} user yang dipilih?`
+      )
+    ) {
+      // TODO: Implement delete API call
+      console.log(
+        "Delete users:",
+        selectedUsers.map((u) => u.id)
+      );
+    }
+  };
+
+  // Handle export data
+  const handleExportData = () => {
+    const selectedUsers = users.filter((user) => user.isChecked);
+    const dataToExport = selectedUsers.length > 0 ? selectedUsers : users;
+
+    // Simple CSV export
+    const csvContent = [
+      [
+        "Name",
+        "Email",
+        "Role",
+        "Registered",
+        "Total Tickets",
+        "Open Tickets",
+        "Closed Tickets",
+      ],
+      ...dataToExport.map((user) => [
+        user.name,
+        user.email,
+        user.role,
+        user.registered,
+        user.tickets_statistics?.total || 0,
+        user.tickets_statistics?.open || 0,
+        user.tickets_statistics?.closed || 0,
+      ]),
+    ]
+      .map((row) => row.join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "users_data.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-gray-600">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error}</span>
+          <button
+            onClick={() => fetchUsers()}
+            className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Manage Users</h1>
+        <p className="text-sm text-gray-600 mt-1">Kelola pengguna sistem</p>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         {/* Total Users Card */}
         <div className="bg-white rounded-lg p-6 shadow-sm border-l-4 border-red-500">
           <div className="flex items-center">
@@ -94,10 +261,10 @@ const ManageUsers = () => {
             </div>
             <div className="ml-4">
               <div className="text-sm font-medium text-gray-500">
-                Semua User
+                Total Users
               </div>
               <div className="text-2xl font-bold text-gray-900">
-                {summaryData.totalUsers}
+                {statistics.total_users}
               </div>
             </div>
           </div>
@@ -126,7 +293,7 @@ const ManageUsers = () => {
             <div className="ml-4">
               <div className="text-sm font-medium text-gray-500">Admin</div>
               <div className="text-2xl font-bold text-gray-900">
-                {summaryData.admins}
+                {statistics.admin_users}
               </div>
             </div>
           </div>
@@ -155,7 +322,36 @@ const ManageUsers = () => {
             <div className="ml-4">
               <div className="text-sm font-medium text-gray-500">Student</div>
               <div className="text-2xl font-bold text-gray-900">
-                {summaryData.students}
+                {statistics.student_users}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Disposisi Card */}
+        <div className="bg-white rounded-lg p-6 shadow-sm border-l-4 border-purple-500">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-purple-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="ml-4">
+              <div className="text-sm font-medium text-gray-500">Disposisi</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {statistics.disposisi_users}
               </div>
             </div>
           </div>
@@ -180,6 +376,35 @@ const ManageUsers = () => {
 
           {/* Right side - Filters */}
           <div className="flex items-center space-x-4">
+            {/* Role Filter Dropdown */}
+            <div className="relative">
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                <option>Semua Role</option>
+                <option>admin</option>
+                <option>student</option>
+                <option>disposisi</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                <svg
+                  className="w-4 h-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+            </div>
+
             {/* Status Filter Dropdown */}
             <div className="relative">
               <select
@@ -190,7 +415,6 @@ const ManageUsers = () => {
                 <option>Semua Status</option>
                 <option>Active</option>
                 <option>Inactive</option>
-                <option>Pending</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                 <svg
@@ -216,6 +440,14 @@ const ManageUsers = () => {
             >
               Reset Filter
             </button>
+
+            {/* Refresh Button */}
+            <button
+              onClick={fetchUsers}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium"
+            >
+              Refresh
+            </button>
           </div>
         </div>
       </div>
@@ -233,94 +465,110 @@ const ManageUsers = () => {
                 className="form-checkbox h-4 w-4 text-red-600 rounded border-gray-300"
               />
             </div>
-            <div className="col-span-3">Username</div>
-            <div className="col-span-4">Email Address</div>
+            <div className="col-span-3">Name</div>
+            <div className="col-span-3">Email Address</div>
             <div className="col-span-1">Role</div>
             <div className="col-span-2">Registered</div>
-            <div className="col-span-1">History</div>
+            <div className="col-span-1">Tickets</div>
+            <div className="col-span-1">Actions</div>
           </div>
         </div>
 
         {/* Table Body */}
         <div className="divide-y divide-gray-200">
-          {users.map((user) => (
-            <div
-              key={user.id}
-              className="px-6 py-4 hover:bg-gray-50 transition-colors"
-            >
-              <div className="grid grid-cols-12 gap-4 items-center">
-                {/* Checkbox */}
-                <div className="col-span-1">
-                  <input
-                    type="checkbox"
-                    checked={user.isChecked}
-                    onChange={() => handleCheckboxChange(user.id)}
-                    className="form-checkbox h-4 w-4 text-red-600 rounded border-gray-300"
-                  />
-                </div>
+          {filteredUsers.length === 0 ? (
+            <div className="px-6 py-8 text-center text-gray-500">
+              Tidak ada data user yang ditemukan
+            </div>
+          ) : (
+            filteredUsers.map((user) => (
+              <div
+                key={user.id}
+                className="px-6 py-4 hover:bg-gray-50 transition-colors"
+              >
+                <div className="grid grid-cols-12 gap-4 items-center">
+                  {/* Checkbox */}
+                  <div className="col-span-1">
+                    <input
+                      type="checkbox"
+                      checked={user.isChecked}
+                      onChange={() => handleCheckboxChange(user.id)}
+                      className="form-checkbox h-4 w-4 text-red-600 rounded border-gray-300"
+                    />
+                  </div>
 
-                {/* Username with Avatar */}
-                <div className="col-span-3">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-gray-300 rounded-full flex-shrink-0 mr-3">
-                      <img
-                        src={user.avatar}
-                        alt={user.username}
-                        className="w-10 h-10 rounded-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                          e.target.nextSibling.style.display = "flex";
-                        }}
-                      />
-                      <div className="w-10 h-10 bg-gray-300 rounded-full hidden items-center justify-center">
+                  {/* Name with Avatar */}
+                  <div className="col-span-3">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-gray-300 rounded-full flex-shrink-0 mr-3 flex items-center justify-center">
                         <span className="text-gray-600 text-sm font-medium">
-                          {user.username.charAt(0)}
+                          {user.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
+                      <span className="text-sm font-medium text-gray-900">
+                        {user.name}
+                      </span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">
-                      {user.username}
+                  </div>
+
+                  {/* Email */}
+                  <div className="col-span-3">
+                    <span className="text-sm text-gray-600">{user.email}</span>
+                    {user.email_verified_at && (
+                      <span className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        Verified
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Role */}
+                  <div className="col-span-1">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        user.role === "admin"
+                          ? "bg-red-100 text-red-800"
+                          : user.role === "student"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-purple-100 text-purple-800"
+                      }`}
+                    >
+                      {user.role}
                     </span>
                   </div>
-                </div>
 
-                {/* Email */}
-                <div className="col-span-4">
-                  <span className="text-sm text-gray-600">{user.email}</span>
-                </div>
+                  {/* Registered */}
+                  <div className="col-span-2">
+                    <span className="text-sm text-gray-600">
+                      {user.registered}
+                    </span>
+                  </div>
 
-                {/* Role */}
-                <div className="col-span-1">
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.role === "Admin"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-blue-100 text-blue-800"
-                    }`}
-                  >
-                    {user.role}
-                  </span>
-                </div>
+                  {/* Tickets Statistics */}
+                  <div className="col-span-1">
+                    <div className="text-xs text-gray-600">
+                      <div>Total: {user.tickets_statistics?.total || 0}</div>
+                      <div className="text-green-600">
+                        Closed: {user.tickets_statistics?.closed || 0}
+                      </div>
+                      <div className="text-yellow-600">
+                        Open: {user.tickets_statistics?.open || 0}
+                      </div>
+                    </div>
+                  </div>
 
-                {/* Registered */}
-                <div className="col-span-2">
-                  <span className="text-sm text-gray-600">
-                    {user.registered}
-                  </span>
-                </div>
-
-                {/* Actions */}
-                <div className="col-span-1">
-                  <button
-                    onClick={() => handleView(user.id)}
-                    className="bg-green-100 text-green-800 px-3 py-1 text-xs font-medium rounded-full hover:bg-green-200 transition-colors"
-                  >
-                    View
-                  </button>
+                  {/* Actions */}
+                  <div className="col-span-1">
+                    <button
+                      onClick={() => handleView(user.id)}
+                      className="bg-green-100 text-green-800 px-3 py-1 text-xs font-medium rounded-full hover:bg-green-200 transition-colors"
+                    >
+                      View
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -333,15 +581,28 @@ const ManageUsers = () => {
           </div>
 
           <div className="flex space-x-2">
-            <button className="px-4 py-2 text-sm text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors">
+            <button
+              onClick={handleDeleteSelected}
+              className="px-4 py-2 text-sm text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors"
+            >
               Hapus Terpilih
             </button>
-            <button className="px-4 py-2 text-sm text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
+            <button
+              onClick={handleExportData}
+              className="px-4 py-2 text-sm text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+            >
               Export Data
             </button>
           </div>
         </div>
       )}
+
+      {/* Display filtered count */}
+      <div className="mt-4 text-sm text-gray-500 text-center">
+        Menampilkan {filteredUsers.length} dari {users.length} users
+        {(statusFilter !== "Semua Status" || roleFilter !== "Semua Role") &&
+          " (filtered)"}
+      </div>
     </div>
   );
 };
