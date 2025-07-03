@@ -15,6 +15,7 @@ import TicketFeedback from "./pages/student/TicketFeedback";
 import { SPLManager } from "./config/splConfig";
 import AdminEmailManagement from "./pages/admin/AdminEmailManagement";
 import AdminTicketStatistics from "./pages/admin/AdminTicketStatistics";
+import BaseLayout from "./components/BaseLayout";
 import "./index.css";
 
 // Import AskedUs components
@@ -60,53 +61,65 @@ createRoot(document.getElementById("root")).render(
           <Route
             path="/student/sampaikan"
             element={
-              <Layout>
-                <Form />
-              </Layout>
+              <BaseLayout>
+                <Layout>
+                  <Form />
+                </Layout>
+              </BaseLayout>
             }
           />
           {/* Student Tickets Dashboard */}
           <Route
             path="/student/tickets"
             element={
-              <Layout>
-                <StudentDashboard />
-              </Layout>
+              <BaseLayout>
+                <Layout>
+                  <StudentDashboard />
+                </Layout>
+              </BaseLayout>
             }
           />
           {/* Student AskedUs - bisa mengakses FAQ atau help */}
           <Route
             path="/student/askedus"
             element={
-              <Layout>
-                <StudentAskedUs />
-              </Layout>
+              <BaseLayout>
+                <Layout>
+                  <StudentAskedUs />
+                </Layout>
+              </BaseLayout>
             }
           />
           {/* Student Detail */}
           <Route
             path="/ticket/:ticketId"
             element={
-              <Layout>
-                <DetailTicket />
-              </Layout>
+              <BaseLayout>
+                <Layout>
+                  <DetailTicket />
+                </Layout>
+              </BaseLayout>
             }
           />
           <Route
             path="/ticket/:ticketId/feedback"
             element={
-              <Layout>
-                <TicketFeedback />
-              </Layout>
+              <BaseLayout>
+                <Layout>
+                  <TicketFeedback />
+                </Layout>
+              </BaseLayout>
             }
           />
           {/* Student ReachUs */}
           <Route
             path="/student/reachus"
             element={
-              <Layout>
-                <StudentAskedUs />
-              </Layout>
+              <BaseLayout>
+                <Layout>
+                  <StudentAskedUs />
+                </Layout>
+              </BaseLayout>
             }
           />
           {/* Admin routes dengan SPL validation */}
@@ -118,36 +131,44 @@ createRoot(document.getElementById("root")).render(
           <Route
             path="/admin/tickets"
             element={
-              <Layout>
-                <AdminDashboard />
-              </Layout>
+              <BaseLayout>
+                <Layout>
+                  <AdminDashboard />
+                </Layout>
+              </BaseLayout>
             }
           />
           {/* Admin Ticket Statistics */}
           <Route
             path="/admin/statistics"
             element={
-              <Layout>
-                <AdminTicketStatistics />
-              </Layout>
+              <BaseLayout>
+                <Layout>
+                  <AdminTicketStatistics />
+                </Layout>
+              </BaseLayout>
             }
           />
           {/* Admin AskedUs - untuk mengelola FAQ */}
           <Route
             path="/admin/askedus"
             element={
-              <Layout>
-                <AdminAskedUs />
-              </Layout>
+              <BaseLayout>
+                <Layout>
+                  <AdminAskedUs />
+                </Layout>
+              </BaseLayout>
             }
           />
           {/* Admin Users - untuk mengelola users */}
           <Route
             path="/admin/users"
             element={
-              <Layout>
-                <ManageUsers />
-              </Layout>
+              <BaseLayout>
+                <Layout>
+                  <ManageUsers />
+                </Layout>
+              </BaseLayout>
             }
           />
 
@@ -155,9 +176,11 @@ createRoot(document.getElementById("root")).render(
           <Route
             path="/admin/emails"
             element={
-              <Layout>
-                <AdminEmailManagement />
-              </Layout>
+              <BaseLayout>
+                <Layout>
+                  <AdminEmailManagement />
+                </Layout>
+              </BaseLayout>
             }
           />
 

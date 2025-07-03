@@ -67,7 +67,7 @@ const Layout = ({ children, requiredRole }) => {
       </div>
   
       {/* Main content with top padding for fixed navbar */}
-      <div className="flex h-screen bg-slate-200 pt-16">
+      <div className="flex h-screen pt-16">
         {/* Sidebar - tidak fixed, mengikuti flow layout */}
         <div className="transition-all duration-300 z-40">
           <Sidebar 

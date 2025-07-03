@@ -367,8 +367,8 @@ const StudentDashboard = () => {
       {/* Header dengan tombol submit */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard Tiket</h1>
-          <p className="text-gray-600 mt-1">Kelola semua tiket Anda di sini</p>
+          <h1 className="text-2xl font-bold text-white">Dashboard Tiket</h1>
+          <p className="text-white mt-1">Temukan tiket yang sudah kamu sampaikan</p>
         </div>
       </div>
 

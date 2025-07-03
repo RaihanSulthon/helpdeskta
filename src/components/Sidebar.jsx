@@ -33,10 +33,10 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
   // Set active menu based on current route
   useEffect(() => {
     const path = location.pathname;
-    if (path.includes("/tickets")) {
-      setActiveMenuItem("tickets");
-    } else if (path.includes("/sampaikan")) {
+    if (path.includes("/sampaikan")) {
       setActiveMenuItem("sampaikan");
+    } else if (path.includes("/tickets")) {
+      setActiveMenuItem("tickets");
     } else if (path.includes("/askedus")) {
       setActiveMenuItem("askedus");
     } else if (path.includes("/users")) {
@@ -92,9 +92,9 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
     } else if (menuId === "users" && userRole === "admin") {
       navigate("/admin/users");
     } else if (menuId === "emails" && userRole === "admin") {
-      navigate("/admin/emails"); // Email Management - admin only
+      navigate("/admin/emails");
     } else if (menuId === "sampaikan" && userRole === "student") {
-      navigate("/student/sampaikan"); // Sampaikan - student only
+      navigate("/student/sampaikan");
     }
 
     if (onMenuClick) {
@@ -178,18 +178,18 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
 
   return (
     <div 
-      className={`bg-white h-full shadow-lg flex flex-col transition-all duration-300 ease-in-out overflow-y-auto rounded-tr-3xl ${
+      className={`bg-white h-full shadow-lg flex flex-col transition-all duration-500 ease-in-out overflow-y-auto rounded-tr-3xl ${
         isExpanded ? 'w-80' : 'w-16'
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Profile Section - Paling Atas */}
-      <div className={`${isExpanded ? 'p-6' : 'p-2'} border-b border-gray-200 bg-gray-50 transition-all duration-300`}>
+      <div className={`${isExpanded ? 'p-6' : 'p-2'} border-b border-gray-200 bg-gray-50 transition-all duration-500`}>
         <div className="flex flex-col items-center text-center">
           {/* Profile Picture */}
-          <div className={`${isExpanded ? 'w-16 h-16' : 'w-10 h-10'} bg-gray-300 rounded-full ${isExpanded ? 'mb-3' : 'mb-1'} flex items-center justify-center transition-all duration-300`}>
-            <span className={`${isExpanded ? 'text-lg' : 'text-sm'} font-bold text-gray-600 transition-all duration-300`}>
+          <div className={`${isExpanded ? 'w-16 h-16' : 'w-10 h-10'} bg-gray-300 rounded-full ${isExpanded ? 'mb-3' : 'mb-1'} flex items-center justify-center transition-all duration-500`}>
+            <span className={`${isExpanded ? 'text-lg' : 'text-sm'} font-bold text-gray-600 transition-all duration-500`}>
               {user?.name ? user.name.charAt(0).toUpperCase() : 
               user?.displayName ? user.displayName.charAt(0).toUpperCase() : 
               user?.email ? user.email.charAt(0).toUpperCase() : "U"}
@@ -198,7 +198,7 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
 
           {/* User Info - Only show when expanded */}
           {isExpanded && (
-            <div className="transition-opacity duration-300">
+            <div className="transition-opacity duration-500">
               <div className="text-gray-800 font-bold text-sm mb-1">
                 {user?.name || user?.displayName || user?.email?.split('@')[0] || "User"}
               </div>
@@ -217,8 +217,8 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
             onClick={handleComposeClick}
             className={`w-full rounded-full ${isExpanded ? 'px-6 py-3' : 'p-3'} flex items-center ${isExpanded ? 'justify-center space-x-3' : 'justify-center'} transition-all duration-300 shadow-md text-base ${
               activeMenuItem === "sampaikan"
-                ? "bg-red-100 text-white"
-                : "bg-red-100 text-red-600 hover:bg-red-200"
+                ? "bg-red-600 text-white"
+                : "bg-red-600 text-white hover:bg-red-700"
             }`}
             title={!isExpanded ? "Sampaikan" : ""}
           >
@@ -301,32 +301,29 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                 {/* Statistics Menu - ADMIN ONLY */}
                 <button
                   onClick={() => handleMenuClick("statistics")}
-                  className={`w-full flex items-center p-4 rounded-lg transition-colors ${
+                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-full' : 'justify-center px-5 py-2 rounded-full'} transition-all duration-300 mt-4 ${
                     activeMenuItem === "statistics"
-                      ? "bg-red-100 text-red-800 border-l-4 border-red-600"
-                      : "bg-white border border-gray-200 hover:bg-gray-50"
+                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-lg" : "bg-red-100 text-gray-800"}`
+                      : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
                   }`}
+                  title={!isExpanded ? "Statistik Tiket" : ""}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className={
-                        activeMenuItem === "statistics"
-                          ? "text-red-600"
-                          : "text-gray-600"
-                      }
-                    >
+                  {isExpanded ? (
+                    <div className="flex items-center space-x-3">
+                      <div className={`${activeMenuItem === "statistics" ? "text-gray-800" : "text-gray-600"} flex-shrink-0`}>
+                        <StatisticsIcon />
+                      </div>
+                      <span className={`text-base font-medium ${
+                        activeMenuItem === "statistics" ? "text-gray-800" : "text-gray-800"
+                      }`}>
+                        Statistik Tiket
+                      </span>
+                    </div>
+                  ) : (
+                    <div className={`${activeMenuItem === "statistics" ? "text-gray-800" : "text-gray-600"}`}>
                       <StatisticsIcon />
                     </div>
-                    <span
-                      className={`text-base font-medium ${
-                        activeMenuItem === "statistics"
-                          ? "text-red-800"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      Statistics
-                    </span>
-                  </div>
+                  )}
                 </button>
                 {/* Users Menu - ADMIN ONLY */}
                 <button
