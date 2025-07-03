@@ -20,7 +20,72 @@ const retryFetch = async (url, options, maxRetries = 3) => {
 };
 
 // FAQ API Functions - NEW for AskedUs Management
+// Get Ticket Statistics API - ADMIN ONLY
+export const getTicketStatisticsAPI = async (filters = {}) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
 
+    const queryParams = new URLSearchParams();
+    if (filters.date_from) queryParams.append("date_from", filters.date_from);
+    if (filters.date_to) queryParams.append("date_to", filters.date_to);
+    if (filters.period) queryParams.append("period", filters.period);
+
+    const queryString = queryParams.toString();
+    const url = `${BASE_URL}/tickets/statistics${
+      queryString ? `?${queryString}` : ""
+    }`;
+
+    console.log("Fetching ticket statistics from:", url);
+
+    const response = await retryFetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Get Ticket Statistics API response:", result);
+
+    // Extract statistics from response
+    if (result.status === "success" && result.data) {
+      return result.data;
+    }
+
+    return {
+      total: 0,
+      new: 0,
+      in_progress: 0,
+      resolved: 0,
+      closed: 0,
+      unread: 0,
+      by_category: [],
+    };
+  } catch (error) {
+    console.error("Get Ticket Statistics API Error:", error);
+    throw new Error(
+      error.message || "Terjadi kesalahan saat mengambil statistik tiket"
+    );
+  }
+};
 // Get All FAQs API
 export const getFAQsAPI = async (filters = {}) => {
   try {
@@ -982,7 +1047,6 @@ export const getChatMessagesAPI = async (ticketId) => {
   }
 };
 
-
 // Send Chat Message API
 // Send Chat Message API - Updated untuk mendukung file upload
 export const sendChatMessageAPI = async (ticketId, message, file = null) => {
@@ -1002,11 +1066,18 @@ export const sendChatMessageAPI = async (ticketId, message, file = null) => {
 
     // Validasi file jika ada
     if (file) {
-      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+      const allowedTypes = [
+        "image/png",
+        "image/jpeg",
+        "image/jpg",
+        "application/pdf",
+      ];
       const maxSize = 10 * 1024 * 1024; // 10MB
 
       if (!allowedTypes.includes(file.type)) {
-        throw new Error("Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.");
+        throw new Error(
+          "Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF."
+        );
       }
 
       if (file.size > maxSize) {
@@ -1023,24 +1094,24 @@ export const sendChatMessageAPI = async (ticketId, message, file = null) => {
     if (file) {
       // Gunakan FormData untuk upload file
       requestBody = new FormData();
-      requestBody.append('message', message.trim());
-      requestBody.append('is_system_message', 'false');
-      requestBody.append('file', file);
+      requestBody.append("message", message.trim());
+      requestBody.append("is_system_message", "false");
+      requestBody.append("file", file);
       // Jangan set Content-Type untuk FormData, browser akan set otomatis
     } else {
       // Gunakan JSON untuk pesan biasa
-      headers['Content-Type'] = 'application/json';
+      headers["Content-Type"] = "application/json";
       requestBody = JSON.stringify({
         message: message.trim(),
         is_system_message: false,
       });
     }
 
-    console.log("Sending chat message:", { 
-      ticketId, 
-      message, 
+    console.log("Sending chat message:", {
+      ticketId,
+      message,
       hasFile: !!file,
-      fileName: file?.name 
+      fileName: file?.name,
     });
 
     const response = await retryFetch(`${BASE_URL}/tickets/${ticketId}/chat`, {
@@ -1101,7 +1172,10 @@ export const deleteTicketAPI = async (ticketId) => {
       credentials: "omit",
     };
 
-    const response = await retryFetch(`${BASE_URL}/tickets/${ticketId}`, options);
+    const response = await retryFetch(
+      `${BASE_URL}/tickets/${ticketId}`,
+      options
+    );
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -1195,7 +1269,7 @@ export const sendEmailAPI = async (emailData) => {
         recipient: emailData.to_email.trim(),
         subject: emailData.subject.trim(),
         message: emailData.body.trim(),
-      }
+      },
     ];
 
     let lastError = null;
@@ -1233,9 +1307,9 @@ export const sendEmailAPI = async (emailData) => {
             status: response.status,
             statusText: response.statusText,
             body: errorResult,
-            format: i + 1
+            format: i + 1,
           };
-          
+
           // If it's not a validation error, stop trying other formats
           if (response.status !== 422) {
             break;
@@ -1249,7 +1323,7 @@ export const sendEmailAPI = async (emailData) => {
     // If all formats failed, throw the last error
     if (lastError) {
       let errorMessage = "Gagal mengirim email";
-      
+
       if (lastError.status === 422) {
         if (lastError.body?.errors) {
           const validationErrors = Object.entries(lastError.body.errors)
@@ -1269,7 +1343,6 @@ export const sendEmailAPI = async (emailData) => {
     }
 
     throw new Error("Semua format request gagal");
-
   } catch (error) {
     console.error("Send Email API Error:", error);
     throw new Error(error.message || "Gagal mengirim email");
@@ -1295,7 +1368,9 @@ export const getEmailLogsAPI = async (filters = {}) => {
     if (!filters.page) queryParams.append("page", "1");
 
     const queryString = queryParams.toString();
-    const url = `${BASE_URL}/emails/logs${queryString ? `?${queryString}` : ""}`;
+    const url = `${BASE_URL}/emails/logs${
+      queryString ? `?${queryString}` : ""
+    }`;
 
     const response = await retryFetch(url, {
       method: "GET",

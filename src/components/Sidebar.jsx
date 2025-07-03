@@ -47,6 +47,8 @@ const Sidebar = ({ onMenuClick }) => {
       setActiveMenuItem("users");
     } else if (path.includes("/emails")) {
       setActiveMenuItem("emails");
+    } else if (path.includes("/statistics")) {
+      setActiveMenuItem("statistics");
     } else if (path.includes("/reachus")) {
       setActiveMenuItem("reachus");
     }
@@ -63,15 +65,15 @@ const Sidebar = ({ onMenuClick }) => {
     try {
       setLoadingCount(true);
       let tickets = [];
-      
+
       console.log(`Loading ticket count for role: ${userRole}`);
-      
+
       if (userRole === "admin") {
         tickets = await getAdminTicketsAPI();
       } else {
         tickets = await getTicketsAPI();
       }
-      
+
       setTicketCount(tickets.length);
       console.log(`Loaded ${tickets.length} tickets for ${userRole}`);
     } catch (error) {
@@ -91,7 +93,7 @@ const Sidebar = ({ onMenuClick }) => {
 
   const handleMenuClick = (menuId) => {
     setActiveMenuItem(menuId);
-  
+
     // Handle navigation based on role and menu
     if (menuId === "tickets") {
       if (userRole === "admin") {
@@ -99,6 +101,8 @@ const Sidebar = ({ onMenuClick }) => {
       } else {
         navigate("/student/tickets"); // StudentDashboard
       }
+    } else if (menuId === "statistics" && userRole === "admin") {
+      navigate("/admin/statistics"); // AdminTicketStatistics - admin only
     } else if (menuId === "askedus") {
       if (userRole === "admin") {
         navigate("/admin/askedus"); // AdminAskedUs
@@ -112,7 +116,7 @@ const Sidebar = ({ onMenuClick }) => {
     } else if (menuId === "sampaikan" && userRole === "student") {
       navigate("/student/sampaikan"); // Sampaikan - student only
     }
-  
+
     if (onMenuClick) {
       onMenuClick(menuId);
     }
@@ -160,13 +164,31 @@ const Sidebar = ({ onMenuClick }) => {
       <path d="M16 3.13a4 4 0 010 7.75" />
     </svg>
   );
-  
+
   const EmailIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
       <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
     </svg>
   );
 
+  const StatisticsIcon = () => (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+      <path
+        d="M3 3v18h18M7 14l4-4 4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        stroke="currentColor"
+        strokeWidth="1"
+        fill="none"
+      />
+    </svg>
+  );
   // Show loading if role is not determined yet
   if (!userRole) {
     return (
@@ -310,8 +332,18 @@ const Sidebar = ({ onMenuClick }) => {
                     className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
                     title="Refresh ticket count"
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
                     </svg>
                   </button>
                 )}
@@ -332,6 +364,36 @@ const Sidebar = ({ onMenuClick }) => {
             {/* ADMIN ONLY MENUS */}
             {userRole === "admin" && (
               <>
+                {/* Statistics Menu - ADMIN ONLY */}
+                <button
+                  onClick={() => handleMenuClick("statistics")}
+                  className={`w-full flex items-center p-4 rounded-lg transition-colors ${
+                    activeMenuItem === "statistics"
+                      ? "bg-red-100 text-red-800 border-l-4 border-red-600"
+                      : "bg-white border border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={
+                        activeMenuItem === "statistics"
+                          ? "text-red-600"
+                          : "text-gray-600"
+                      }
+                    >
+                      <StatisticsIcon />
+                    </div>
+                    <span
+                      className={`text-base font-medium ${
+                        activeMenuItem === "statistics"
+                          ? "text-red-800"
+                          : "text-gray-800"
+                      }`}
+                    >
+                      Statistics
+                    </span>
+                  </div>
+                </button>
                 {/* Users Menu - ADMIN ONLY */}
                 <button
                   onClick={() => handleMenuClick("users")}
