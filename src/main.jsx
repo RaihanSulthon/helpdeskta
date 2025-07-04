@@ -1,6 +1,4 @@
-// src/main.jsx - Enhanced dengan SPL dan AskedUs Routes
 import React from "react";
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
@@ -44,181 +42,179 @@ const RoleBasedRedirect = () => {
 };
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          {/* SPL-aware role-based redirect */}
-          <Route path="/dashboard" element={<RoleBasedRedirect />} />
-          {/* Student routes dengan SPL validation */}
-          <Route
-            path="/student"
-            element={<Navigate to="/student/tickets" replace />}
-          />
-          <Route
-            path="/student/sampaikan"
-            element={
-              <BaseLayout>
-                <Layout>
-                  <Form />
-                </Layout>
-              </BaseLayout>
-            }
-          />
-          {/* Student Tickets Dashboard */}
-          <Route
-            path="/student/tickets"
-            element={
-              <BaseLayout>
-                <Layout>
-                  <StudentDashboard />
-                </Layout>
-              </BaseLayout>
-            }
-          />
-          {/* Student AskedUs - bisa mengakses FAQ atau help */}
-          <Route
-            path="/student/askedus"
-            element={
-              <BaseLayout>
-                <Layout>
-                  <StudentAskedUs />
-                </Layout>
-              </BaseLayout>
-            }
-          />
-          {/* Student Detail */}
-          <Route
-            path="/ticket/:ticketId"
-            element={
-              <BaseLayout>
-                <Layout>
-                  <DetailTicket />
-                </Layout>
-              </BaseLayout>
-            }
-          />
-          <Route
-            path="/ticket/:ticketId/feedback"
-            element={
-              <BaseLayout>
-                <Layout>
-                  <TicketFeedback />
-                </Layout>
-              </BaseLayout>
-            }
-          />
-          {/* Student ReachUs */}
-          <Route
-            path="/student/reachus"
-            element={
-              <BaseLayout>
-                <Layout>
-                  <StudentAskedUs />
-                </Layout>
-              </BaseLayout>
-            }
-          />
-          {/* Admin routes dengan SPL validation */}
-          <Route
-            path="/admin"
-            element={<Navigate to="/admin/tickets" replace />}
-          />
-          {/* Admin Tickets Dashboard */}
-          <Route
-            path="/admin/tickets"
-            element={
-              <BaseLayout>
-                <Layout>
-                  <AdminDashboard />
-                </Layout>
-              </BaseLayout>
-            }
-          />
-          {/* Admin Ticket Statistics */}
-          <Route
-            path="/admin/statistics"
-            element={
-              <BaseLayout>
-                <Layout>
-                  <AdminTicketStatistics />
-                </Layout>
-              </BaseLayout>
-            }
-          />
-          {/* Admin AskedUs - untuk mengelola FAQ */}
-          <Route
-            path="/admin/askedus"
-            element={
-              <BaseLayout>
-                <Layout>
-                  <AdminAskedUs />
-                </Layout>
-              </BaseLayout>
-            }
-          />
-          {/* Admin Users - untuk mengelola users */}
-          <Route
-            path="/admin/users"
-            element={
-              <BaseLayout>
-                <Layout>
-                  <ManageUsers />
-                </Layout>
-              </BaseLayout>
-            }
-          />
-
-          {/* Admin email management */}
-          <Route
-            path="/admin/emails"
-            element={
-              <BaseLayout>
-                <Layout>
-                  <AdminEmailManagement />
-                </Layout>
-              </BaseLayout>
-            }
-          />
-
-          {/* Admin ReachUs - untuk mengelola kontak */}
-          {/* <Route
-            path="/admin/reachus"
-            element={
+  <AuthProvider>
+    <BrowserRouter>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        {/* SPL-aware role-based redirect */}
+        <Route path="/dashboard" element={<RoleBasedRedirect />} />
+        {/* Student routes dengan SPL validation */}
+        <Route
+          path="/student"
+          element={<Navigate to="/student/tickets" replace />}
+        />
+        <Route
+          path="/student/sampaikan"
+          element={
+            <BaseLayout>
               <Layout>
-                <AdminReachUs />
+                <Form />
               </Layout>
-            }
-          /> */}
-          {/* Access denied route */}
-          <Route
-            path="/access-denied"
-            element={
-              <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                  <h1 className="text-2xl font-bold text-red-600 mb-4">
-                    Access Denied
-                  </h1>
-                  <p className="text-gray-600">
-                    Feature not available for your role
-                  </p>
-                  <button
-                    onClick={() => window.history.back()}
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    Go Back
-                  </button>
-                </div>
+            </BaseLayout>
+          }
+        />
+        {/* Student Tickets Dashboard */}
+        <Route
+          path="/student/tickets"
+          element={
+            <BaseLayout>
+              <Layout>
+                <StudentDashboard />
+              </Layout>
+            </BaseLayout>
+          }
+        />
+        {/* Student AskedUs - bisa mengakses FAQ atau help */}
+        <Route
+          path="/student/askedus"
+          element={
+            <BaseLayout>
+              <Layout>
+                <StudentAskedUs />
+              </Layout>
+            </BaseLayout>
+          }
+        />
+        {/* Student Detail */}
+        <Route
+          path="/ticket/:ticketId"
+          element={
+            <BaseLayout>
+              <Layout>
+                <DetailTicket />
+              </Layout>
+            </BaseLayout>
+          }
+        />
+        <Route
+          path="/ticket/:ticketId/feedback"
+          element={
+            <BaseLayout>
+              <Layout>
+                <TicketFeedback />
+              </Layout>
+            </BaseLayout>
+          }
+        />
+        {/* Student ReachUs */}
+        <Route
+          path="/student/reachus"
+          element={
+            <BaseLayout>
+              <Layout>
+                <StudentAskedUs />
+              </Layout>
+            </BaseLayout>
+          }
+        />
+        {/* Admin routes dengan SPL validation */}
+        <Route
+          path="/admin"
+          element={<Navigate to="/admin/tickets" replace />}
+        />
+        {/* Admin Tickets Dashboard */}
+        <Route
+          path="/admin/tickets"
+          element={
+            <BaseLayout>
+              <Layout>
+                <AdminDashboard />
+              </Layout>
+            </BaseLayout>
+          }
+        />
+        {/* Admin Ticket Statistics */}
+        <Route
+          path="/admin/statistics"
+          element={
+            <BaseLayout>
+              <Layout>
+                <AdminTicketStatistics />
+              </Layout>
+            </BaseLayout>
+          }
+        />
+        {/* Admin AskedUs - untuk mengelola FAQ */}
+        <Route
+          path="/admin/askedus"
+          element={
+            <BaseLayout>
+              <Layout>
+                <AdminAskedUs />
+              </Layout>
+            </BaseLayout>
+          }
+        />
+        {/* Admin Users - untuk mengelola users */}
+        <Route
+          path="/admin/users"
+          element={
+            <BaseLayout>
+              <Layout>
+                <ManageUsers />
+              </Layout>
+            </BaseLayout>
+          }
+        />
+
+        {/* Admin email management */}
+        <Route
+          path="/admin/emails"
+          element={
+            <BaseLayout>
+              <Layout>
+                <AdminEmailManagement />
+              </Layout>
+            </BaseLayout>
+          }
+        />
+
+        {/* Admin ReachUs - untuk mengelola kontak */}
+        {/* <Route
+          path="/admin/reachus"
+          element={
+            <Layout>
+              <AdminReachUs />
+            </Layout>
+          }
+        /> */}
+        {/* Access denied route */}
+        <Route
+          path="/access-denied"
+          element={
+            <div className="flex items-center justify-center min-h-screen">
+              <div className="text-center">
+                <h1 className="text-2xl font-bold text-red-600 mb-4">
+                  Access Denied
+                </h1>
+                <p className="text-gray-600">
+                  Feature not available for your role
+                </p>
+                <button
+                  onClick={() => window.history.back()}
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Go Back
+                </button>
               </div>
-            }
-          />
-          {/* Catch-all redirect */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
-  </StrictMode>
+            </div>
+          }
+        />
+        {/* Catch-all redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  </AuthProvider>
 );

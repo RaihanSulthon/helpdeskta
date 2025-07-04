@@ -11,25 +11,51 @@ const TicketColumn = ({
   columnColor = "bg-blue-800",
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [dropPosition, setDropPosition] = useState(null);
 
   const handleDragOver = (e) => {
     e.preventDefault();
     setIsDragOver(true);
+
+    // Calculate drop position
+    const columnRect = e.currentTarget.getBoundingClientRect();
+    const mouseY = e.clientY;
+    const tickets = Array.from(e.currentTarget.querySelectorAll('[data-ticket-card]'));
+    
+    let insertIndex = tickets.length;
+    
+    for (let i = 0; i < tickets.length; i++) {
+      const ticketRect = tickets[i].getBoundingClientRect();
+      const ticketMiddle = ticketRect.top + ticketRect.height / 2;
+      
+      if (mouseY < ticketMiddle) {
+        insertIndex = i;
+        break;
+      }
+    }
+    
+    setDropPosition(insertIndex);
   };
 
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
 
+  const handleDragLeave = (e) => {
+    // Only set drag over to false if we're actually leaving the column
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setIsDragOver(false);
+      setDropPosition(null);
+    }
+  };
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragOver(false);
-
+    
     try {
       const data = JSON.parse(e.dataTransfer.getData("application/json"));
-      onDropTicket && onDropTicket(data.id, id);
+      onDropTicket && onDropTicket(data.id, id, dropPosition);
     } catch (err) {
       console.error("Error parsing drag data:", err);
+    } finally {
+      setDropPosition(null);
     }
   };
 

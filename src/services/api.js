@@ -408,8 +408,6 @@ export const getAdminTicketsAPI = async (filters = {}) => {
     const queryString = queryParams.toString();
     const url = `${BASE_URL}/tickets${queryString ? `?${queryString}` : ""}`;
 
-    console.log("Fetching admin tickets from:", url);
-
     const response = await retryFetch(url, {
       method: "GET",
       headers: {
@@ -433,8 +431,7 @@ export const getAdminTicketsAPI = async (filters = {}) => {
     }
 
     const result = await response.json();
-    console.log("Get Admin Tickets API response:", result);
-
+    
     // Extract tickets from response
     if (result?.data?.tickets) {
       return result.data.tickets;
@@ -988,6 +985,47 @@ export const getCategoriesAPI = async () => {
       ];
     }
 
+    throw new Error(
+      error.message || "Terjadi kesalahan saat mengambil data kategori"
+    );
+  }
+};
+
+export const getCategoryByIdAPI = async (categoryId) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Token tidak ditemukan. Silakan login ulang.");
+    }
+
+    const response = await retryFetch(`${BASE_URL}/categories/${categoryId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      mode: "cors",
+      credentials: "omit",
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn("Could not parse error response:", parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log("Get Category By ID API response:", result);
+
+    return result.data || result;
+  } catch (error) {
+    console.error("Get Category By ID API Error:", error);
     throw new Error(
       error.message || "Terjadi kesalahan saat mengambil data kategori"
     );

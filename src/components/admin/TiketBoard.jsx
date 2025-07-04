@@ -117,86 +117,57 @@ const TiketPage = () => {
   };
 
   // Handler untuk mendrop tiket ke kolom
-  const handleDropTicket = (cardId, columnId) => {
-    // Cek apakah ini adalah pesan yang di-drop
-    if (cardId.startsWith("msg-")) {
-      // Konversi pesan menjadi tiket
-      const messageIndex = messages.findIndex((msg) => msg.id === cardId);
-
-      if (messageIndex !== -1) {
-        const message = messages[messageIndex];
-
-        // Buat tiket baru dari pesan
-        const newTaskId = `task-${
-          Object.keys(tickets).length + 1
-        }-${Date.now()}`;
-        const newTask = {
-          id: newTaskId,
-          judul: message.message,
-          dateRange: `${new Date().toLocaleDateString()} → ${new Date(
-            Date.now() + 7 * 24 * 60 * 60 * 1000
-          ).toLocaleDateString()}`,
-          kategori: "Baru",
-          status: "menunggu",
-        };
-
-        // Tambahkan tiket baru ke state tickets
-        setTickets({
-          ...tickets,
-          [newTaskId]: newTask,
-        });
-
-        // Tambahkan ID tiket ke kolom tujuan
-        const targetColumn = { ...columns[columnId] };
-        targetColumn.cardIds = [...targetColumn.cardIds, newTaskId];
-
-        setColumns({
-          ...columns,
-          [columnId]: targetColumn,
-        });
-
-        // Hapus pesan dari daftar pesan
-        const newMessages = [...messages];
-        newMessages.splice(messageIndex, 1);
-        setMessages(newMessages);
-
-        return;
-      }
-    }
-
-    // Proses untuk tiket yang sudah ada
-    // Cari kolom sumber
+  const handleDropTicket = (ticketId, columnId, insertIndex = null) => {
+    // Find the ticket and its current column
+    let ticketToMove = null;
     let sourceColumnId = null;
-    for (const [colId, column] of Object.entries(columns)) {
-      if (column.cardIds.includes(cardId)) {
+  
+    // Find the ticket in columns
+    Object.keys(columns).forEach((colId) => {
+      const cardIndex = columns[colId].cardIds.indexOf(ticketId);
+      if (cardIndex !== -1) {
         sourceColumnId = colId;
-        break;
+        ticketToMove = tickets[ticketId];
       }
-    }
-
-    // Jika tidak ada kolom sumber atau sama dengan kolom tujuan, keluar
-    if (!sourceColumnId || sourceColumnId === columnId) {
-      return;
-    }
-
-    // Hapus tiket dari kolom sumber
-    const sourceColumn = { ...columns[sourceColumnId] };
-    const sourceCardIds = [...sourceColumn.cardIds];
-    sourceCardIds.splice(sourceCardIds.indexOf(cardId), 1);
-    sourceColumn.cardIds = sourceCardIds;
-
-    // Tambahkan tiket ke kolom tujuan
-    const destColumn = { ...columns[columnId] };
-    const destCardIds = [...destColumn.cardIds];
-    destCardIds.push(cardId);
-    destColumn.cardIds = destCardIds;
-
-    // Update state
-    setColumns({
-      ...columns,
-      [sourceColumnId]: sourceColumn,
-      [columnId]: destColumn,
     });
+  
+    if (!ticketToMove || !sourceColumnId) return;
+  
+    // Update columns with proper positioning
+    setColumns((prevColumns) => {
+      const newColumns = { ...prevColumns };
+      
+      // Remove from source column
+      newColumns[sourceColumnId] = {
+        ...newColumns[sourceColumnId],
+        cardIds: newColumns[sourceColumnId].cardIds.filter(id => id !== ticketId)
+      };
+      
+      // Add to target column at specific position
+      const targetCardIds = [...newColumns[columnId].cardIds];
+      
+      if (insertIndex !== null && insertIndex >= 0 && insertIndex <= targetCardIds.length) {
+        targetCardIds.splice(insertIndex, 0, ticketId);
+      } else {
+        targetCardIds.push(ticketId);
+      }
+      
+      newColumns[columnId] = {
+        ...newColumns[columnId],
+        cardIds: targetCardIds
+      };
+      
+      return newColumns;
+    });
+  
+    // Update ticket status if needed
+    setTickets((prevTickets) => ({
+      ...prevTickets,
+      [ticketId]: {
+        ...prevTickets[ticketId],
+        status: getStatusFromColumnId(columnId)
+      }
+    }));
   };
 
   // Handler untuk menambahkan tiket baru
