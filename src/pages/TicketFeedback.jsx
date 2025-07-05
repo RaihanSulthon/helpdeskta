@@ -1,8 +1,8 @@
 // pages/student/TicketFeedback.jsx - Updated with real API integration
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getChatMessagesAPI, sendChatMessageAPI, getTicketDetailAPI } from "../../services/api";
-import { useAuth } from "../../context/AuthContext";
+import { getChatMessagesAPI, sendChatMessageAPI, getTicketDetailAPI } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const TicketFeedback = () => {
   const navigate = useNavigate();

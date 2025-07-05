@@ -1,7 +1,7 @@
 // pages/student/TicketDetail.jsx - Updated version matching API response structure
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getTicketDetailAPI } from "../../services/api";
+import { getTicketDetailAPI } from "../services/api";
 
 const DetailTicket = () => {
   const navigate = useNavigate();
