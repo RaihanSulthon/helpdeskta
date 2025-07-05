@@ -193,8 +193,7 @@ const AdminDashboard = () => {
     if (selectedCategory && selectedCategory !== "") {
       filtered = filtered.filter(ticket => {
         // Check both categoryType and raw ticket category name
-        const categoryMatches = ticket.categoryType === selectedCategory || 
-                              ticket.rawTicket?.category?.name === selectedCategory;
+        const categoryMatches = ticket.categoryType === selectedCategory || ticket.rawTicket?.category?.name === selectedCategory;
         
         console.log(`Filtering ticket ${ticket.id}: categoryType="${ticket.categoryType}", rawCategory="${ticket.rawTicket?.category?.name}", selectedCategory="${selectedCategory}", matches=${categoryMatches}`);
         
@@ -396,48 +395,130 @@ const AdminDashboard = () => {
 
   // 7. EVENT HANDLERS
   const handleDragStart = (e, ticket, fromColumn) => {
+    console.log(`Drag started: Ticket ${ticket.id} from ${fromColumn}`);
+    
+    // Store drag data immediately
     setDraggedTicket(ticket);
     setDraggedFrom(fromColumn);
+    
+    // Set drag effect
     e.dataTransfer.effectAllowed = "move";
+    
+    // Store ticket data for drop handler (backup method)
+    e.dataTransfer.setData("application/json", JSON.stringify({
+      ticketId: ticket.id,
+      fromColumn: fromColumn
+    }));
   };
-
+  
+  // 2. handleDragOver - COMPLETE VERSION (no changes needed)
   const handleDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
-
+  
+  // 3. handleDrop - COMPLETE VERSION
   const handleDrop = async (e, toColumn, insertIndex = null) => {
     e.preventDefault();
-  
-    if (!draggedTicket || !draggedFrom) {
+    
+    console.log(`Drop event: toColumn=${toColumn}, insertIndex=${insertIndex}`);
+    
+    // Get drag data (try both methods)
+    let dragData = null;
+    try {
+      const dataTransferData = e.dataTransfer.getData("application/json");
+      if (dataTransferData) {
+        dragData = JSON.parse(dataTransferData);
+      }
+    } catch (error) {
+      console.log("No dataTransfer data, using state");
+    }
+    
+    // Use stored state as primary method
+    const ticket = draggedTicket;
+    const fromColumn = draggedFrom || (dragData ? dragData.fromColumn : null);
+    
+    if (!ticket || !fromColumn) {
+      console.log("No ticket or fromColumn found, resetting drag state");
       setDraggedTicket(null);
       setDraggedFrom(null);
       return;
     }
-
+    
+    // Handle same-column reordering (NEW LOGIC)
+    if (fromColumn === toColumn) {
+      console.log("Same column reordering");
+      
+      // Only proceed if we have a valid insertIndex and it's different from current position
+      if (insertIndex !== null) {
+        setTickets((prev) => {
+          const newTickets = { ...prev };
+          const currentColumnTickets = [...newTickets[fromColumn]];
+          
+          // Find current position of the ticket
+          const currentIndex = currentColumnTickets.findIndex(t => t.id === ticket.id);
+          
+          if (currentIndex === -1) {
+            console.log("Ticket not found in current column");
+            return prev;
+          }
+          
+          // If dropping at the same position, do nothing
+          if (currentIndex === insertIndex || (currentIndex === insertIndex - 1)) {
+            console.log("Dropping at same position, no change needed");
+            return prev;
+          }
+          
+          // Remove ticket from current position
+          const [movedTicket] = currentColumnTickets.splice(currentIndex, 1);
+          
+          // Calculate new insert position (adjust if moving from earlier position)
+          let newInsertIndex = insertIndex;
+          if (currentIndex < insertIndex) {
+            newInsertIndex = insertIndex - 1;
+          }
+          
+          // Insert at new position
+          currentColumnTickets.splice(newInsertIndex, 0, movedTicket);
+          
+          // Update the column
+          newTickets[fromColumn] = currentColumnTickets;
+          
+          return newTickets;
+        });
+        
+        console.log(`Ticket ${ticket.id} reordered within ${fromColumn}`);
+      }
+      
+      // Reset drag state
+      setDraggedTicket(null);
+      setDraggedFrom(null);
+      return;
+    }
+  
+    // Handle cross-column movement (EXISTING LOGIC)
     try {
-      setUpdating(draggedTicket.id);
-
+      setUpdating(ticket.id);
+      console.log(`Updating ticket ${ticket.id} from ${fromColumn} to ${toColumn}`);
+  
       // Get new status for API - try multiple options
       let newStatus = mapColumnToStatus(toColumn);
-      console.log(
-        `Updating ticket ${draggedTicket.id} from ${draggedFrom} to ${toColumn} (${newStatus})`
-      );
-
+      console.log(`Mapped status: ${newStatus}`);
+  
       // Call API to update status
       try {
-        await updateTicketStatusAPI(draggedTicket.id, newStatus);
+        await updateTicketStatusAPI(ticket.id, newStatus);
       } catch (error) {
         // If failed, try alternative status names
         if (toColumn === "selesai") {
           console.log("Trying alternative status for 'selesai'...");
           try {
             newStatus = "completed";
-            await updateTicketStatusAPI(draggedTicket.id, newStatus);
+            await updateTicketStatusAPI(ticket.id, newStatus);
           } catch (error2) {
             try {
               newStatus = "resolved";
-              await updateTicketStatusAPI(draggedTicket.id, newStatus);
+              await updateTicketStatusAPI(ticket.id, newStatus);
             } catch (error3) {
               throw error; // Throw original error if all fail
             }
@@ -446,37 +527,38 @@ const AdminDashboard = () => {
           throw error;
         }
       }
-
+  
       // Update local state with proper positioning
       setTickets((prev) => {
         const newTickets = { ...prev };
-
+  
         // Remove from source column
-        newTickets[draggedFrom] = newTickets[draggedFrom].filter(
-          (ticket) => ticket.id !== draggedTicket.id
+        newTickets[fromColumn] = newTickets[fromColumn].filter(
+          (t) => t.id !== ticket.id
         );
-
+  
         // Update ticket status
         const updatedTicket = {
-          ...draggedTicket,
+          ...ticket,
           status: newStatus,
           category: mapStatusToCategory(newStatus),
         };
-
+  
         // Add to target column at specific position
         if (insertIndex !== null && insertIndex >= 0 && insertIndex <= newTickets[toColumn].length) {
           newTickets[toColumn].splice(insertIndex, 0, updatedTicket);
         } else {
           newTickets[toColumn].push(updatedTicket);
         }
-
+  
         return newTickets;
       });
+      
       console.log("Ticket status updated successfully to:", newStatus);
     } catch (error) {
       console.error("Error updating ticket status:", error);
       setError("Gagal mengupdate status tiket: " + error.message);
-
+  
       // Show error for 5 seconds
       setTimeout(() => setError(""), 5000);
     } finally {
@@ -485,6 +567,7 @@ const AdminDashboard = () => {
       setDraggedFrom(null);
     }
   };
+  
 
   const handleTicketClick = (ticketId) => {
     navigate(`/ticket/${ticketId}`);
@@ -549,105 +632,208 @@ const AdminDashboard = () => {
     </button>
   );
 
-  const TicketCard = ({ ticket, columnKey }) => (
-    <div
-      data-ticket-card // Add this attribute for positioning calculation
-      draggable={!updating}
-      onDragStart={(e) => handleDragStart(e, ticket, columnKey)}
-      onDragEnd={(e) => {
-        e.target.style.opacity = '';
-        e.target.style.transform = '';
-      }}
-      onClick={() => handleTicketClick(ticket.id)}
-      className={`bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-200 transition-all duration-200 ${
-        updating === ticket.id
-          ? "opacity-50 cursor-wait"
-          : "cursor-move hover:shadow-md"
-      }`}
-      style={{
-        opacity: draggedTicket?.id === ticket.id ? '0.5' : '1',
-        transform: draggedTicket?.id === ticket.id ? 'rotate(5deg) scale(1.05)' : 'none'
-      }}
-    >
-      {/* Checkbox and ID */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            className="w-4 h-4 mr-2 rounded"
-            onClick={(e) => e.stopPropagation()}
-          />
-          <span className="text-sm font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
-            #{ticket.id}
-          </span>
+  const TicketCard = ({ ticket, columnKey }) => {
+    const [isDragging, setIsDragging] = useState(false);
+  
+    return (
+      <div
+        data-ticket-card
+        draggable={!updating}
+        // KEY FIX: Force drag to start immediately with mouse events
+        onMouseDown={(e) => {
+          if (e.button === 0 && !updating) {
+            // Force the element to be ready for immediate drag
+            e.currentTarget.style.cursor = 'grabbing';
+            
+            // Add a tiny delay to ensure drag detection works
+            setTimeout(() => {
+              const element = e.currentTarget;
+              if (element) {
+                // Force drag readiness
+                element.draggable = true;
+                element.style.opacity = '0.8';
+              }
+            }, 10);
+          }
+        }}
+        
+        onDragStart={(e) => {
+          if (updating === ticket.id) {
+            e.preventDefault();
+            return;
+          }
+          
+          setIsDragging(true);
+          handleDragStart(e, ticket, columnKey);
+          
+          // Set drag properties immediately
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.dropEffect = "move";
+          
+          // Reduce delay for drag image
+          const dragImage = document.createElement('div');
+          dragImage.innerHTML = `📋 #${ticket.id}`;
+          dragImage.style.cssText = `
+            position: absolute;
+            top: -1000px;
+            background: #3b82f6;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+          `;
+          document.body.appendChild(dragImage);
+          e.dataTransfer.setDragImage(dragImage, 0, 0);
+          
+          // Quick cleanup
+          setTimeout(() => {
+            if (document.body.contains(dragImage)) {
+              document.body.removeChild(dragImage);
+            }
+          }, 50);
+        }}
+        
+        onDragEnd={(e) => {
+          console.log("🔴 Drag end");
+          setIsDragging(false);
+          e.target.style.opacity = '';
+          e.target.style.cursor = '';
+        }}
+        
+        onMouseUp={() => {
+          // Reset cursor if not dragging
+          if (!isDragging) {
+            setTimeout(() => {
+              const elements = document.querySelectorAll('[data-ticket-card]');
+              elements.forEach(el => {
+                el.style.cursor = '';
+                el.style.opacity = '';
+              });
+            }, 100);
+          }
+        }}
+        
+        onClick={(e) => {
+          if (isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+          
+          // Only click if we're not in a drag state
+          setTimeout(() => {
+            if (!isDragging) {
+              handleTicketClick(ticket.id);
+            }
+          }, 50);
+        }}
+        
+        className={`bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-200 transition-all duration-100 ${
+          updating === ticket.id
+            ? "opacity-50 cursor-wait"
+            : isDragging 
+            ? "opacity-60 transform rotate-1 scale-105 cursor-grabbing border-blue-500 z-50"
+            : "cursor-grab hover:shadow-md hover:border-blue-300"
+        }`}
+        style={{
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none',
+          msUserSelect: 'none',
+          // Force immediate drag readiness
+          WebkitUserDrag: !updating ? 'element' : 'none',
+          // Reduce transition time for faster response
+          transition: 'all 0.1s ease'
+        }}
+      >
+        {/* Checkbox and ID */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              className="w-4 h-4 mr-2 rounded"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+            />
+            <span className="text-sm font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
+              #{ticket.id}
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(
+                ticket.priority
+              )}`}
+            >
+              {getPriorityLabel(ticket.priority)}
+            </span>
+            {!ticket.isRead && (
+              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+            )}
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(
-              ticket.priority
-            )}`}
-          >
-            {getPriorityLabel(ticket.priority)}
-          </span>
-          {!ticket.isRead && (
-            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+  
+        {/* Date */}
+        <div className="text-xs text-gray-500 mb-2">{ticket.date}</div>
+  
+        {/* Sender Info */}
+        <div className="mb-2">
+          <div className="text-sm font-medium text-gray-800">{ticket.sender}</div>
+          <div className="text-xs text-gray-500 truncate">{ticket.email}</div>
+          {ticket.nim && (
+            <div className="text-xs text-gray-500">NIM: {ticket.nim}</div>
           )}
         </div>
-      </div>
-
-      {/* Date */}
-      <div className="text-xs text-gray-500 mb-2">{ticket.date}</div>
-
-      {/* Sender Info */}
-      <div className="mb-2">
-        <div className="text-sm font-medium text-gray-800">{ticket.sender}</div>
-        <div className="text-xs text-gray-500 truncate">{ticket.email}</div>
-        {ticket.nim && (
-          <div className="text-xs text-gray-500">NIM: {ticket.nim}</div>
+  
+        {/* Subject */}
+        <div className="mb-3">
+          <h4 className="text-sm font-medium text-blue-700 leading-snug line-clamp-2">
+            {ticket.subject}
+          </h4>
+        </div>
+  
+        {/* Footer with category and status indicators */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-500">
+              📁 {ticket.categoryType}
+            </span>
+          </div>
+  
+          <div className="flex items-center space-x-1">
+            {ticket.readByAdmin && (
+              <span className="text-green-600" title="Dibaca Admin">
+                👨‍💼
+              </span>
+            )}
+            {ticket.readByDisposisi && (
+              <span className="text-blue-600" title="Dibaca Disposisi">
+                📋
+              </span>
+            )}
+            {ticket.readByStudent && (
+              <span className="text-gray-600" title="Dibaca Mahasiswa">
+                👁️
+              </span>
+            )}
+          </div>
+        </div>
+  
+        {updating === ticket.id && (
+          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          </div>
         )}
       </div>
-
-      {/* Subject */}
-      <div className="mb-3">
-        <h4 className="text-sm font-medium text-blue-700 leading-snug line-clamp-2">
-          {ticket.subject}
-        </h4>
-      </div>
-
-      {/* Footer with category and status indicators */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <span className="text-xs text-gray-500">
-            📁 {ticket.categoryType}
-          </span>
-        </div>
-
-        <div className="flex items-center space-x-1">
-          {ticket.readByAdmin && (
-            <span className="text-green-600" title="Dibaca Admin">
-              👨‍💼
-            </span>
-          )}
-          {ticket.readByDisposisi && (
-            <span className="text-blue-600" title="Dibaca Disposisi">
-              📋
-            </span>
-          )}
-          {ticket.readByStudent && (
-            <span className="text-gray-600" title="Dibaca Mahasiswa">
-              👁️
-            </span>
-          )}
-        </div>
-      </div>
-
-      {updating === ticket.id && (
-        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   const Column = ({ columnKey, config, tickets: columnTickets }) => {
     const [isDragOver, setIsDragOver] = useState(false);
@@ -825,7 +1011,6 @@ const AdminDashboard = () => {
                   }
                 }}
                 className="border-2 border-gray-400 text-sm px-3 py-2 rounded-lg focus:ring-1 focus:ring-black focus:border-black flex items-center space-x-2 hover:bg-gray-50"
-                style={{ backgroundColor: 'rgba(237, 28, 36, 0.2)' }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="w-4 h-4">
                   <path fill="currentColor" d="M5 21V5q0-.825.588-1.412T7 3h10q.825 0 1.413.588T19 5v16l-7-3z"/>
@@ -880,7 +1065,6 @@ const AdminDashboard = () => {
                   }
                 }}
                 className="border-2 border-gray-400 text-sm px-3 py-2 rounded-lg focus:ring-1 focus:ring-black focus:border-black flex items-center space-x-2 hover:bg-gray-50"
-                style={{ backgroundColor: 'rgba(237, 28, 36, 0.2)' }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" className="w-4 h-4">
                   <path fill="currentColor" d="M5.673 0a.7.7 0 0 1 .7.7v1.309h7.517v-1.3a.7.7 0 0 1 1.4 0v1.3H18a2 2 0 0 1 2 1.999v13.993A2 2 0 0 1 18 20H2a2 2 0 0 1-2-1.999V4.008a2 2 0 0 1 2-1.999h2.973V.699a.7.7 0 0 1 .7-.699M1.4 7.742v10.259a.6.6 0 0 0 .6.6h16a.6.6 0 0 0 .6-.6V7.756zm5.267 6.877v1.666H5v-1.666zm4.166 0v1.666H9.167v-1.666zm4.167 0v1.666h-1.667v-1.666zm-8.333-3.977v1.666H5v-1.666zm4.166 0v1.666H9.167v-1.666zm4.167 0v1.666h-1.667v-1.666zM4.973 3.408H2a.6.6 0 0 0-.6.6v2.335l17.2.014V4.008a.6.6 0 0 0-.6-.6h-2.71v.929a.7.7 0 0 1-1.4 0v-.929H6.373v.92a.7.7 0 0 1-1.4 0z"/>
@@ -964,7 +1148,6 @@ const AdminDashboard = () => {
                   }
                 }}
                 className="border-2 border-gray-400 text-sm px-3 py-2 rounded-lg focus:ring-1 focus:ring-black focus:border-black flex items-center space-x-2 hover:bg-gray-50"
-                style={{ backgroundColor: 'rgba(237, 28, 36, 0.2)' }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" className="w-4 h-4">
                   <path fill="currentColor" d="M496 128.05A64 64 0 0 0 389.62 80a64.5 64.5 0 0 0-12.71 15.3v.06c-.54.9-1.05 1.82-1.55 2.74l-.24.49c-.42.79-.81 1.59-1.19 2.4c-.12.25-.23.5-.34.75c-.33.73-.65 1.47-.95 2.22c-.13.31-.25.62-.37.93c-.27.7-.53 1.4-.78 2.11l-.36 1.06c-.22.68-.43 1.37-.63 2.06c-.12.39-.23.77-.33 1.16c-.19.67-.35 1.35-.51 2c-.1.41-.2.82-.29 1.23c-.14.68-.27 1.37-.39 2c-.08.42-.16.84-.23 1.26c-.11.7-.2 1.41-.29 2.12c-.05.41-.11.82-.16 1.24c-.08.77-.13 1.54-.19 2.32c0 .36-.06.72-.08 1.08c-.06 1.14-.1 2.28-.1 3.44c0 1 0 2 .08 2.94v.64q.08 1.41.21 2.82l.06.48c.09.85.19 1.69.32 2.52c0 .17 0 .35.07.52c.14.91.31 1.81.49 2.71c0 .22.09.43.13.65c.18.86.38 1.72.6 2.57v.19c.23.89.48 1.76.75 2.63l.21.68c.27.85.55 1.68.85 2.51c.06.18.13.36.2.54c.27.71.55 1.42.84 2.12c.08.21.16.41.25.61c.34.79.69 1.58 1.06 2.36l.33.67c.35.7.7 1.4 1.07 2.09a64.34 64.34 0 0 0 22.14 23.81a62 62 0 0 0 7.62 4.15l.39.18q2.66 1.2 5.43 2.16l.95.32l1.5.47c.45.14.9.26 1.36.39l1.92.5l1.73.4l1.15.23l1.83.33l.94.15c.9.13 1.81.25 2.72.35l.77.07c.73.06 1.47.12 2.21.16l.86.05c1 0 1.94.08 2.92.08c1.16 0 2.3 0 3.44-.1l1.08-.08c.78-.06 1.55-.11 2.32-.19l1.25-.16c.7-.09 1.41-.18 2.11-.29l1.26-.23c.68-.12 1.37-.25 2-.39l1.23-.29c.68-.16 1.36-.32 2-.51c.39-.1.77-.21 1.16-.33c.69-.2 1.38-.41 2.06-.63l1.06-.36c.71-.25 1.41-.51 2.11-.78l.93-.37c.75-.3 1.49-.62 2.22-.95l.75-.34c.81-.38 1.61-.77 2.4-1.19l.49-.24c.92-.5 1.84-1 2.74-1.55h.06A64.5 64.5 0 0 0 480 170.38a63.8 63.8 0 0 0 16-42.33"/>
@@ -1009,7 +1192,6 @@ const AdminDashboard = () => {
           {/* Reset Filter Button */}
           <button
             className="border-2 border-gray-400 text-sm px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center space-x-2 hover:bg-gray-50"
-            style={{ backgroundColor: 'rgba(237, 28, 36, 0.2)' }}
             onClick={() => {
               const defaultFilters = {
                 selectedCategory: "",
