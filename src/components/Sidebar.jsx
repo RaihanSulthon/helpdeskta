@@ -244,11 +244,11 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
             {/* Tickets Menu - Available for both roles */}
             <button
               onClick={() => handleMenuClick("tickets")}
-              className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-full' : 'justify-center px-5 py-2 rounded-full'} transition-all duration-300 mt-4 ${
-                activeMenuItem === "tickets"
-                  ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-lg" : "bg-red-100 text-gray-800"}`
-                  : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
-              }`}
+              className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-lg' : 'justify-center px-5 py-2 rounded-lg'} transition-all duration-300 mt-4 ${
+                    activeMenuItem === "tickets"
+                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-md" : "bg-red-100 text-gray-800"}`
+                      : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
+                  }`}
               title={!isExpanded ? (userRole === "admin" ? "Kelola Tiket" : "My Ticket") : ""}
             >
               {isExpanded ? (
@@ -301,9 +301,9 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                 {/* Statistics Menu - ADMIN ONLY */}
                 <button
                   onClick={() => handleMenuClick("statistics")}
-                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-full' : 'justify-center px-5 py-2 rounded-full'} transition-all duration-300 mt-4 ${
+                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-lg' : 'justify-center px-5 py-2 rounded-lg'} transition-all duration-300 mt-4 ${
                     activeMenuItem === "statistics"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-lg" : "bg-red-100 text-gray-800"}`
+                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-md" : "bg-red-100 text-gray-800"}`
                       : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
                   }`}
                   title={!isExpanded ? "Statistik Tiket" : ""}
@@ -328,9 +328,9 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                 {/* Users Menu - ADMIN ONLY */}
                 <button
                   onClick={() => handleMenuClick("users")}
-                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-full' : 'justify-center px-5 py-2 rounded-full'} transition-all duration-300 mt-4 ${
+                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-lg' : 'justify-center px-5 py-2 rounded-lg'} transition-all duration-300 mt-4 ${
                     activeMenuItem === "users"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-lg" : "bg-red-100 text-gray-800"}`
+                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-md" : "bg-red-100 text-gray-800"}`
                       : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
                   }`}
                   title={!isExpanded ? "Data Mahasiswa" : ""}
@@ -356,9 +356,9 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                 {/* AskedUs Menu - ADMIN */}
                 <button
                   onClick={() => handleMenuClick("askedus")}
-                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-full' : 'justify-center px-5 py-2 rounded-full'} transition-all duration-300 mt-4 ${
+                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-lg' : 'justify-center px-5 py-2 rounded-lg'} transition-all duration-300 mt-4 ${
                     activeMenuItem === "askedus"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-lg" : "bg-red-100 text-gray-800"}`
+                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-md" : "bg-red-100 text-gray-800"}`
                       : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
                   }`}
                   title={!isExpanded ? "Kelola Asked Us (FAQ)" : ""}
@@ -384,9 +384,9 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                 {/* Email Management Menu - ADMIN ONLY */}
                 <button
                   onClick={() => handleMenuClick("emails")}
-                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-full' : 'justify-center px-5 py-2 rounded-full'} transition-all duration-300 mt-4 ${
+                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-lg' : 'justify-center px-5 py-2 rounded-lg'} transition-all duration-300 mt-4 ${
                     activeMenuItem === "emails"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-lg" : "bg-red-100 text-gray-800"}`
+                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-md" : "bg-red-100 text-gray-800"}`
                       : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
                   }`}
                   title={!isExpanded ? "Email Management" : ""}
@@ -417,9 +417,9 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                 {/* AskedUs Menu - STUDENT */}
                 <button
                   onClick={() => handleMenuClick("askedus")}
-                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-full' : 'justify-center px-5 py-2 rounded-full'} transition-all duration-300 mt-4 ${
+                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-lg' : 'justify-center px-5 py-2 rounded-lg'} transition-all duration-300 mt-4 ${
                     activeMenuItem === "askedus"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-lg" : "bg-red-100 text-gray-800"}`
+                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-md" : "bg-red-100 text-gray-800"}`
                       : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
                   }`}
                   title={!isExpanded ? "AskedUs" : ""}

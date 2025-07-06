@@ -395,18 +395,24 @@ export const getAdminTicketsAPI = async (filters = {}) => {
       throw new Error("Token tidak ditemukan. Silakan login ulang.");
     }
 
+    // Log filters untuk debugging
+    console.log("getAdminTicketsAPI called with filters:", filters);
+
     const queryParams = new URLSearchParams();
     if (filters.status) queryParams.append("status", filters.status);
     if (filters.category) queryParams.append("category", filters.category);
     if (filters.date) queryParams.append("date", filters.date);
     if (filters.user_id) queryParams.append("user_id", filters.user_id);
+    if (filters.search) queryParams.append("search", filters.search);
 
     // Get more data for admin view
-    queryParams.append("per_page", "200");
-    queryParams.append("page", "1");
+    queryParams.append("per_page", filters.per_page || "200");
+    queryParams.append("page", filters.page || "1");
 
     const queryString = queryParams.toString();
     const url = `${BASE_URL}/tickets${queryString ? `?${queryString}` : ""}`;
+    
+    console.log("API URL:", url); // Debug log
 
     const response = await retryFetch(url, {
       method: "GET",
@@ -431,6 +437,7 @@ export const getAdminTicketsAPI = async (filters = {}) => {
     }
 
     const result = await response.json();
+    console.log("API response:", result); // Debug log
     
     // Extract tickets from response
     if (result?.data?.tickets) {
@@ -443,6 +450,7 @@ export const getAdminTicketsAPI = async (filters = {}) => {
       return result;
     }
 
+    console.warn("Unexpected API response format:", result);
     return [];
   } catch (error) {
     console.error("Get Admin Tickets API Error:", error);
@@ -822,8 +830,6 @@ export const getTicketDetailAPI = async (ticketId) => {
       throw new Error("ID tiket tidak valid");
     }
 
-    console.log("Fetching ticket detail for ID:", ticketId);
-
     const options = {
       method: "GET",
       headers: {
@@ -855,12 +861,10 @@ export const getTicketDetailAPI = async (ticketId) => {
     }
 
     const result = await response.json();
-    console.log("Ticket detail API response:", result);
 
     // Handle the response structure based on the Postman response
     // The API returns: { status: "success", data: { ticket: {...} } }
     if (result.status === "success" && result.data && result.data.ticket) {
-      console.log("Extracted ticket data:", result.data.ticket);
       return result.data.ticket;
     } else if (result.data) {
       console.log("Using result.data:", result.data);

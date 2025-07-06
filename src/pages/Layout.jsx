@@ -77,7 +77,7 @@ const Layout = ({ children, requiredRole }) => {
         </div>
   
         {/* Main Content - otomatis menyesuaikan */}
-        <div className="flex-1 flex flex-col transition-all duration-300 h-full">
+        <div className="flex-1 flex flex-col transition-all duration-300 h-full ">
           <main className="flex-1 p-6 overflow-auto">
             {children}
           </main>

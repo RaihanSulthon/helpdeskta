@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getFAQsAPI, getFAQCategoriesAPI } from "../../services/api";
+import SearchBar from "../../components/SearchBar";
 
 const StudentAskedUs = () => {
   const [faqData, setFaqData] = useState([]);
@@ -248,9 +249,14 @@ const StudentAskedUs = () => {
     initializeData();
   }, [loadCategories, loadFAQs]);
 
-  // Handle filter changes
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    loadFAQs();
+  };
+  
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    loadFAQs();
   };
 
   const handleCategoryFilterChange = (e) => {
@@ -332,12 +338,11 @@ const StudentAskedUs = () => {
               Cari FAQ
             </label>
             <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="Cari berdasarkan pertanyaan atau jawaban..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              <SearchBar
+                placeholder="Cari pertanyaan FAQ..."
+                onSearch={handleSearch}
+                onClear={handleClearSearch}
+                className="flex-1"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg

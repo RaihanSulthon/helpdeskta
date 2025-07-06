@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import SearchBar from "../../components/SearchBar";
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -13,6 +14,8 @@ const ManageUsers = () => {
     student_users: 0,
     disposisi_users: 0,
   });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState([]);
 
   // API base URL
   const BASE_URL = "https://apibackendtio.mynextskill.com/api";
@@ -100,19 +103,29 @@ const ManageUsers = () => {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    loadUsers();
+    loadUserStatistics();
+  }, []);
+  
+  // Update filteredUsers when users change
+  useEffect(() => {
+    setFilteredUsers(users);
+  }, [users]);
+
   // Filter users based on status and role
-  const filteredUsers = users.filter((user) => {
-    const statusMatch =
-      statusFilter === "Semua Status" ||
-      (statusFilter === "Active" && user.email_verified_at) ||
-      (statusFilter === "Inactive" && !user.email_verified_at);
+  // const filteredUsers = filteredUsers.filter((user) => {
+  //   const statusMatch =
+  //     statusFilter === "Semua Status" ||
+  //     (statusFilter === "Active" && user.email_verified_at) ||
+  //     (statusFilter === "Inactive" && !user.email_verified_at);
 
-    const roleMatch =
-      roleFilter === "Semua Role" ||
-      user.role.toLowerCase() === roleFilter.toLowerCase();
+  //   const roleMatch =
+  //     roleFilter === "Semua Role" ||
+  //     user.role.toLowerCase() === roleFilter.toLowerCase();
 
-    return statusMatch && roleMatch;
-  });
+  //   return statusMatch && roleMatch;
+  // });
 
   // Handle individual checkbox
   const handleCheckboxChange = (id) => {
@@ -121,6 +134,33 @@ const ManageUsers = () => {
         user.id === id ? { ...user, isChecked: !user.isChecked } : user
       )
     );
+  };
+
+  // Add this new function after loadUserStatistics
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    
+    if (!query.trim()) {
+      setFilteredUsers(users);
+      return;
+    }
+
+    const filtered = filteredUsers.filter(user => {
+      const searchLower = query.toLowerCase();
+      return (
+        user.name?.toLowerCase().includes(searchLower) ||
+        user.email?.toLowerCase().includes(searchLower) ||
+        user.nim?.toLowerCase().includes(searchLower) ||
+        user.prodi?.toLowerCase().includes(searchLower)
+      );
+    });
+
+    setFilteredUsers(filtered);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setFilteredUsers(users);
   };
 
   // Handle select all checkbox
@@ -148,7 +188,7 @@ const ManageUsers = () => {
 
   // Handle delete selected users
   const handleDeleteSelected = () => {
-    const selectedUsers = users.filter((user) => user.isChecked);
+    const selectedUsers = filteredUsers.filter((user) => user.isChecked);
     if (selectedUsers.length === 0) return;
 
     if (
@@ -166,7 +206,7 @@ const ManageUsers = () => {
 
   // Handle export data
   const handleExportData = () => {
-    const selectedUsers = users.filter((user) => user.isChecked);
+    const selectedUsers = filteredUsers.filter((user) => user.isChecked);
     const dataToExport = selectedUsers.length > 0 ? selectedUsers : users;
 
     // Simple CSV export
@@ -356,6 +396,15 @@ const ManageUsers = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <SearchBar
+          placeholder="Cari nama, email, NIM, atau prodi mahasiswa..."
+          onSearch={handleSearch}
+          onClear={handleClearSearch}
+          className="max-w-md"
+        />
       </div>
 
       {/* Filters */}
@@ -576,7 +625,7 @@ const ManageUsers = () => {
       {users.some((user) => user.isChecked) && (
         <div className="mt-6 flex justify-between items-center">
           <div className="text-sm text-gray-500">
-            {users.filter((user) => user.isChecked).length} dari {users.length}{" "}
+            {filteredUsers.filter((user) => user.isChecked).length} dari {users.length}{" "}
             user dipilih
           </div>
 
