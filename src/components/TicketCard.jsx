@@ -249,7 +249,7 @@ const TicketCard = ({
         
         {/* Right side info with calendar icon and lastUpdate date */}
         <div className="flex items-center space-x-2 text-gray-600 text-xs">
-          <span> Terakhir Update:
+          <span>Terakhir Update: {' '}
             {ticketData 
               ? formatDate(ticketData.lastUpdate)
               : formatDate(ticket.lastUpdate || ticket.updated_at)

@@ -1126,7 +1126,7 @@ const AdminDashboard = () => {
             
             {/* Content */}
             <div className="p-6">
-              <p className="text-black mb-2 font-normal">
+              <p className="text-black mb-1 font-normal">
                 Apakah anda yakin ingin menghapus tiket berikut?
               </p>
               
@@ -1135,18 +1135,18 @@ const AdminDashboard = () => {
               </p>
               
               {/* Warning Box */}
-              <div className="bg-[#F8D7DA] border border-[#F5C6CB] rounded-md p-3 mb-6 flex space-x-3">
-                {/* Warning Icon */}
+              <div className="bg-red-100 rounded-lg p-3 mb-6 flex items-center space-x-3">
+                {/* Warning Icon - Now properly centered */}
                 <div className="flex-shrink-0">
                   <svg width="18" height="14" viewBox="0 0 22 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12.3001 0.882812L20.9342 14.5906C21.0658 14.7997 21.1351 15.0368 21.1351 15.2781C21.1351 15.5195 21.0658 15.7566 20.9342 15.9656C20.8025 16.1747 20.6132 16.3482 20.3851 16.4689C20.1571 16.5896 19.8985 16.6531 19.6352 16.6531H2.36715C2.10385 16.6531 1.84519 16.5896 1.61716 16.4689C1.38914 16.3482 1.19979 16.1747 1.06814 15.9656C0.936492 15.7566 0.867186 15.5195 0.867188 15.2781C0.867189 15.0368 0.936498 14.7997 1.06815 14.5906L9.70215 0.882812C10.2791 -0.0338542 11.7221 -0.0338542 12.3001 0.882812ZM11.0011 11.7471C10.7359 11.7471 10.4816 11.8437 10.294 12.0156C10.1065 12.1875 10.0011 12.4207 10.0011 12.6638C10.0011 12.9069 10.1065 13.1401 10.294 13.312C10.4816 13.4839 10.7359 13.5805 11.0011 13.5805C11.2664 13.5805 11.5207 13.4839 11.7083 13.312C11.8958 13.1401 12.0011 12.9069 12.0011 12.6638C12.0011 12.4207 11.8958 12.1875 11.7083 12.0156C11.5207 11.8437 11.2664 11.7471 11.0011 11.7471ZM11.0011 5.33048C10.7562 5.33051 10.5198 5.41294 10.3368 5.56214C10.1537 5.71133 10.0368 5.91692 10.0081 6.1399L10.0011 6.24715V9.91381C10.0014 10.1475 10.099 10.3722 10.274 10.5421C10.449 10.712 10.6881 10.8142 10.9425 10.8279C11.197 10.8416 11.4475 10.7657 11.643 10.6157C11.8384 10.4658 11.964 10.2531 11.9941 10.0211L12.0011 9.91381V6.24715C12.0011 6.00403 11.8958 5.77087 11.7083 5.59897C11.5207 5.42706 11.2664 5.33048 11.0011 5.33048Z" fill="#E01A3F"/>
                   </svg>
                 </div>
                 
-                {/* Warning Text */}
+                {/* Warning Text - "Peringatan:" is now bold */}
                 <div className="flex-1">
-                  <p className="text-[#E01A3F] font-semibold text-xs">
-                    Peringatan: Tiket akan dihapus dari daftar Anda, namun tetap dapat diakses oleh Admin.
+                  <p className="text-[#E01A3F] font-medium text-xs">
+                    <span className="font-bold">Peringatan:</span> Tiket akan dihapus dari daftar Anda, namun tetap dapat diakses oleh Admin.
                   </p>
                 </div>
               </div>

@@ -395,9 +395,6 @@ export const getAdminTicketsAPI = async (filters = {}) => {
       throw new Error("Token tidak ditemukan. Silakan login ulang.");
     }
 
-    // Log filters untuk debugging
-    console.log("getAdminTicketsAPI called with filters:", filters);
-
     const queryParams = new URLSearchParams();
     if (filters.status) queryParams.append("status", filters.status);
     if (filters.category) queryParams.append("category", filters.category);
@@ -411,8 +408,6 @@ export const getAdminTicketsAPI = async (filters = {}) => {
 
     const queryString = queryParams.toString();
     const url = `${BASE_URL}/tickets${queryString ? `?${queryString}` : ""}`;
-    
-    console.log("API URL:", url); // Debug log
 
     const response = await retryFetch(url, {
       method: "GET",
@@ -437,8 +432,6 @@ export const getAdminTicketsAPI = async (filters = {}) => {
     }
 
     const result = await response.json();
-    console.log("API response:", result); // Debug log
-    
     // Extract tickets from response
     if (result?.data?.tickets) {
       return result.data.tickets;
@@ -453,7 +446,6 @@ export const getAdminTicketsAPI = async (filters = {}) => {
     console.warn("Unexpected API response format:", result);
     return [];
   } catch (error) {
-    console.error("Get Admin Tickets API Error:", error);
     if (error.name === "TypeError" && error.message.includes("fetch")) {
       throw new Error(
         "Koneksi ke server gagal. Pastikan server berjalan dan coba lagi."

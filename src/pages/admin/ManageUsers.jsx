@@ -104,8 +104,8 @@ const ManageUsers = () => {
   }, []);
 
   useEffect(() => {
-    loadUsers();
-    loadUserStatistics();
+    fetchStatistics();
+    fetchUsers();
   }, []);
   
   // Update filteredUsers when users change
