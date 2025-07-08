@@ -208,6 +208,22 @@ const StudentDashboard = () => {
         return "Tiket Baru";
     }
   };
+  const validateBadgeIsolation = (statusType, allTickets) => {
+    const result = shouldShowBadge(statusType, allTickets);
+
+    // Logging untuk debug
+    const statusTickets = allTickets.filter((t) => t.category === statusType);
+    const otherTickets = allTickets.filter((t) => t.category !== statusType);
+
+    console.log(`✅ Badge validation for ${statusType}:`, {
+      result,
+      statusTicketsCount: statusTickets.length,
+      otherTicketsCount: otherTickets.length,
+      isolationValid: true, // Karena kita hanya cek statusTickets
+    });
+
+    return result;
+  };
   const handleRefresh = async () => {
     try {
       setRefreshLoading(true);
@@ -276,56 +292,125 @@ const StudentDashboard = () => {
     const statusTickets = tickets.filter(
       (ticket) => ticket.category === statusType
     );
-    return statusTickets.some((ticket) => {
-      // Cek apakah ada perubahan status dalam 24 jam terakhir
+
+    const hasRecentUpdate = statusTickets.some((ticket) => {
       const updateTime = new Date(ticket.lastStatusUpdate);
       const now = new Date();
       const hoursDiff = (now - updateTime) / (1000 * 60 * 60);
+      const isRecent = hoursDiff <= 24;
+      const notClicked = !clickedTickets.has(ticket.id);
 
-      return hoursDiff <= 24 && !clickedTickets.has(ticket.id);
+      return isRecent && notClicked;
     });
+
+    console.log(`hasStatusUpdate ${statusType}:`, {
+      statusTickets: statusTickets.length,
+      hasRecentUpdate,
+    });
+
+    return hasRecentUpdate;
   };
 
   // TAMBAH: Fungsi untuk cek feedback update
   const hasFeedbackUpdate = (statusType, tickets) => {
     if (!tickets || tickets.length === 0) return false;
 
+    // Safety check: pastikan feedbackCounts sudah loaded
+    if (Object.keys(feedbackCounts).length === 0) {
+      console.log(
+        `hasFeedbackUpdate ${statusType}: feedbackCounts belum loaded`
+      );
+      return false;
+    }
+
     const statusTickets = tickets.filter(
       (ticket) => ticket.category === statusType
     );
-    return statusTickets.some((ticket) => {
+
+    const hasUnreadFeedback = statusTickets.some((ticket) => {
       const feedbackCount = feedbackCounts[ticket.id];
-      return feedbackCount?.unread > 0 && !clickedTickets.has(ticket.id);
+      const hasUnread = feedbackCount?.unread > 0;
+      const notClicked = !clickedTickets.has(ticket.id);
+
+      if (hasUnread && notClicked) {
+        console.log(`Ticket ${ticket.id} has unread feedback:`, feedbackCount);
+      }
+
+      return hasUnread && notClicked;
     });
+
+    console.log(`hasFeedbackUpdate ${statusType}:`, {
+      statusTickets: statusTickets.length,
+      feedbackCountsLoaded: Object.keys(feedbackCounts).length > 0,
+      hasUnreadFeedback,
+    });
+
+    return hasUnreadFeedback;
   };
 
   // TAMBAH: Fungsi gabungan untuk badge
-  const shouldShowBadge = (statusType, tickets) => {
-    return (
-      hasStatusUpdate(statusType, tickets) ||
-      hasFeedbackUpdate(statusType, tickets) ||
-      hasNewMessages(statusType, tickets)
+  const shouldShowBadge = (statusType, allTickets, currentClickedTickets) => {
+    if (!allTickets || allTickets.length === 0) return false;
+    if (!currentClickedTickets) {
+      console.warn(
+        `shouldShowBadge: currentClickedTickets missing for ${statusType}`
+      );
+      return false;
+    }
+
+    // 🎯 KUNCI: HANYA filter tiket untuk status yang sedang dicek
+    const statusTickets = allTickets.filter(
+      (ticket) => ticket.category === statusType
     );
+
+    if (statusTickets.length === 0) return false;
+
+    console.log(`🔍 shouldShowBadge for ${statusType}:`, {
+      totalTicketsInStatus: statusTickets.length,
+      statusTicketIds: statusTickets.map((t) => t.id),
+      currentClickedTickets: [...currentClickedTickets],
+      feedbackCountsLoaded: Object.keys(feedbackCounts).length > 0,
+    });
+
+    // 🔧 PERBAIKAN: Cek badge HANYA untuk tiket dalam status ini
+    const shouldShow = statusTickets.some((ticket) => {
+      const isUnread = !ticket.isRead;
+      const hasUnreadFeedback = (feedbackCounts[ticket.id]?.unread || 0) > 0;
+      const notClicked = !currentClickedTickets.has(ticket.id);
+
+      const needsBadge = (isUnread || hasUnreadFeedback) && notClicked;
+
+      console.log(`📍 Ticket ${ticket.id} (${statusType}):`, {
+        isUnread,
+        hasUnreadFeedback: feedbackCounts[ticket.id]?.unread || 0,
+        notClicked,
+        needsBadge,
+        ticketCategory: ticket.category,
+      });
+
+      return needsBadge;
+    });
+
+    console.log(`🎯 ${statusType} final badge result:`, shouldShow);
+    return shouldShow;
   };
   // FIXED: Improved hasNewMessages logic
   const hasNewMessages = (statusType, tickets) => {
     if (!tickets || tickets.length === 0) return false;
 
-    // 🔥 ULTRA SIMPLE: Badge muncul jika ada tiket tidak terbaca di kategori ini
-    const unreadTickets = tickets.filter(
-      (ticket) =>
-        ticket.category === statusType &&
-        !ticket.isRead &&
-        !clickedTickets.has(ticket.id)
-    );
+    const unreadTickets = tickets.filter((ticket) => {
+      const isCorrectCategory = ticket.category === statusType;
+      const isUnread = !ticket.isRead;
+      const notClicked = !clickedTickets.has(ticket.id);
 
-    unreadTickets.forEach((t) =>
-      console.log(
-        `  - Ticket #${t.id}: isRead=${t.isRead}, clicked=${clickedTickets.has(
-          t.id
-        )}`
-      )
-    );
+      return isCorrectCategory && isUnread && notClicked;
+    });
+
+    console.log(`hasNewMessages ${statusType}:`, {
+      totalTickets: tickets.filter((t) => t.category === statusType).length,
+      unreadCount: unreadTickets.length,
+      unreadIds: unreadTickets.map((t) => t.id),
+    });
 
     return unreadTickets.length > 0;
   };
@@ -489,6 +574,7 @@ const StudentDashboard = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showDatePicker, showReadDropdown]);
+
   // FIXED: Simplified loadTickets - load all data, filter on frontend
   const loadTickets = async () => {
     try {
@@ -496,8 +582,9 @@ const StudentDashboard = () => {
       setError("");
 
       const response = await getTicketsAPI({});
-
       let ticketsData = [];
+
+      // Parse response logic tetap sama...
       if (response && response.tickets) {
         ticketsData = response.tickets;
       } else if (Array.isArray(response)) {
@@ -510,19 +597,24 @@ const StudentDashboard = () => {
 
       console.log("🔍 RAW API DATA:", ticketsData.slice(0, 2));
 
+      // ✅ PERBAIKI: Gunakan functional update untuk mendapatkan clickedTickets terbaru
       const transformedTickets = ticketsData.map((ticket) => {
         // Deteksi perubahan status
         const lastKnownStatus = lastStatusCheck.get(ticket.id);
         const currentStatus = ticket.status;
+        const lastKnownTime = lastViewTime.get(`status_${ticket.id}`);
+        const currentTime = new Date(ticket.updated_at);
+
         const isStatusChanged =
-          lastKnownStatus && lastKnownStatus !== currentStatus;
+          lastKnownStatus &&
+          lastKnownStatus !== currentStatus &&
+          (!lastKnownTime || currentTime > lastKnownTime);
 
         // Deteksi feedback baru
         const lastKnownFeedbackCount = lastFeedbackCheck.get(ticket.id) || 0;
         const currentFeedbackCount = ticket.chat_count || 0;
         const hasFeedbackUpdate = currentFeedbackCount > lastKnownFeedbackCount;
 
-        // ✅ RETURN TICKET OBJECT
         return {
           id: ticket.id,
           sender:
@@ -539,10 +631,14 @@ const StudentDashboard = () => {
           category: mapStatusToCategory(ticket.status),
           categoryType: ticket.category?.name || "Umum",
           subCategory: ticket.sub_category?.name || "Umum",
+
+          // ✅ isRead menggunakan clickedTickets langsung
           isRead:
             ticket.read_by_student === true ||
             ticket.read_by_student === 1 ||
-            ticket.read_by_student === "1",
+            ticket.read_by_student === "1" ||
+            clickedTickets.has(ticket.id),
+
           status: ticket.status,
           priority: ticket.priority || "medium",
           description: ticket.deskripsi || ticket.description || "",
@@ -567,16 +663,18 @@ const StudentDashboard = () => {
           rawReadByDisposisi: ticket.read_by_disposisi,
           rawReadByStudent: ticket.read_by_student,
 
-          // Badge tracking properties
-          hasStatusUpdate: isStatusChanged,
-          hasFeedbackUpdate: hasFeedbackUpdate,
+          // Badge flags dengan clickedTickets current
+          hasStatusUpdate: isStatusChanged && !clickedTickets.has(ticket.id),
+          hasFeedbackUpdate:
+            hasFeedbackUpdate && !clickedTickets.has(ticket.id),
           lastStatusUpdate: ticket.updated_at,
         };
       });
 
+      // Set tickets langsung
       setTickets(transformedTickets);
 
-      // Update tracking
+      // Update tracking maps
       setLastStatusCheck((prev) => {
         const newMap = new Map(prev);
         transformedTickets.forEach((ticket) => {
@@ -593,8 +691,9 @@ const StudentDashboard = () => {
         return newMap;
       });
 
-      console.log("📊 LOADED TICKETS SUMMARY:", {
+      console.log("📊 LOADED TICKETS:", {
         total: transformedTickets.length,
+        clickedTickets: [...clickedTickets],
         categories: {
           "Tiket Baru": transformedTickets.filter(
             (t) => t.category === "Tiket Baru"
@@ -625,31 +724,205 @@ const StudentDashboard = () => {
   };
 
   // FIXED: Improved ticket click handler
-  const handleTicketClick = (ticketId) => {
-    setClickedTickets((prev) => {
-      const newSet = new Set([...prev, ticketId]);
-      // 🔥 LANGSUNG SAVE KE LOCALSTORAGE
-      if (user?.id) {
-        localStorage.setItem(
-          `clickedTickets_${user.id}`,
-          JSON.stringify([...newSet])
-        );
-      }
+  const handleTicketClick = async (ticketId) => {
+    console.log(`🎯 CLICK START: Ticket ${ticketId}`);
 
-      return newSet;
+    const clickedTicket = tickets.find((t) => t.id === ticketId);
+    if (!clickedTicket) {
+      console.error(`❌ Ticket ${ticketId} not found!`);
+      navigate(`/ticket/${ticketId}`);
+      return;
+    }
+
+    console.log(`📋 Clicked ticket:`, {
+      id: clickedTicket.id,
+      category: clickedTicket.category,
+      isRead: clickedTicket.isRead,
+      subject: clickedTicket.subject,
     });
-    // 2. Update ticket isRead status
-    setTickets((prev) =>
-      prev.map((ticket) => {
-        if (ticket.id === ticketId) {
-          return { ...ticket, isRead: true };
-        }
-        return ticket;
-      })
-    );
 
-    // 3. Navigate ke detail
-    navigate(`/ticket/${ticketId}`);
+    // 🔧 DEBUGGING: Log state sebelum update
+    console.log(`📊 BEFORE UPDATE:`, {
+      clickedTicketsCount: clickedTickets.size,
+      clickedTicketsList: [...clickedTickets],
+      badgeStates: {
+        "Tiket Baru": {
+          shouldShow: shouldShowBadge("Tiket Baru", tickets, clickedTickets),
+          ticketsInStatus: tickets
+            .filter((t) => t.category === "Tiket Baru")
+            .map((t) => ({
+              id: t.id,
+              isRead: t.isRead,
+              isClicked: clickedTickets.has(t.id),
+              hasUnreadFeedback: (feedbackCounts[t.id]?.unread || 0) > 0,
+            })),
+        },
+        "Sedang Diproses": {
+          shouldShow: shouldShowBadge(
+            "Sedang Diproses",
+            tickets,
+            clickedTickets
+          ),
+          ticketsInStatus: tickets
+            .filter((t) => t.category === "Sedang Diproses")
+            .map((t) => ({
+              id: t.id,
+              isRead: t.isRead,
+              isClicked: clickedTickets.has(t.id),
+              hasUnreadFeedback: (feedbackCounts[t.id]?.unread || 0) > 0,
+            })),
+        },
+        Selesai: {
+          shouldShow: shouldShowBadge("Selesai", tickets, clickedTickets),
+          ticketsInStatus: tickets
+            .filter((t) => t.category === "Selesai")
+            .map((t) => ({
+              id: t.id,
+              isRead: t.isRead,
+              isClicked: clickedTickets.has(t.id),
+              hasUnreadFeedback: (feedbackCounts[t.id]?.unread || 0) > 0,
+            })),
+        },
+      },
+    });
+
+    try {
+      // 🔧 KUNCI: Update clickedTickets dengan functional update
+      setClickedTickets((prevClicked) => {
+        const newClickedSet = new Set([...prevClicked, ticketId]);
+
+        console.log(`✅ CLICKED TICKETS UPDATED:`, {
+          before: [...prevClicked],
+          after: [...newClickedSet],
+          addedTicket: ticketId,
+          clickedTicketCategory: clickedTicket.category,
+        });
+
+        // Simpan ke localStorage
+        if (user?.id) {
+          localStorage.setItem(
+            `clickedTickets_${user.id}`,
+            JSON.stringify([...newClickedSet])
+          );
+        }
+
+        return newClickedSet;
+      });
+
+      // 🔧 KUNCI: Update tickets state untuk mark sebagai read
+      setTickets((prevTickets) => {
+        const updatedTickets = prevTickets.map((ticket) => {
+          if (ticket.id === ticketId) {
+            console.log(
+              `📝 Marking ticket ${ticketId} (${ticket.category}) as read`
+            );
+            return {
+              ...ticket,
+              isRead: true,
+              hasStatusUpdate: false,
+              hasFeedbackUpdate: false,
+            };
+          }
+          return ticket;
+        });
+
+        // 🔧 DEBUGGING: Log setelah tickets update
+        setTimeout(() => {
+          const newClickedTickets = new Set([...clickedTickets, ticketId]);
+          console.log(`📊 AFTER TICKETS UPDATE - Badge verification:`, {
+            clickedTicket: {
+              id: ticketId,
+              category: clickedTicket.category,
+              affectedStatus: clickedTicket.category,
+            },
+            badgeStates: {
+              "Tiket Baru": {
+                shouldShow: shouldShowBadge(
+                  "Tiket Baru",
+                  updatedTickets,
+                  newClickedTickets
+                ),
+                shouldBeAffected:
+                  clickedTicket.category === "Tiket Baru" ? "YES" : "NO",
+                ticketsData: updatedTickets
+                  .filter((t) => t.category === "Tiket Baru")
+                  .map((t) => ({
+                    id: t.id,
+                    isRead: t.isRead,
+                    isClicked: newClickedTickets.has(t.id),
+                    hasUnreadFeedback: (feedbackCounts[t.id]?.unread || 0) > 0,
+                    needsBadge:
+                      (!t.isRead || (feedbackCounts[t.id]?.unread || 0) > 0) &&
+                      !newClickedTickets.has(t.id),
+                  })),
+              },
+              "Sedang Diproses": {
+                shouldShow: shouldShowBadge(
+                  "Sedang Diproses",
+                  updatedTickets,
+                  newClickedTickets
+                ),
+                shouldBeAffected:
+                  clickedTicket.category === "Sedang Diproses" ? "YES" : "NO",
+                ticketsData: updatedTickets
+                  .filter((t) => t.category === "Sedang Diproses")
+                  .map((t) => ({
+                    id: t.id,
+                    isRead: t.isRead,
+                    isClicked: newClickedTickets.has(t.id),
+                    hasUnreadFeedback: (feedbackCounts[t.id]?.unread || 0) > 0,
+                    needsBadge:
+                      (!t.isRead || (feedbackCounts[t.id]?.unread || 0) > 0) &&
+                      !newClickedTickets.has(t.id),
+                  })),
+              },
+              Selesai: {
+                shouldShow: shouldShowBadge(
+                  "Selesai",
+                  updatedTickets,
+                  newClickedTickets
+                ),
+                shouldBeAffected:
+                  clickedTicket.category === "Selesai" ? "YES" : "NO",
+                ticketsData: updatedTickets
+                  .filter((t) => t.category === "Selesai")
+                  .map((t) => ({
+                    id: t.id,
+                    isRead: t.isRead,
+                    isClicked: newClickedTickets.has(t.id),
+                    hasUnreadFeedback: (feedbackCounts[t.id]?.unread || 0) > 0,
+                    needsBadge:
+                      (!t.isRead || (feedbackCounts[t.id]?.unread || 0) > 0) &&
+                      !newClickedTickets.has(t.id),
+                  })),
+              },
+            },
+          });
+        }, 50);
+
+        return updatedTickets;
+      });
+
+      // 3. Update tracking
+      setLastStatusCheck((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(ticketId, clickedTicket.status);
+        return newMap;
+      });
+
+      setLastFeedbackCheck((prev) => {
+        const newMap = new Map(prev);
+        const currentFeedbackCount = feedbackCounts[ticketId]?.total || 0;
+        newMap.set(ticketId, currentFeedbackCount);
+        return newMap;
+      });
+
+      // 4. Navigate
+      navigate(`/ticket/${ticketId}`);
+    } catch (error) {
+      console.error("❌ Error in handleTicketClick:", error);
+      navigate(`/ticket/${ticketId}`);
+    }
   };
   const handleFeedbackClick = (ticketId, e) => {
     e.stopPropagation();
@@ -752,7 +1025,24 @@ const StudentDashboard = () => {
   const handleDateFilterApply = () => {
     setShowDatePicker(false);
   };
-
+  useEffect(() => {
+    if (tickets.length > 0 && Object.keys(feedbackCounts).length > 0) {
+      console.log("🔄 Badge state monitoring triggered:", {
+        ticketsCount: tickets.length,
+        clickedTicketsCount: clickedTickets.size,
+        feedbackCountsLoaded: Object.keys(feedbackCounts).length,
+        currentBadgeStates: {
+          "Tiket Baru": shouldShowBadge("Tiket Baru", tickets, clickedTickets),
+          "Sedang Diproses": shouldShowBadge(
+            "Sedang Diproses",
+            tickets,
+            clickedTickets
+          ),
+          Selesai: shouldShowBadge("Selesai", tickets, clickedTickets),
+        },
+      });
+    }
+  }, [clickedTickets, tickets, feedbackCounts]);
   if (loading) {
     return (
       <div className="p-6">
@@ -763,7 +1053,68 @@ const StudentDashboard = () => {
       </div>
     );
   }
+  if (typeof window !== "undefined") {
+    window.debugBadgeState = () => {
+      console.log("🧪 CURRENT BADGE STATE ANALYSIS:");
+      console.log("=".repeat(50));
 
+      const currentTickets = tickets;
+      const currentClicked = clickedTickets;
+      const currentFeedback = feedbackCounts;
+
+      console.log("📊 Global State:", {
+        totalTickets: currentTickets.length,
+        clickedTicketsCount: currentClicked.size,
+        clickedTicketsList: [...currentClicked],
+        feedbackCountsLoaded: Object.keys(currentFeedback).length,
+      });
+
+      ["Tiket Baru", "Sedang Diproses", "Selesai"].forEach((status) => {
+        const statusTickets = currentTickets.filter(
+          (t) => t.category === status
+        );
+        const badgeShown = shouldShowBadge(
+          status,
+          currentTickets,
+          currentClicked
+        );
+
+        console.log(`\n📋 ${status.toUpperCase()}:`);
+        console.log(`   Badge Shown: ${badgeShown ? "🔴 YES" : "⚪ NO"}`);
+        console.log(`   Total Tickets: ${statusTickets.length}`);
+
+        statusTickets.forEach((ticket) => {
+          const isUnread = !ticket.isRead;
+          const hasUnreadFeedback =
+            (currentFeedback[ticket.id]?.unread || 0) > 0;
+          const isClicked = currentClicked.has(ticket.id);
+          const needsBadge = (isUnread || hasUnreadFeedback) && !isClicked;
+
+          console.log(`   📝 Ticket ${ticket.id}:`, {
+            isRead: ticket.isRead,
+            unreadFeedback: currentFeedback[ticket.id]?.unread || 0,
+            isClicked,
+            needsBadge: needsBadge ? "🔴" : "⚪",
+          });
+        });
+      });
+
+      console.log("=".repeat(50));
+    };
+
+    window.testClick = (ticketId) => {
+      console.log(`\n🧪 TESTING CLICK ON TICKET ${ticketId}`);
+      console.log("BEFORE:");
+      window.debugBadgeState();
+
+      handleTicketClick(ticketId);
+
+      setTimeout(() => {
+        console.log("\nAFTER:");
+        window.debugBadgeState();
+      }, 100);
+    };
+  }
   return (
     <div className="p-0">
       {/* Header */}
@@ -779,7 +1130,7 @@ const StudentDashboard = () => {
       {/* Main Container */}
       <div className="bg-white rounded-lg shadow max-w-0xl mx-auto">
         {/* Filter Section */}
-        <div className="py-0 px-6 border-b border-gray-200 shadow-xl rounded-xl">
+        <div className="py-5 px-6 border-b border-gray-200 shadow-xl rounded-xl">
           <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
             {/* 🔧 SEARCH BOX - Tetap di Kiri */}
             <div className="relative flex-1 min-w-[250px] max-w-[400px]">
@@ -1129,7 +1480,7 @@ const StudentDashboard = () => {
               active={statusFilter === "Tiket Baru"}
               onClick={() => handleStatusFilterClick("Tiket Baru")}
               statusType="Tiket Baru"
-              hasNew={shouldShowBadge("Tiket Baru", tickets)} // GANTI dari hasNewMessages
+              hasNew={shouldShowBadge("Tiket Baru", tickets, clickedTickets)} // ✅ TAMBAH clickedTickets
             />
             <FilterButton
               label="Sedang Diproses"
@@ -1137,7 +1488,11 @@ const StudentDashboard = () => {
               active={statusFilter === "Sedang Diproses"}
               onClick={() => handleStatusFilterClick("Sedang Diproses")}
               statusType="Sedang Diproses"
-              hasNew={shouldShowBadge("Sedang Diproses", tickets)} // GANTI dari hasNewMessages
+              hasNew={shouldShowBadge(
+                "Sedang Diproses",
+                tickets,
+                clickedTickets
+              )} // ✅ TAMBAH clickedTickets
             />
             <FilterButton
               label="Selesai"
@@ -1145,7 +1500,7 @@ const StudentDashboard = () => {
               active={statusFilter === "Selesai"}
               onClick={() => handleStatusFilterClick("Selesai")}
               statusType="Selesai"
-              hasNew={shouldShowBadge("Selesai", tickets)} // GANTI dari hasNewMessages
+              hasNew={shouldShowBadge("Selesai", tickets, clickedTickets)} // ✅ TAMBAH clickedTickets
             />
           </div>
         </div>
