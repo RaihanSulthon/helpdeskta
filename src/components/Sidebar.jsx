@@ -119,7 +119,7 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
 
   const TicketIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 1728 1728" fill="currentColor">
-      <path d="m992 420l316 316l-572 572l-316-316zm-211 979l618-618q19-19 19-45t-19-45l-362-362q-18-18-45-18t-45 18L329 947q-19 19-19 45t19 45l362 362q18 18 45 18t45-18m889-637l-907 908q-37 37-90.5 37t-90.5-37l-126-126q56-56 56-136t-56-136t-136-56t-136 56L59 1146q-37-37-37-90.5T59 965L966 59q37-37 90.5-37t90.5 37l125 125q-56 56-56 136t56 136t136 56t136-56l126 125q37 37 37 90.5t-37 90.5"/>
+      <path d="m992 420l316 316l-572 572l-316-316zm-211 979l618-618q19-19 19-45t-19-45l-362-362q-18-18-45-18t-45 18L329 947q-19 19-19 45t19 45l362 362q18 18 45 18t45-18m889-637l-907 908q-37 37-90.5 37t-90.5-37l-126-126q56-56 56-136t-56-136t-136-56t-136 56L59 1146q-37-37-37-90.5T59 965L966 59q37-37 90.5-37t90.5 37l125 125q-56 56-56 136t56 136t136 56t136-56l126 125q37 37 37 90.5t-37 90.5" />
     </svg>
   );
 
@@ -127,8 +127,8 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
       <g className="user-outline">
         <g fillRule="evenodd" className="Vector" clipRule="evenodd">
-          <path d="M12 10a3 3 0 1 0 0-6a3 3 0 0 0 0 6m0 2a5 5 0 1 0 0-10a5 5 0 0 0 0 10m-7.361 3.448C5.784 13.93 7.509 13 9.714 13h4.572c2.205 0 3.93.93 5.075 2.448C20.482 16.935 21 18.916 21 21a1 1 0 1 1-2 0c0-1.782-.446-3.3-1.235-4.348C17 15.638 15.867 15 14.285 15h-4.57c-1.582 0-2.715.638-3.48 1.652C5.445 17.7 5 19.218 5 21a1 1 0 1 1-2 0c0-2.084.518-4.065 1.639-5.552"/>
-          <path d="M3 21a1 1 0 0 1 1-1h15.962a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1"/>
+          <path d="M12 10a3 3 0 1 0 0-6a3 3 0 0 0 0 6m0 2a5 5 0 1 0 0-10a5 5 0 0 0 0 10m-7.361 3.448C5.784 13.93 7.509 13 9.714 13h4.572c2.205 0 3.93.93 5.075 2.448C20.482 16.935 21 18.916 21 21a1 1 0 1 1-2 0c0-1.782-.446-3.3-1.235-4.348C17 15.638 15.867 15 14.285 15h-4.57c-1.582 0-2.715.638-3.48 1.652C5.445 17.7 5 19.218 5 21a1 1 0 1 1-2 0c0-2.084.518-4.065 1.639-5.552" />
+          <path d="M3 21a1 1 0 0 1 1-1h15.962a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1" />
         </g>
       </g>
     </svg>
@@ -137,8 +137,11 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
   const QuestionIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
       <g fill="none">
-        <path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"/>
-        <path fill="currentColor" d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2m0 2a8 8 0 1 0 0 16a8 8 0 0 0 0-16m0 12a1 1 0 1 1 0 2a1 1 0 0 1 0-2m0-9.5a3.625 3.625 0 0 1 1.348 6.99a.8.8 0 0 0-.305.201c-.044.05-.051.114-.05.18L13 14a1 1 0 0 1-1.993.117L11 14v-.25c0-1.153.93-1.845 1.604-2.116a1.626 1.626 0 1 0-2.229-1.509a1 1 0 1 1-2 0A3.625 3.625 0 0 1 12 6.5"/>
+        <path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z" />
+        <path
+          fill="currentColor"
+          d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2m0 2a8 8 0 1 0 0 16a8 8 0 0 0 0-16m0 12a1 1 0 1 1 0 2a1 1 0 0 1 0-2m0-9.5a3.625 3.625 0 0 1 1.348 6.99a.8.8 0 0 0-.305.201c-.044.05-.051.114-.05.18L13 14a1 1 0 0 1-1.993.117L11 14v-.25c0-1.153.93-1.845 1.604-2.116a1.626 1.626 0 1 0-2.229-1.509a1 1 0 1 1-2 0A3.625 3.625 0 0 1 12 6.5"
+        />
       </g>
     </svg>
   );
@@ -177,22 +180,40 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
   }
 
   return (
-    <div 
+    <div
       className={`bg-white h-full shadow-lg flex flex-col transition-all duration-300 ease-in-out overflow-y-auto rounded-tr-3xl ${
-        isExpanded ? 'w-80' : 'w-16'
+        isExpanded ? "w-80" : "w-16"
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Profile Section - Paling Atas */}
-      <div className={`${isExpanded ? 'p-6' : 'p-2'} border-b border-gray-200 bg-gray-50 transition-all duration-300`}>
+      <div
+        className={`${
+          isExpanded ? "p-6" : "p-2"
+        } border-b border-gray-200 bg-gray-50 transition-all duration-300`}
+      >
         <div className="flex flex-col items-center text-center">
           {/* Profile Picture */}
-          <div className={`${isExpanded ? 'w-16 h-16' : 'w-10 h-10'} bg-gray-300 rounded-full ${isExpanded ? 'mb-3' : 'mb-1'} flex items-center justify-center transition-all duration-300`}>
-            <span className={`${isExpanded ? 'text-lg' : 'text-sm'} font-bold text-gray-600 transition-all duration-300`}>
-              {user?.name ? user.name.charAt(0).toUpperCase() : 
-              user?.displayName ? user.displayName.charAt(0).toUpperCase() : 
-              user?.email ? user.email.charAt(0).toUpperCase() : "U"}
+          <div
+            className={`${
+              isExpanded ? "w-16 h-16" : "w-10 h-10"
+            } bg-gray-300 rounded-full ${
+              isExpanded ? "mb-3" : "mb-1"
+            } flex items-center justify-center transition-all duration-300`}
+          >
+            <span
+              className={`${
+                isExpanded ? "text-lg" : "text-sm"
+              } font-bold text-gray-600 transition-all duration-300`}
+            >
+              {user?.name
+                ? user.name.charAt(0).toUpperCase()
+                : user?.displayName
+                ? user.displayName.charAt(0).toUpperCase()
+                : user?.email
+                ? user.email.charAt(0).toUpperCase()
+                : "U"}
             </span>
           </div>
 
@@ -200,7 +221,10 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
           {isExpanded && (
             <div className="transition-opacity duration-300">
               <div className="text-gray-800 font-bold text-sm mb-1">
-                {user?.name || user?.displayName || user?.email?.split('@')[0] || "User"}
+                {user?.name ||
+                  user?.displayName ||
+                  user?.email?.split("@")[0] ||
+                  "User"}
               </div>
               <div className="text-xs text-red-800 font-bold mb-2 bg-red-100 px-2 py-1 rounded">
                 {userRole?.toUpperCase()}
@@ -212,10 +236,18 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
 
       {/* Sampaikan Button - STUDENT ONLY */}
       {userRole === "student" && (
-        <div className={`${isExpanded ? 'p-6' : 'p-2'} transition-all duration-300`}>
+        <div
+          className={`${
+            isExpanded ? "p-6" : "p-2"
+          } transition-all duration-300`}
+        >
           <button
             onClick={handleComposeClick}
-            className={`w-full rounded-full ${isExpanded ? 'px-6 py-3' : 'p-3'} flex items-center ${isExpanded ? 'justify-center space-x-3' : 'justify-center'} transition-all duration-300 shadow-md text-base ${
+            className={`w-full rounded-full ${
+              isExpanded ? "px-6 py-3" : "p-3"
+            } flex items-center ${
+              isExpanded ? "justify-center space-x-3" : "justify-center"
+            } transition-all duration-300 shadow-md text-base ${
               activeMenuItem === "sampaikan"
                 ? "bg-red-100 text-white"
                 : "bg-red-100 text-red-600 hover:bg-red-200"
@@ -223,7 +255,7 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
             title={!isExpanded ? "Sampaikan" : ""}
           >
             <ComposeIcon />
-            {isExpanded && <span className="font-medium">Sampaikan</span>}
+            {isExpanded && <span className="font-medium">Ajukan Tiket</span>}
           </button>
         </div>
       )}
@@ -244,22 +276,50 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
             {/* Tickets Menu - Available for both roles */}
             <button
               onClick={() => handleMenuClick("tickets")}
-              className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-full' : 'justify-center px-5 py-2 rounded-full'} transition-all duration-300 mt-4 ${
+              className={`w-full flex items-center ${
+                isExpanded
+                  ? "justify-between px-4 py-3 rounded-full"
+                  : "justify-center px-5 py-2 rounded-full"
+              } transition-all duration-300 mt-4 ${
                 activeMenuItem === "tickets"
-                  ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-lg" : "bg-red-100 text-gray-800"}`
-                  : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
+                  ? `${
+                      isExpanded
+                        ? "bg-red-100 text-gray-800 shadow-lg"
+                        : "bg-red-100 text-gray-800"
+                    }`
+                  : `${
+                      isExpanded
+                        ? "bg-white hover:bg-gray-50"
+                        : "bg-white hover:bg-gray-50"
+                    }`
               }`}
-              title={!isExpanded ? (userRole === "admin" ? "Kelola Tiket" : "My Ticket") : ""}
+              title={
+                !isExpanded
+                  ? userRole === "admin"
+                    ? "Kelola Tiket"
+                    : "My Ticket"
+                  : ""
+              }
             >
               {isExpanded ? (
                 <>
                   <div className="flex items-center space-x-3">
-                    <div className={`${activeMenuItem === "tickets" ? "text-gray-800" : "text-gray-600"} flex-shrink-0`}>
+                    <div
+                      className={`${
+                        activeMenuItem === "tickets"
+                          ? "text-gray-800"
+                          : "text-gray-600"
+                      } flex-shrink-0`}
+                    >
                       <TicketIcon />
                     </div>
-                    <span className={`text-base font-medium ${
-                      activeMenuItem === "tickets" ? "text-gray-800" : "text-gray-800"
-                    }`}>
+                    <span
+                      className={`text-base font-medium ${
+                        activeMenuItem === "tickets"
+                          ? "text-gray-800"
+                          : "text-gray-800"
+                      }`}
+                    >
                       {userRole === "admin" ? "Kelola Tiket" : "My Ticket"}
                     </span>
                   </div>
@@ -267,16 +327,26 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                     {loadingCount ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                     ) : (
-                      <span className={`font-semibold text-sm ${
-                        activeMenuItem === "tickets" ? "text-gray-800" : "text-gray-600"
-                      }`}>
+                      <span
+                        className={`font-semibold text-sm ${
+                          activeMenuItem === "tickets"
+                            ? "text-gray-800"
+                            : "text-gray-600"
+                        }`}
+                      >
                         {ticketCount.toLocaleString()}
                       </span>
                     )}
                   </div>
                 </>
               ) : (
-                <div className={`${activeMenuItem === "tickets" ? "text-gray-800" : "text-gray-600"}`}>
+                <div
+                  className={`${
+                    activeMenuItem === "tickets"
+                      ? "text-gray-800"
+                      : "text-gray-600"
+                  }`}
+                >
                   <TicketIcon />
                 </div>
               )}
@@ -331,26 +401,54 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                 {/* Users Menu - ADMIN ONLY */}
                 <button
                   onClick={() => handleMenuClick("users")}
-                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-full' : 'justify-center px-5 py-2 rounded-full'} transition-all duration-300 mt-4 ${
+                  className={`w-full flex items-center ${
+                    isExpanded
+                      ? "justify-between px-4 py-3 rounded-full"
+                      : "justify-center px-5 py-2 rounded-full"
+                  } transition-all duration-300 mt-4 ${
                     activeMenuItem === "users"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-lg" : "bg-red-100 text-gray-800"}`
-                      : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
+                      ? `${
+                          isExpanded
+                            ? "bg-red-100 text-gray-800 shadow-lg"
+                            : "bg-red-100 text-gray-800"
+                        }`
+                      : `${
+                          isExpanded
+                            ? "bg-white hover:bg-gray-50"
+                            : "bg-white hover:bg-gray-50"
+                        }`
                   }`}
                   title={!isExpanded ? "Data Mahasiswa" : ""}
                 >
                   {isExpanded ? (
                     <div className="flex items-center space-x-3">
-                      <div className={`${activeMenuItem === "users" ? "text-gray-800" : "text-gray-600"} flex-shrink-0`}>
+                      <div
+                        className={`${
+                          activeMenuItem === "users"
+                            ? "text-gray-800"
+                            : "text-gray-600"
+                        } flex-shrink-0`}
+                      >
                         <UsersIcon />
                       </div>
-                      <span className={`text-base font-medium ${
-                        activeMenuItem === "users" ? "text-gray-800" : "text-gray-800"
-                      }`}>
+                      <span
+                        className={`text-base font-medium ${
+                          activeMenuItem === "users"
+                            ? "text-gray-800"
+                            : "text-gray-800"
+                        }`}
+                      >
                         Data Mahasiswa
                       </span>
                     </div>
                   ) : (
-                    <div className={`${activeMenuItem === "users" ? "text-gray-800" : "text-gray-600"}`}>
+                    <div
+                      className={`${
+                        activeMenuItem === "users"
+                          ? "text-gray-800"
+                          : "text-gray-600"
+                      }`}
+                    >
                       <UsersIcon />
                     </div>
                   )}
@@ -359,26 +457,54 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                 {/* AskedUs Menu - ADMIN */}
                 <button
                   onClick={() => handleMenuClick("askedus")}
-                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-full' : 'justify-center px-5 py-2 rounded-full'} transition-all duration-300 mt-4 ${
+                  className={`w-full flex items-center ${
+                    isExpanded
+                      ? "justify-between px-4 py-3 rounded-full"
+                      : "justify-center px-5 py-2 rounded-full"
+                  } transition-all duration-300 mt-4 ${
                     activeMenuItem === "askedus"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-lg" : "bg-red-100 text-gray-800"}`
-                      : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
+                      ? `${
+                          isExpanded
+                            ? "bg-red-100 text-gray-800 shadow-lg"
+                            : "bg-red-100 text-gray-800"
+                        }`
+                      : `${
+                          isExpanded
+                            ? "bg-white hover:bg-gray-50"
+                            : "bg-white hover:bg-gray-50"
+                        }`
                   }`}
                   title={!isExpanded ? "Kelola Asked Us (FAQ)" : ""}
                 >
                   {isExpanded ? (
                     <div className="flex items-center space-x-3">
-                      <div className={`${activeMenuItem === "askedus" ? "text-gray-800" : "text-gray-600"} flex-shrink-0`}>
+                      <div
+                        className={`${
+                          activeMenuItem === "askedus"
+                            ? "text-gray-800"
+                            : "text-gray-600"
+                        } flex-shrink-0`}
+                      >
                         <QuestionIcon />
                       </div>
-                      <span className={`text-base font-medium ${
-                        activeMenuItem === "askedus" ? "text-gray-800" : "text-gray-800"
-                      }`}>
+                      <span
+                        className={`text-base font-medium ${
+                          activeMenuItem === "askedus"
+                            ? "text-gray-800"
+                            : "text-gray-800"
+                        }`}
+                      >
                         Kelola Asked Us (FAQ)
                       </span>
                     </div>
                   ) : (
-                    <div className={`${activeMenuItem === "askedus" ? "text-gray-800" : "text-gray-600"}`}>
+                    <div
+                      className={`${
+                        activeMenuItem === "askedus"
+                          ? "text-gray-800"
+                          : "text-gray-600"
+                      }`}
+                    >
                       <QuestionIcon />
                     </div>
                   )}
@@ -387,26 +513,54 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                 {/* Email Management Menu - ADMIN ONLY */}
                 <button
                   onClick={() => handleMenuClick("emails")}
-                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-full' : 'justify-center px-5 py-2 rounded-full'} transition-all duration-300 mt-4 ${
+                  className={`w-full flex items-center ${
+                    isExpanded
+                      ? "justify-between px-4 py-3 rounded-full"
+                      : "justify-center px-5 py-2 rounded-full"
+                  } transition-all duration-300 mt-4 ${
                     activeMenuItem === "emails"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-lg" : "bg-red-100 text-gray-800"}`
-                      : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
+                      ? `${
+                          isExpanded
+                            ? "bg-red-100 text-gray-800 shadow-lg"
+                            : "bg-red-100 text-gray-800"
+                        }`
+                      : `${
+                          isExpanded
+                            ? "bg-white hover:bg-gray-50"
+                            : "bg-white hover:bg-gray-50"
+                        }`
                   }`}
                   title={!isExpanded ? "Email Management" : ""}
                 >
                   {isExpanded ? (
                     <div className="flex items-center space-x-3">
-                      <div className={`${activeMenuItem === "emails" ? "text-gray-800" : "text-gray-600"} flex-shrink-0`}>
+                      <div
+                        className={`${
+                          activeMenuItem === "emails"
+                            ? "text-gray-800"
+                            : "text-gray-600"
+                        } flex-shrink-0`}
+                      >
                         <EmailIcon />
                       </div>
-                      <span className={`text-base font-medium ${
-                        activeMenuItem === "emails" ? "text-gray-800" : "text-gray-600"
-                      }`}>
+                      <span
+                        className={`text-base font-medium ${
+                          activeMenuItem === "emails"
+                            ? "text-gray-800"
+                            : "text-gray-600"
+                        }`}
+                      >
                         Email Management
                       </span>
                     </div>
                   ) : (
-                    <div className={`${activeMenuItem === "emails" ? "text-gray-800" : "text-gray-600"}`}>
+                    <div
+                      className={`${
+                        activeMenuItem === "emails"
+                          ? "text-gray-800"
+                          : "text-gray-600"
+                      }`}
+                    >
                       <EmailIcon />
                     </div>
                   )}
@@ -420,26 +574,54 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                 {/* AskedUs Menu - STUDENT */}
                 <button
                   onClick={() => handleMenuClick("askedus")}
-                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-full' : 'justify-center px-5 py-2 rounded-full'} transition-all duration-300 mt-4 ${
+                  className={`w-full flex items-center ${
+                    isExpanded
+                      ? "justify-between px-4 py-3 rounded-full"
+                      : "justify-center px-5 py-2 rounded-full"
+                  } transition-all duration-300 mt-4 ${
                     activeMenuItem === "askedus"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-lg" : "bg-red-100 text-gray-800"}`
-                      : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
+                      ? `${
+                          isExpanded
+                            ? "bg-red-100 text-gray-800 shadow-lg"
+                            : "bg-red-100 text-gray-800"
+                        }`
+                      : `${
+                          isExpanded
+                            ? "bg-white hover:bg-gray-50"
+                            : "bg-white hover:bg-gray-50"
+                        }`
                   }`}
                   title={!isExpanded ? "AskedUs" : ""}
                 >
                   {isExpanded ? (
                     <div className="flex items-center space-x-3">
-                      <div className={`${activeMenuItem === "askedus" ? "text-gray-800" : "text-gray-600"} flex-shrink-0`}>
+                      <div
+                        className={`${
+                          activeMenuItem === "askedus"
+                            ? "text-gray-800"
+                            : "text-gray-600"
+                        } flex-shrink-0`}
+                      >
                         <QuestionIcon />
                       </div>
-                      <span className={`text-base font-medium ${
-                        activeMenuItem === "askedus" ? "text-gray-800" : "text-gray-600"
-                      }`}>
+                      <span
+                        className={`text-base font-medium ${
+                          activeMenuItem === "askedus"
+                            ? "text-gray-800"
+                            : "text-gray-600"
+                        }`}
+                      >
                         AskedUs
                       </span>
                     </div>
                   ) : (
-                    <div className={`${activeMenuItem === "askedus" ? "text-gray-800" : "text-gray-600"}`}>
+                    <div
+                      className={`${
+                        activeMenuItem === "askedus"
+                          ? "text-gray-800"
+                          : "text-gray-600"
+                      }`}
+                    >
                       <QuestionIcon />
                     </div>
                   )}

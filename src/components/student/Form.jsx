@@ -44,9 +44,9 @@ function Form() {
 
   useEffect(() => {
     if (user?.email && !formData.anonymous) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        email: user.email
+        email: user.email,
       }));
     }
   }, [user]);
@@ -135,7 +135,7 @@ function Form() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-  
+
     if (type === "checkbox") {
       setFormData({
         ...formData,
@@ -146,12 +146,12 @@ function Form() {
       if (name === "email" && user?.email && !formData.anonymous) {
         return; // Tidak mengizinkan perubahan email
       }
-  
+
       setFormData({
         ...formData,
         [name]: value,
       });
-  
+
       // Reset sub-kategori jika kategori berubah
       if (name === "kategori") {
         setFormData((prev) => ({
@@ -552,7 +552,9 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan email Anda"
                 disabled={formData.anonymous || !!user?.email} // Disabled
-                className={`mt-1 ${(formData.anonymous || !!user?.email) ? 'bg-gray-100' : ''}`}
+                className={`mt-1 ${
+                  formData.anonymous || !!user?.email ? "bg-gray-100" : ""
+                }`}
                 required={!formData.anonymous}
               />
               {user?.email && !formData.anonymous}

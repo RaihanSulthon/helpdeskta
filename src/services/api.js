@@ -583,7 +583,7 @@ export const submitTicketAPI = async (formData) => {
       deskripsi: formData.deskripsi.trim(),
       category_id: parseInt(formData.category_id),
       sub_category_id: parseInt(formData.sub_category_id),
-      anonymous: Boolean(formData.anonymous),
+      anonymous: formData.anonymous ? "1" : "0",
     };
 
     // Add identity fields - send even if empty for anonymous users
