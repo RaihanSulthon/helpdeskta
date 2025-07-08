@@ -1,67 +1,118 @@
-// pages/student/TicketDetail.jsx - Updated version matching API response structure
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { getTicketDetailAPI } from "../services/api";
+// pages/student/TicketDetail.jsx - Updated to match Figma design
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  getTicketDetailAPI,
+  updateTicketStatusAPI,
+  deleteTicketAPI,
+} from '../services/api';
+import Navigation from '../components/Navigation';
+import { ToastContainer } from '../components/Toast';
 
 const DetailTicket = () => {
   const navigate = useNavigate();
   const { ticketId } = useParams();
   const [ticketData, setTicketData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
+  const [newFeedbackCount, setNewFeedbackCount] = useState(0);
+  const [totalFeedbackCount, setTotalFeedbackCount] = useState(0);
+  const [toasts, setToasts] = useState([]);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const userRole = localStorage.getItem('userRole');
+  const isAdmin = userRole === 'admin';
 
   useEffect(() => {
     if (ticketId) {
       loadTicketDetail();
-    } else {
-      setError("ID tiket tidak valid");
-      setLoading(false);
     }
-  }, [ticketId]);
+  }, [ticketId, ticketData?.unread, ticketData?.read]);
+
+  const addToast = (message, type = 'info', duration = 3000) => {
+    const id = Date.now() + Math.random();
+    const newToast = { id, message, type, duration };
+    setToasts((prev) => [...prev, newToast]);
+  };
+
+  const handleDeleteTicket = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteTicket = async () => {
+    if (!ticketData?.id || isDeleting) return;
+    try {
+      setIsDeleting(true);
+      console.log('Deleting ticket:', ticketData.id);
+      // Call the delete API
+      const result = await deleteTicketAPI(ticketData.id);
+      console.log('Delete result:', result);
+      if (result.success || result.status === 'success' || result) {
+        // Show success toast
+        addToast(
+          `Tiket #${ticketData.id} - "${ticketData.title}" berhasil dihapus`,
+          'success',
+          4000
+        );
+        // Navigate back to dashboard after successful deletion
+        setTimeout(() => {
+          handleBack();
+        }, 1500);
+      } else {
+        throw new Error('Respons API tidak valid');
+      }
+    } catch (error) {
+      console.error('Error deleting ticket:', error);
+      addToast(
+        `Gagal menghapus tiket: ${error.message || 'Terjadi kesalahan tidak diketahui'}`,
+        'error',
+        5000
+      );
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
+  };
+
+  const cancelDeleteTicket = () => {
+    if (!isDeleting) {
+      setShowDeleteModal(false);
+    }
+  };
+
+  const removeToast = (id) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
 
   const loadTicketDetail = async () => {
     try {
       setLoading(true);
-      setError("");
-
-      console.log("Loading ticket detail for ID:", ticketId);
+      setError('');
       const data = await getTicketDetailAPI(ticketId);
-      console.log("Received ticket data:", data);
-
-      // Transform API data to match component expectations
-      // Handle the response structure properly
-      console.log("Raw API data structure:", JSON.stringify(data, null, 2));
+      console.log('Received ticket data:', data);
 
       const transformedData = {
-        id: data.id || "Tidak tersedia",
-        title: data.judul || data.title || "Judul tidak tersedia",
+        id: data.id || 'Tidak tersedia',
+        title: data.judul || data.title || 'Judul tidak tersedia',
         submitter:
           data.anonymous === true
-            ? "Anonim"
-            : data.nama || data.name || "Tidak diketahui",
+            ? 'Anonim'
+            : data.nama || data.name || 'Tidak diketahui',
         email:
           data.anonymous === true
-            ? "anonim@email.com"
-            : data.email || "tidak diketahui",
+            ? 'anonim@email.com'
+            : data.email || 'tidak diketahui',
         date: formatDate(data.created_at),
         status: mapStatus(data.status),
         lastUpdate: formatDate(data.updated_at || data.created_at),
         description:
-          data.deskripsi || data.description || "Deskripsi tidak tersedia",
-        attachment:
-          data.attachments &&
-          Array.isArray(data.attachments) &&
-          data.attachments.length > 0,
-        attachmentUrl:
-          data.attachments &&
-          Array.isArray(data.attachments) &&
-          data.attachments.length > 0
-            ? data.attachments[0]
-            : data.attachment_url || null,
-        category: data.category?.name || "Umum",
-        subCategory: data.sub_category?.name || "Umum",
+          data.deskripsi || data.description || 'Deskripsi tidak tersedia',
+        attachments: data.attachments || [],
+        category: data.category?.name || 'Umum',
+        subCategory: data.sub_category?.name || 'Umum',
         rawStatus: data.status,
-        priority: data.priority || "medium",
+        priority: data.priority || 'medium',
         assignedTo: data.assigned_to || null,
         readByAdmin: data.read_by_admin === true || data.read_by_admin === 1,
         readByDisposisi:
@@ -69,20 +120,21 @@ const DetailTicket = () => {
         readByStudent:
           data.read_by_student === true || data.read_by_student === 1,
         // User data fields from API response
-        nim: data.nim || "",
-        prodi: data.prodi || "",
-        semester: data.semester ? data.semester.toString() : "",
-        noHp: data.no_hp || "",
+        nim: data.nim || '',
+        prodi: data.prodi || '',
+        semester: data.semester ? data.semester.toString() : '',
+        noHp: data.no_hp || '',
         anonymous: data.anonymous === true || data.anonymous === 1,
         userId: data.user_id,
+        unread: data.unread_chat_count,
+        read: data.chat_count,
       };
-
-      console.log("Transformed data:", transformedData);
-
       setTicketData(transformedData);
+      setTotalFeedbackCount(transformedData.read || 0);
+      setNewFeedbackCount(transformedData.unread || 0);
     } catch (error) {
-      console.error("Error loading ticket detail:", error);
-      setError(error.message || "Gagal memuat detail tiket");
+      console.error('Error loading ticket detail:', error);
+      setError(error.message || 'Gagal memuat detail tiket');
     } finally {
       setLoading(false);
     }
@@ -90,118 +142,255 @@ const DetailTicket = () => {
 
   // Helper function to format date
   const formatDate = (dateString) => {
-    if (!dateString) return "Tanggal tidak tersedia";
-
+    if (!dateString) return 'Tanggal tidak tersedia';
     try {
       const date = new Date(dateString);
       const now = new Date();
-      const diffTime = Math.abs(now - date);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 1)
-        return `Kemarin, ${date.toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`;
-      if (diffDays === 0)
-        return `Hari ini, ${date.toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`;
-      return (
-        date.toLocaleDateString("id-ID", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }) +
-        `, ${date.toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`
+      // Reset time to 00:00:00 for accurate day comparison
+      const dateOnly = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
       );
+      const nowOnly = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+      const diffTime = nowOnly.getTime() - dateOnly.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      // Format full date
+      const fullDate = date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+      // Format time
+      const timeString = date.toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      if (diffDays === 0) {
+        return `${fullDate}, ${timeString} (Hari ini)`;
+      } else if (diffDays === 1) {
+        return `${fullDate}, ${timeString} (Kemarin)`;
+      } else {
+        return `${fullDate}, ${timeString}`;
+      }
     } catch (error) {
-      console.error("Date formatting error:", error);
-      return "Tanggal tidak valid";
+      console.error('Date formatting error:', error);
+      return 'Tanggal tidak valid';
     }
   };
 
   // Helper function to map API status
   const mapStatus = (status) => {
-    if (!status) return "TAK";
-
+    if (!status) return 'Baru';
     switch (status.toLowerCase()) {
-      case "pending":
-      case "new":
-      case "open":
-        return "TAK";
-      case "in_progress":
-      case "processing":
-      case "assigned":
-        return "PROSES";
-      case "completed":
-      case "resolved":
-      case "closed":
-        return "SELESAI";
+      case 'pending':
+      case 'new':
+      case 'open':
+        return 'Baru';
+      case 'in_progress':
+      case 'processing':
+      case 'assigned':
+        return 'Diproses';
+      case 'completed':
+      case 'resolved':
+      case 'closed':
+        return 'Selesai';
       default:
-        return "TAK";
+        return 'Baru';
     }
   };
 
   const handleBack = () => {
-    const userRole = localStorage.getItem("userRole") || "student";
-    if (userRole === "admin") {
-      navigate("/admin/tickets");
+    const userRole = localStorage.getItem('userRole') || 'student';
+    if (userRole === 'admin') {
+      navigate('/admin/tickets');
     } else {
-      navigate("/student/tickets");
+      navigate('/student/tickets');
     }
   };
 
-  const handleFeedback = () => {
+  const handleUpdateStatus = async (newStatus) => {
+    if (!ticketData?.id || isUpdatingStatus) return;
+    try {
+      setIsUpdatingStatus(true);
+      console.log(`Updating ticket ${ticketData.id} status to:`, newStatus);
+      // Call API to update status
+      await updateTicketStatusAPI(ticketData.id, newStatus);
+      // Update local state
+      setTicketData((prev) => ({
+        ...prev,
+        status: newStatus,
+        rawStatus: newStatus,
+      }));
+      // Show success toast
+      const statusMessage =
+        newStatus === 'in_progress' ? 'Diproses' : 'Selesai';
+      addToast(
+        `Status tiket berhasil diubah menjadi "${statusMessage}"`,
+        'success',
+        4000
+      );
+      // Reload ticket detail to get fresh data
+      setTimeout(() => {
+        loadTicketDetail();
+      }, 1000);
+    } catch (error) {
+      console.error('Error updating ticket status:', error);
+      addToast('Gagal mengubah status tiket: ' + error.message, 'error', 5000);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  const renderStatusButton = () => {
+    if (!ticketData) return null;
+    const currentStatus = ticketData.rawStatus || ticketData.status;
+    // Jika status saat ini adalah 'in_progress' atau 'diproses', tampilkan button "Tandai Selesai"
+    if (
+      currentStatus === 'in_progress' ||
+      currentStatus === 'processing' ||
+      currentStatus === 'assigned'
+    ) {
+      return (
+        <button
+          onClick={() => handleUpdateStatus('closed')}
+          disabled={isUpdatingStatus}
+          className={`flex items-center gap-2 px-4 py-2 hover:scale-105 transition-all duration-300 border border-gray-500 rounded-md shadow-xl text-sm font-medium ${
+            isUpdatingStatus
+              ? 'bg-gray-400 cursor-not-allowed opacity-50'
+              : 'bg-green-500 hover:bg-green-600 text-white'
+          }`}
+        >
+          {isUpdatingStatus ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <span>Mengubah...</span>
+            </>
+          ) : (
+            <>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M10 0.75C12.6581 0.75 15.053 1.88432 16.7432 3.69238C13.6407 6.0346 11.448 8.70968 10.2109 10.4375C9.55016 9.6939 8.67362 8.83111 7.65723 8.13965L7.375 7.95508L6.72559 7.54492L6.0918 7.14355L5.69141 7.77734L4.86914 9.07812L4.4668 9.71289L5.10254 10.1133L5.75293 10.5225V10.5234C6.64925 11.0906 7.46809 11.9096 8.07617 12.6133C8.66489 13.2946 9.02617 13.8326 9.03711 13.8486L9.05078 13.8701L9.06641 13.8896L9.32617 14.2344L9.55078 14.5332H11.2246L11.4395 14.1523L11.6592 13.7637C11.6592 13.7637 12.3233 12.6082 13.5947 11.0205C14.7407 9.58947 16.3698 7.82006 18.4395 6.22949C18.9586 7.38242 19.25 8.65681 19.25 10C19.25 15.0996 15.0996 19.25 10 19.25C4.90037 19.25 0.75 15.0996 0.75 10C0.750186 4.90035 4.90037 0.75 10 0.75Z"
+                  fill="white"
+                  stroke="white"
+                  strokeWidth="1.5"
+                />
+              </svg>
+              <span>Tandai "Selesai"</span>
+            </>
+          )}
+        </button>
+      );
+    }
+    // Jika status saat ini adalah 'closed', 'completed', atau 'resolved', tampilkan button "Tandai Diproses"
+    if (
+      currentStatus === 'closed' ||
+      currentStatus === 'completed' ||
+      currentStatus === 'resolved'
+    ) {
+      return (
+        <button
+          onClick={() => handleUpdateStatus('in_progress')}
+          disabled={isUpdatingStatus}
+          className={`flex items-center gap-2 px-4 py-2 hover:scale-105 transition-all duration-300 border border-gray-500 rounded-md shadow-xl text-sm font-medium ${
+            isUpdatingStatus
+              ? 'bg-gray-400 cursor-not-allowed opacity-50'
+              : 'bg-orange-400 hover:bg-orange-600 text-white'
+          }`}
+        >
+          {isUpdatingStatus ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <span>Mengubah...</span>
+            </>
+          ) : (
+            <>
+              <svg
+                width="24"
+                height="20"
+                viewBox="0 0 24 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M19.4092 7.38086C21.7593 8.52498 23.25 10.5925 23.25 12.8574C23.2499 14.1885 22.7409 15.4344 21.8477 16.4756L21.5479 16.8252L21.7236 17.25C22.0415 18.02 22.4653 18.7004 22.8018 19.1807C21.8379 19.0305 21.0144 18.6514 20.3682 18.248L20.0029 18.0195L19.6221 18.2197C18.3894 18.8678 16.9213 19.25 15.333 19.25C12.5831 19.2499 10.2094 18.1196 8.80078 16.4609C14.4682 16.3998 19.2637 12.4717 19.4092 7.38086ZM8.66699 0.75C13.1822 0.750144 16.5828 3.73976 16.583 7.14258C16.583 10.5455 13.1824 13.536 8.66699 13.5361C7.0801 13.5361 5.6109 13.15 4.37598 12.5049L3.99609 12.3066L3.63184 12.5332C2.98533 12.9367 2.16169 13.3167 1.19727 13.4668C1.53383 12.986 1.95825 12.3052 2.27637 11.5371L2.45215 11.1123L2.15332 10.7627C1.25849 9.71566 0.75 8.47315 0.75 7.14258C0.750186 3.73968 4.15157 0.75 8.66699 0.75ZM0.651367 14.1826L0.649414 14.1807C0.656513 14.1726 0.666326 14.1611 0.678711 14.1465C0.670118 14.1586 0.661652 14.1711 0.651367 14.1826Z"
+                  fill="white"
+                  stroke="white"
+                  strokeWidth="1.5"
+                />
+              </svg>
+              <span>Tandai "Diproses"</span>
+            </>
+          )}
+        </button>
+      );
+    }
+    // Jika status adalah 'new', 'open', atau 'pending', tampilkan button "Tandai Diproses"
+    if (
+      currentStatus === 'new' ||
+      currentStatus === 'open' ||
+      currentStatus === 'pending'
+    ) {
+      return (
+        <button
+          onClick={() => handleUpdateStatus('in_progress')}
+          disabled={isUpdatingStatus}
+          className={`flex items-center gap-2 px-4 py-2 hover:scale-105 transition-all duration-300 border border-gray-500 rounded-md shadow-xl text-sm font-medium ${
+            isUpdatingStatus
+              ? 'bg-gray-400 cursor-not-allowed opacity-50'
+              : 'bg-orange-400 hover:bg-orange-600 text-white'
+          }`}
+        >
+          {isUpdatingStatus ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <span>Mengubah...</span>
+            </>
+          ) : (
+            <>
+              <svg
+                width="24"
+                height="20"
+                viewBox="0 0 24 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M19.4092 7.38086C21.7593 8.52498 23.25 10.5925 23.25 12.8574C23.2499 14.1885 22.7409 15.4344 21.8477 16.4756L21.5479 16.8252L21.7236 17.25C22.0415 18.02 22.4653 18.7004 22.8018 19.1807C21.8379 19.0305 21.0144 18.6514 20.3682 18.248L20.0029 18.0195L19.6221 18.2197C18.3894 18.8678 16.9213 19.25 15.333 19.25C12.5831 19.2499 10.2094 18.1196 8.80078 16.4609C14.4682 16.3998 19.2637 12.4717 19.4092 7.38086ZM8.66699 0.75C13.1822 0.750144 16.5828 3.73976 16.583 7.14258C16.583 10.5455 13.1824 13.536 8.66699 13.5361C7.0801 13.5361 5.6109 13.15 4.37598 12.5049L3.99609 12.3066L3.63184 12.5332C2.98533 12.9367 2.16169 13.3167 1.19727 13.4668C1.53383 12.986 1.95825 12.3052 2.27637 11.5371L2.45215 11.1123L2.15332 10.7627C1.25849 9.71566 0.75 8.47315 0.75 7.14258C0.750186 3.73968 4.15157 0.75 8.66699 0.75ZM0.651367 14.1826L0.649414 14.1807C0.656513 14.1726 0.666326 14.1611 0.678711 14.1465C0.670118 14.1586 0.661652 14.1711 0.651367 14.1826Z"
+                  fill="white"
+                  stroke="white"
+                  strokeWidth="1.5"
+                />
+              </svg>
+              <span>Tandai "Diproses"</span>
+            </>
+          )}
+        </button>
+      );
+    }
+    // Default case - tidak menampilkan button jika status tidak dikenali
+    return null;
+  };
+
+  const handleFeedback = (e) => {
+    e.stopPropagation();
+    const currentUserRole = localStorage.getItem('userRole');
     navigate(`/ticket/${ticketId}/feedback`);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "TAK":
-        return "bg-orange-100 text-orange-800 border-orange-200";
-      case "SELESAI":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "PROSES":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority?.toLowerCase()) {
-      case "high":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "low":
-        return "bg-green-100 text-green-800 border-green-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  const getPriorityLabel = (priority) => {
-    switch (priority?.toLowerCase()) {
-      case "high":
-        return "Tinggi";
-      case "medium":
-        return "Sedang";
-      case "low":
-        return "Rendah";
-      default:
-        return "Sedang";
-    }
-  };
-
-  const handleDownloadAttachment = () => {
-    if (ticketData.attachmentUrl) {
-      window.open(ticketData.attachmentUrl, "_blank");
+  const handleDownloadAttachment = (attachment) => {
+    if (attachment.file_url) {
+      window.open(attachment.file_url, '_blank');
     }
   };
 
@@ -217,562 +406,477 @@ const DetailTicket = () => {
     );
   }
 
-  // Error state
-  if (error) {
-    return (
-      <div className="p-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <div className="flex items-center justify-between">
-            <div>
-              <strong className="font-bold">Error!</strong>
-              <span className="block">{error}</span>
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={loadTicketDetail}
-                className="text-red-600 hover:text-red-800 font-medium underline"
-              >
-                Coba Lagi
-              </button>
-              <button
-                onClick={handleBack}
-                className="text-red-600 hover:text-red-800 font-medium underline"
-              >
-                Kembali
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Not found state
-  if (!ticketData) {
-    return (
-      <div className="p-6">
-        <div className="text-center text-gray-500">
-          <svg
-            className="w-16 h-16 mx-auto mb-4 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Tiket tidak ditemukan
-          </h3>
-          <p className="text-gray-600 mb-4">
-            Tiket dengan ID #{ticketId} tidak dapat ditemukan.
-          </p>
-          <button
-            onClick={handleBack}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Kembali ke Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Fixed Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between max-w-6xl mx-auto">
-          <div className="flex items-center space-x-4">
-            {/* Back Button */}
+    <div className={`bg-white rounded-lg shadow h-auto`}>
+      {/* Header Buttons Row */}
+      <Navigation topOffset="">
+        <div className="mx-auto">
+          <div className="flex items-center space-x-3">
+            {/* Back Arrow */}
             <button
               onClick={handleBack}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              title="Kembali"
+              className="p-2 pl-3 mr-2 hover:bg-gray-100 rounded transition-all hover:shadow-xl hover:scale-105 duration-300"
             >
               <svg
-                className="w-5 h-5 text-gray-600"
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
                 fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
               >
                 <path
+                  d="M2 10H18M2 10L10 2M2 10L10 18"
+                  stroke="#444746"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
                 />
               </svg>
             </button>
 
-            {/* Action Buttons */}
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg">
+            {/* Ticket Detail Button */}
+            <button className="flex items-center gap-2 px-4 py-2 hover:scale-105 transition-all duration-300 bg-[#f8caca] text-[#333333] border border-gray-500 rounded-md shadow-xl text-sm font-medium">
+              <svg
+                width="22"
+                height="20"
+                viewBox="0 0 22 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M2.2002 0.5H19.7998C20.249 0.5 20.6808 0.680504 21 1.00293C21.3194 1.32553 21.5 1.76428 21.5 2.22266V17.7773C21.5 18.2357 21.3194 18.6745 21 18.9971C20.6808 19.3195 20.249 19.5 19.7998 19.5H2.2002C1.75096 19.5 1.31921 19.3195 1 18.9971C0.680624 18.6745 0.5 18.2357 0.5 17.7773V2.22266C0.5 1.76428 0.680624 1.32553 1 1.00293C1.31921 0.680505 1.75096 0.5 2.2002 0.5ZM2.7998 16.0557H10.4004V12.833H2.7998V16.0557ZM2.7998 11.6113H19.2002V8.38867H2.7998V11.6113ZM2.7998 7.16699H19.2002V3.94434H2.7998V7.16699Z"
+                  fill="#333333"
+                  stroke="#333333"
+                />
+              </svg>
+              <span>Ticket Detail</span>
+            </button>
+
+            {/* Feedback Button */}
+            <button
+              onClick={handleFeedback}
+              className={`flex items-center gap-2 px-4 py-2 hover:scale-105 transition-all duration-300 border border-gray-500 rounded-md shadow-xl text-sm font-medium ${
+                newFeedbackCount > 0
+                  ? 'bg-yellow-600 border-yellow-700 hover:bg-yellow-700 text-white'
+                  : 'bg-white hover:bg-[#f8caca] text-[#333333]'
+              }`}
+            >
+              <svg
+                width="24"
+                height="20"
+                viewBox="0 0 24 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M19.4092 7.38086C21.7593 8.52498 23.25 10.5925 23.25 12.8574C23.2499 14.1885 22.7409 15.4344 21.8477 16.4756L21.5479 16.8252L21.7236 17.25C22.0415 18.02 22.4653 18.7004 22.8018 19.1807C21.8379 19.0305 21.0144 18.6514 20.3682 18.248L20.0029 18.0195L19.6221 18.2197C18.3894 18.8678 16.9213 19.25 15.333 19.25C12.5831 19.2499 10.2094 18.1196 8.80078 16.4609C14.4682 16.3998 19.2637 12.4717 19.4092 7.38086ZM8.66699 0.75C13.1822 0.750144 16.5828 3.73976 16.583 7.14258C16.583 10.5455 13.1824 13.536 8.66699 13.5361C7.0801 13.5361 5.6109 13.15 4.37598 12.5049L3.99609 12.3066L3.63184 12.5332C2.98533 12.9367 2.16169 13.3167 1.19727 13.4668C1.53383 12.986 1.95825 12.3052 2.27637 11.5371L2.45215 11.1123L2.15332 10.7627C1.25849 9.71566 0.75 8.47315 0.75 7.14258C0.750186 3.73968 4.15157 0.75 8.66699 0.75ZM0.651367 14.1826L0.649414 14.1807C0.656513 14.1726 0.666326 14.1611 0.678711 14.1465C0.670118 14.1586 0.661652 14.1711 0.651367 14.1826Z"
+                  stroke="#444746"
+                  strokeWidth="1.5"
+                />
+              </svg>
+              <span
+                className={`${newFeedbackCount > 0 ? 'text-white' : 'text-[#333333]'}`}
+              >
+                Feedback ({totalFeedbackCount}
+                {newFeedbackCount > 0 ? `/${newFeedbackCount} baru` : ''})
+              </span>
+            </button>
+
+            {isAdmin && (
+              <>
+                <button className="flex items-center gap-2 px-4 py-2 hover:scale-105 transition-all duration-300 bg-white hover:bg-[#f8caca] text-[#333333] border border-gray-500 rounded-md shadow-xl text-sm font-medium">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <rect
+                      y="0.5"
+                      width="20"
+                      height="19"
+                      fill="url(#pattern0_3370_21679)"
+                    />
+                    <defs>
+                      <pattern
+                        id="pattern0_3370_21679"
+                        patternContentUnits="objectBoundingBox"
+                        width="1"
+                        height="1"
+                      >
+                        <use
+                          xlinkHref="#image0_3370_21679"
+                          transform="matrix(0.0416667 0 0 0.0438596 0 -0.00438596)"
+                        />
+                      </pattern>
+                      <image
+                        id="image0_3370_21679"
+                        width="24"
+                        height="23"
+                        preserveAspectRatio="none"
+                        xlinkHref="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAXCAYAAAARIY8tAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAANMSURBVHgBtVVbaxNBGD2zl2a7uWpb02rVaMU+eAFF8UGE+qYiKL4pCPqkP8E3BVHxB1gEBRFBX/VB9EG8teKDiIogglqtCq2mNEmTNJvsZsZvJrspMYm0VT92spnbOfOdMzPL0Cask/dSrqe9AkQCi4vH1at7dmvtej0Pqb8AB5icD2j4z2G06/AS3WCeaGrv7g3D7Ghcl64zJPsjDW1M0/Diyh8IZAitmcCKGAh3kXKM1dvMDh39G5Y2jX0hM0ieff+IYIZAP0JI6QCuKrV6jUn+F+DlIipf3sCO7gALdWI+odG8oQBPPlxhMYHfwOWbmTbgVrCQMNRcJpGFyjlmadg3GGGxkIa3k2U8GysqroAEYkH45IGc4INvTIZw5/hqlnOqGM+4OLc3iYsP06oEwPlcGc73Agnv1kGkB3bEbAAWvr4G6S3RmWy4frgfo5+LOHrzuxpweGsClw8tx+jYLEY/FRRJpeRiNlOSuTcQ5Kadlhlovui0egurEiYuP59WdVluvcyqQRuSHRCcg1erWGgYQtTkCVyNhfTa7qHCCVTKlSA/RJVGcDFvD7xsNmUPnviswV/teMYTEmznGlt6ogA3UVZxS8fIx4Kqq/Z5EFSzGZTGx2EdOJKq7SIquaLLLj5I4/z+XsTppOZKHo5sW4Lhp1MY+ZCXh0MNZJUStEKGcg/VAYWhY+KrCUZbmKW/QY9EgeQ6dQ8ZgRwy/eGRKWQKHnYN2IiTLBfuT2L4SboOLjNVIM4szZzzQ9CpLo45sGwTof611Dd3QbD4qbciACDJ6YjRwzn87ev7EchD728PUA6vgIgtUwBafhom4VmbtkCzLDSb7IksuZwQCpyzwEgRgHJfQ58wvGo5etZvRvr5a3BaqbVuAHpPb1s/DM2rbvGAlEzKUzlRY/7dkFaeOF131H8xuDCXdSHU3YWVh/ahlMnSmZgBr8zSNWLJK7SJgLViTZ25e4zSudaqT4/1oKNvTb1edengTU2hlHfAwgniMBqIWl7X1uD2NtQtCE0T0b4+2N0uCpM/UXY4eRGjjhr0P/uiSaL4yhWILo3SLstCOPJq4a0J6GuUxSKjc0kCXQOr0Wkz8Jn0l7ZCDNz4cdA02OI/+hSOVbz9C4xGk2NU1HE+AAAAAElFTkSuQmCC"
+                      />
+                    </defs>
+                  </svg>
+                  <span>Disposisi (Email)</span>
+                </button>
+
+                {/* Tandai Diproses Button */}
+                {renderStatusButton()}
+              </>
+            )}
+
+            {isAdmin && (
+              <>
+                {/* Delete icon on the right */}
+                <div className="flex-1 flex justify-end">
+                  <button
+                    onClick={handleDeleteTicket}
+                    className="p-2 hover:bg-red-100 rounded transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  >
+                    <svg
+                      width="16"
+                      height="20"
+                      viewBox="0 0 16 20"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M10.6504 0.349609V1.46094H15.6504V2.9834H14.6504V17.7773C14.6504 18.3062 14.4833 18.746 14.1523 19.1143C13.8228 19.4808 13.4441 19.651 13 19.6504H3C2.55614 19.6504 2.17835 19.4796 1.84863 19.1133C1.5179 18.7458 1.35019 18.3072 1.34961 17.7773V2.9834H0.349609V1.46094H5.34961V0.349609H10.6504ZM2.65039 18.1279H13.3496V2.9834H2.65039V18.1279ZM10.6504 5.90527V15.2051H9.34961V5.90527H10.6504ZM6.65039 5.90527V15.2051H5.34961V5.90527H6.65039Z"
+                        fill="#444746"
+                        stroke="#444746"
+                        strokeWidth="0.7"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </>
+            )}
+            {!isAdmin && <div className="flex-1"></div>}
+          </div>
+        </div>
+      </Navigation>
+
+      <div className="relative">
+        <div
+          className={`absolute left-[20px] top-0 bottom-0 w-2 ${
+            ticketData.status === 'Baru'
+              ? 'bg-[#607D8B]'
+              : ticketData.status === 'Diproses'
+                ? 'bg-[#FF8C00]'
+                : ticketData.status === 'Selesai'
+                  ? 'bg-[#228B22]'
+                  : 'bg-[#607D8B]'
+          }`}
+        ></div>
+        {/* Main Container (All Description Section) */}
+        <div className="px-8 pt-4 pb-6 space-y-6 pl-[50px]">
+          {/* 1. Ticket Title */}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+              {ticketData.title}
+            </h1>
+          </div>
+
+          {/* 2. Submitter Information Section */}
+          <div className="rounded-lg">
+            <div className="flex items-center space-x-4">
+              {/* Avatar */}
+              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                 <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                  className="w-6 h-6 text-gray-600"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                 >
                   <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    fillRule="evenodd"
+                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                    clipRule="evenodd"
                   />
                 </svg>
-                <span className="text-sm font-medium">Ticket Detail</span>
               </div>
 
-              <button
-                onClick={handleFeedback}
-                className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-                <span className="text-sm font-medium">Feedback</span>
-              </button>
+              {/* User Info */}
+              <div>
+                <div className="font-semibold text-blue-900 text-md">
+                  {ticketData.submitter}
+                </div>
+                <div className="text-sm text-black font-semibold">
+                  {ticketData.email}
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Ticket Information Row (Left: ID, Date, Category | Right: Last Update) */}
+            <div className="flex justify-between items-start">
+              {/* Left Side */}
+              <div className="space-y-3 pt-2">
+                {/* Ticket ID */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-black font-semibold px-2 py-1">
+                    #{ticketData.id}
+                  </span>
+
+                  {/* Created Date */}
+                  <div className="text-sm text-black relative group flex items-center space-x-2">
+                    {/* Tooltip SVG with hover label */}
+                    <div className="relative flex items-center group">
+                      <svg
+                        viewBox="0 0 14 14"
+                        className="w-4 h-4 text-black cursor-pointer"
+                        fill="currentColor"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="M0 12.6875C0 13.4121 0.671875 14 1.5 14H12.5C13.3281 14 14 13.4121 14 12.6875V5.25H0V12.6875ZM10 7.32813C10 7.14766 10.1687 7 10.375 7H11.625C11.8313 7 12 7.14766 12 7.32813V8.42188C12 8.60234 11.8313 8.75 11.625 8.75H10.375C10.1687 8.75 10 8.60234 10 8.42188V7.32813ZM10 10.8281C10 10.6477 10.1687 10.5 10.375 10.5H11.625C11.8313 10.5 12 10.6477 12 10.8281V11.9219C12 12.1023 11.8313 12.25 11.625 12.25H10.375C10.1687 12.25 10 12.1023 10 11.9219V10.8281ZM6 7.32813C6 7.14766 6.16875 7 6.375 7H7.625C7.83125 7 8 7.14766 8 7.32813V8.42188C8 8.60234 7.83125 8.75 7.625 8.75H6.375C6.16875 8.75 6 8.60234 6 8.42188V7.32813ZM6 10.8281C6 10.6477 6.16875 10.5 6.375 10.5H7.625C7.83125 10.5 8 10.6477 8 10.8281V11.9219C8 12.1023 7.83125 12.25 7.625 12.25H6.375C6.16875 12.25 6 12.1023 6 11.9219V10.8281ZM2 7.32813C2 7.14766 2.16875 7 2.375 7H3.625C3.83125 7 4 7.14766 4 7.32813V8.42188C8 8.60234 3.83125 8.75 3.625 8.75H2.375C2.16875 8.75 2 8.60234 2 8.42188V7.32813ZM2 10.8281C2 10.6477 2.16875 10.5 2.375 10.5H3.625C3.83125 10.5 4 10.6477 4 10.8281V11.9219C4 12.1023 3.83125 12.25 3.625 12.25H2.375C2.16875 12.25 2 12.1023 2 11.9219V10.8281ZM12.5 1.75H11V0.4375C11 0.196875 10.775 0 10.5 0H9.5C9.225 0 9 0.196875 9 0.4375V1.75H5V0.4375C5 0.196875 4.775 0 4.5 0H3.5C3.225 0 3 0.196875 3 0.4375V1.75H1.5C0.671875 1.75 0 2.33789 0 3.0625V4.375H14V3.0625C14 2.33789 13.3281 1.75 12.5 1.75Z" />
+                      </svg>
+                      {/* Tooltip below the icon */}
+                      <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                        Tanggal Dibuat
+                      </div>
+                    </div>
+
+                    {/* Date */}
+                    <span>{ticketData.date}</span>
+                  </div>
+
+                  {/* Category with Bookmark Icon */}
+                  <div className="flex items-center space-x-1 relative group">
+                    {/* SVG icon with tooltip */}
+                    <div className="relative flex items-center group ml-2">
+                      <svg
+                        className="w-5 h-5 text-black cursor-pointer"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                      </svg>
+
+                      {/* Tooltip */}
+                      <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                        Kategori
+                      </div>
+                    </div>
+
+                    {/* Category Name */}
+                    <span className="text-sm text-black">
+                      {ticketData.category}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Side - Last Update */}
+              <div className="text-right">
+                <div className="text-sm text-black font-semibold">
+                  Last Update:{' '}
+                  <span className="font-light text-black">
+                    {ticketData.lastUpdate}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Menu Button */}
-          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <svg
-              className="w-5 h-5 text-gray-600"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-            </svg>
-          </button>
-        </div>
-      </div>
+          {/* Deskripsi Laporan */}
+          <div>
+            <p className="text-black leading-relaxed whitespace-pre-wrap text-justify">
+              {ticketData.description}
+            </p>
+          </div>
 
-      {/* Content */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          {/* Ticket Header */}
-          <div className="border-l-4 border-orange-400 px-8 py-6">
-            {/* Ticket ID, Status, and Priority */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-4">
-                <span className="text-sm font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  #{ticketData.id}
-                </span>
-                <div
-                  className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                    ticketData.status
-                  )}`}
-                >
-                  {ticketData.status}
-                </div>
-                <div
-                  className={`px-3 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
-                    ticketData.priority
-                  )}`}
-                >
-                  {getPriorityLabel(ticketData.priority)}
-                </div>
-              </div>
-              <div className="text-sm text-gray-500">
-                Dibuat: {ticketData.date}
-              </div>
-            </div>
+          {/* 5. Attachments Section */}
+          {ticketData.attachments && ticketData.attachments.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Lampiran
+              </h3>
+              <div className="space-y-2">
+                {ticketData.attachments.map((attachment, index) => (
+                  <div
+                    key={index}
+                    className="inline-flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 max-w-md"
+                  >
+                    {/* Left Side - Icon and File Info */}
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      {/* File Icon based on type */}
+                      <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
+                        {attachment.file_type?.startsWith('image/') ? (
+                          // Image Icon
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                          >
+                            <g
+                              fill="none"
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                            >
+                              <rect
+                                width="18"
+                                height="18"
+                                x="3"
+                                y="3"
+                                rx="2"
+                                ry="2"
+                              />
+                              <circle cx="9" cy="9" r="2" />
+                              <path d="m21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                            </g>
+                          </svg>
+                        ) : attachment.file_type === 'application/pdf' ? (
+                          // PDF Icon
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              fill="#ef5350"
+                              d="M13 9h5.5L13 3.5zM6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m4.93 10.44c.41.9.93 1.64 1.53 2.15l.41.32c-.87.16-2.07.44-3.34.93l-.11.04l.5-1.04c.45-.87.78-1.66 1.01-2.4m6.48 3.81c.18-.18.27-.41.28-.66c.03-.2-.02-.39-.12-.55c-.29-.47-1.04-.69-2.28-.69l-1.29.07l-.87-.58c-.63-.52-1.2-1.43-1.6-2.56l.04-.14c.33-1.33.64-2.94-.02-3.6a.85.85 0 0 0-.61-.24h-.24c-.37 0-.7.39-.79.77c-.37 1.33-.15 2.06.22 3.27v.01c-.25.88-.57 1.9-1.08 2.93l-.96 1.8l-.89.49c-1.2.75-1.77 1.59-1.88 2.12c-.04.19-.02.36.05.54l.03.05l.48.31l.44.11c.81 0 1.73-.95 2.97-3.07l.18-.07c1.03-.33 2.31-.56 4.03-.75c1.03.51 2.24.74 3 .74c.44 0 .74-.11.91-.3m-.41-.71l.09.11c-.01.1-.04.11-.09.13h-.04l-.19.02c-.46 0-1.17-.19-1.9-.51c.09-.1.13-.1.23-.1c1.4 0 1.8.25 1.9.35M7.83 17c-.65 1.19-1.24 1.85-1.69 2c.05-.38.5-1.04 1.21-1.69zm3.02-6.91c-.23-.9-.24-1.63-.07-2.05l.07-.12l.15.05c.17.24.19.56.09 1.1l-.03.16l-.16.82z"
+                            />
+                          </svg>
+                        ) : (
+                          // Generic File Icon
+                          <svg
+                            className="w-6 h-6 text-gray-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                        )}
+                      </div>
 
-            {/* Title */}
-            <h1 className="text-2xl font-bold text-gray-900 mb-6 leading-tight">
-              {ticketData.title}
-            </h1>
+                      {/* File Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {attachment.file_name || 'File Attachment'}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {attachment.file_type?.toUpperCase() ||
+                            'Unknown Type'}
+                          {attachment.file_size && ` - ${attachment.file_size}`}
+                        </div>
+                      </div>
+                    </div>
 
-            {/* Submitter Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Informasi Pelapor
-                </h3>
-                {ticketData.anonymous ? (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div className="flex items-center space-x-2">
+                    {/* Right Side - Download Button */}
+                    <button
+                      onClick={() => handleDownloadAttachment(attachment)}
+                      className="p-2 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0 ml-2"
+                      title="Download file"
+                    >
                       <svg
-                        className="w-5 h-5 text-yellow-600"
-                        fill="none"
-                        stroke="currentColor"
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
                         viewBox="0 0 24 24"
                       >
                         <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                          fill="currentColor"
+                          d="M16.59 9H15V4c0-.55-.45-1-1-1h-4c-.55 0-1 .45-1 1v5H7.41c-.89 0-1.34 1.08-.71 1.71l4.59 4.59c.39.39 1.02.39 1.41 0l4.59-4.59c.63-.63.19-1.71-.7-1.71M5 19c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1"
                         />
                       </svg>
-                      <span className="font-medium text-yellow-800">
-                        Laporan Anonim
-                      </span>
-                    </div>
-                    <p className="text-yellow-700 text-sm mt-2">
-                      Identitas pelapor dirahasiakan untuk privasi
-                    </p>
+                    </button>
                   </div>
-                ) : (
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Nama:</span>
-                      <span className="font-medium">
-                        {ticketData.submitter}
-                      </span>
-                    </div>
-                    {ticketData.nim && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">NIM:</span>
-                        <span className="font-medium">{ticketData.nim}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Email:</span>
-                      <span className="font-medium">{ticketData.email}</span>
-                    </div>
-                    {ticketData.prodi && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Program Studi:</span>
-                        <span className="font-medium">{ticketData.prodi}</span>
-                      </div>
-                    )}
-                    {ticketData.semester && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Semester:</span>
-                        <span className="font-medium">
-                          {ticketData.semester}
-                        </span>
-                      </div>
-                    )}
-                    {ticketData.noHp && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">No. HP:</span>
-                        <span className="font-medium">{ticketData.noHp}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal - tambahkan setelah ToastContainer */}
+      {showDeleteModal && ticketData && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={cancelDeleteTicket}
+        >
+          <div
+            className="bg-white rounded-lg max-w-md w-full mx-4 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-blue-950 px-6 py-4">
+              <h3 className="text-white text-xl font-semibold">Hapus Tiket</h3>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <p className="text-black mb-1 font-normal">
+                Apakah anda yakin ingin menghapus tiket berikut?
+              </p>
+
+              <p className="text-gray-800 mb-6">
+                <span className="font-bold">Judul:</span> {ticketData.title}
+              </p>
+
+              {/* Warning Box */}
+              <div className="bg-red-100 rounded-lg p-3 mb-6 flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <svg
+                    width="18"
+                    height="14"
+                    viewBox="0 0 22 17"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12.3001 0.882812L20.9342 14.5906C21.0658 14.7997 21.1351 15.0368 21.1351 15.2781C21.1351 15.5195 21.0658 15.7566 20.9342 15.9656C20.8025 16.1747 20.6132 16.3482 20.3851 16.4689C20.1571 16.5896 19.8985 16.6531 19.6352 16.6531H2.36715C2.10385 16.6531 1.84519 16.5896 1.61716 16.4689C1.38914 16.3482 1.19979 16.1747 1.06814 15.9656C0.936492 15.7566 0.867186 15.5195 0.867188 15.2781C0.867189 15.0368 0.936498 14.7997 1.06815 14.5906L9.70215 0.882812C10.2791 -0.0338542 11.7221 -0.0338542 12.3001 0.882812ZM11.0011 11.7471C10.7359 11.7471 10.4816 11.8437 10.294 12.0156C10.1065 12.1875 10.0011 12.4207 10.0011 12.6638C10.0011 12.9069 10.1065 13.1401 10.294 13.312C10.4816 13.4839 10.7359 13.5805 11.0011 13.5805C11.2664 13.5805 11.5207 13.4839 11.7083 13.312C11.8958 13.1401 12.0011 12.9069 12.0011 12.6638C12.0011 12.4207 11.8958 12.1875 11.7083 12.0156C11.5207 11.8437 11.2664 11.7471 11.0011 11.7471ZM11.0011 5.33048C10.7562 5.33051 10.5198 5.41294 10.3368 5.56214C10.1537 5.71133 10.0368 5.91692 10.0081 6.1399L10.0011 6.24715V9.91381C10.0014 10.1475 10.099 10.3722 10.274 10.5421C10.449 10.712 10.6881 10.8142 10.9425 10.8279C11.197 10.8416 11.4475 10.7657 11.643 10.6157C11.8384 10.4658 11.964 10.2531 11.9941 10.0211L12.0011 9.91381V6.24715C12.0011 6.00403 11.8958 5.77087 11.7083 5.59897C11.5207 5.42706 11.2664 5.33048 11.0011 5.33048Z"
+                      fill="#E01A3F"
+                    />
+                  </svg>
+                </div>
+
+                <div className="flex-1">
+                  <p className="text-[#E01A3F] font-medium text-xs">
+                    <span className="font-bold">Peringatan:</span> Tiket akan
+                    dihapus secara permanen dan tidak dapat dikembalikan.
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Informasi Tiket
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Kategori:</span>
-                    <span className="font-medium">{ticketData.category}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Sub Kategori:</span>
-                    <span className="font-medium">
-                      {ticketData.subCategory}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Prioritas:</span>
-                    <span className="font-medium">
-                      {getPriorityLabel(ticketData.priority)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Status:</span>
-                    <span className="font-medium">{ticketData.status}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Terakhir Update:</span>
-                    <span className="font-medium">{ticketData.lastUpdate}</span>
-                  </div>
-                  {ticketData.assignedTo && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Ditugaskan ke:</span>
-                      <span className="font-medium">
-                        {ticketData.assignedTo}
-                      </span>
-                    </div>
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={cancelDeleteTicket}
+                  disabled={isDeleting}
+                  className="px-6 py-2 border-2 border-[#E01A3F] text-[#E01A3F] rounded-lg hover:bg-[#E01A3F] hover:text-white transition-colors disabled:opacity-50 font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={confirmDeleteTicket}
+                  disabled={isDeleting}
+                  className="px-6 py-2 bg-[#E01A3F] text-white rounded-lg hover:bg-[#C41E3A] transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    <span>Hapus Tiket</span>
                   )}
-                </div>
-              </div>
-            </div>
-
-            {/* Read Status Indicators */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div
-                className={`p-3 rounded-lg border ${
-                  ticketData.readByAdmin
-                    ? "bg-green-50 border-green-200"
-                    : "bg-gray-50 border-gray-200"
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <svg
-                    className={`w-4 h-4 ${
-                      ticketData.readByAdmin
-                        ? "text-green-600"
-                        : "text-gray-400"
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span
-                    className={`text-sm font-medium ${
-                      ticketData.readByAdmin
-                        ? "text-green-800"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    Dibaca Admin
-                  </span>
-                </div>
-              </div>
-
-              <div
-                className={`p-3 rounded-lg border ${
-                  ticketData.readByDisposisi
-                    ? "bg-green-50 border-green-200"
-                    : "bg-gray-50 border-gray-200"
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <svg
-                    className={`w-4 h-4 ${
-                      ticketData.readByDisposisi
-                        ? "text-green-600"
-                        : "text-gray-400"
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span
-                    className={`text-sm font-medium ${
-                      ticketData.readByDisposisi
-                        ? "text-green-800"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    Dibaca Disposisi
-                  </span>
-                </div>
-              </div>
-
-              <div
-                className={`p-3 rounded-lg border ${
-                  ticketData.readByStudent
-                    ? "bg-green-50 border-green-200"
-                    : "bg-gray-50 border-gray-200"
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <svg
-                    className={`w-4 h-4 ${
-                      ticketData.readByStudent
-                        ? "text-green-600"
-                        : "text-gray-400"
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span
-                    className={`text-sm font-medium ${
-                      ticketData.readByStudent
-                        ? "text-green-800"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    Dibaca Mahasiswa
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Content Section */}
-          <div className="px-8 py-6 border-t border-gray-200">
-            {/* Description */}
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Deskripsi Laporan
-              </h3>
-              <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                <p className="text-gray-800 leading-relaxed whitespace-pre-wrap text-justify">
-                  {ticketData.description}
-                </p>
-              </div>
-            </div>
-
-            {/* Attachment */}
-            {ticketData.attachment && (
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Lampiran
-                </h3>
-                <button
-                  onClick={handleDownloadAttachment}
-                  className="flex items-center space-x-3 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors border border-gray-300"
-                >
-                  <svg
-                    className="w-6 h-6 text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <div className="text-left">
-                    <div className="text-sm font-medium text-gray-700">
-                      Download Lampiran
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Klik untuk mengunduh file lampiran
-                    </div>
-                  </div>
-                </button>
-              </div>
-            )}
-
-            {/* Status Information */}
-            <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
-              <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center space-x-2">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span>Informasi Status</span>
-              </h3>
-              <div className="space-y-2 text-sm text-blue-800">
-                <p>
-                  <span className="font-medium">Status saat ini:</span>{" "}
-                  <span className="font-semibold">{ticketData.status}</span>
-                </p>
-                <p>
-                  <span className="font-medium">Prioritas:</span>{" "}
-                  <span className="font-semibold">
-                    {getPriorityLabel(ticketData.priority)}
-                  </span>
-                </p>
-                <p>
-                  <span className="font-medium">Terakhir diperbarui:</span>{" "}
-                  {ticketData.lastUpdate}
-                </p>
-
-                {ticketData.status === "TAK" && (
-                  <div className="mt-3 p-3 bg-orange-50 rounded border border-orange-200">
-                    <p className="text-orange-800 font-medium">
-                      🕐 Tiket Menunggu Tinjauan
-                    </p>
-                    <p className="text-orange-700 text-xs mt-1">
-                      Laporan Anda sedang menunggu untuk ditinjau oleh tim kami.
-                      Estimasi waktu proses adalah 3x24 jam kerja.
-                    </p>
-                  </div>
-                )}
-
-                {ticketData.status === "PROSES" && (
-                  <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
-                    <p className="text-blue-800 font-medium">
-                      ⚙️ Tiket Sedang Diproses
-                    </p>
-                    <p className="text-blue-700 text-xs mt-1">
-                      Tim kami sedang menangani laporan Anda. Kami akan
-                      memberikan update secara berkala melalui email.
-                    </p>
-                  </div>
-                )}
-
-                {ticketData.status === "SELESAI" && (
-                  <div className="mt-3 p-3 bg-green-50 rounded border border-green-200">
-                    <p className="text-green-800 font-medium">
-                      ✅ Tiket Telah Diselesaikan
-                    </p>
-                    <p className="text-green-700 text-xs mt-1">
-                      Laporan Anda telah diselesaikan. Jika masih ada pertanyaan
-                      atau masalah berlanjut, silakan berikan feedback.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Action Footer */}
-          <div className="px-8 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
-                <p>Butuh bantuan? Hubungi tim support kami.</p>
-              </div>
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleBack}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
-                >
-                  Kembali ke Dashboard
-                </button>
-                <button
-                  onClick={handleFeedback}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                >
-                  Berikan Feedback
                 </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

@@ -1,34 +1,34 @@
 // src/pages/Login.jsx
-import { useState } from "react";
-import "../App.css";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useState } from 'react';
+import '../App.css';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const [credentials, setCredentials] = useState({
-    email: "",
-    password: "",
+    email: '',
+    password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCredentials({ ...credentials, [name]: value });
     // Clear any error when user types
-    if (error) setError("");
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError('');
 
     if (!credentials.email || !credentials.password) {
-      setError("Silakan isi email dan password!");
+      setError('Silakan isi email dan password!');
       return;
     }
 
@@ -36,24 +36,24 @@ function Login() {
       setIsLoading(true);
 
       const userData = await login(credentials.email, credentials.password);
-      console.log("Login successful:", userData);
+      console.log('Login successful:', userData);
 
       // Navigate berdasarkan role
       switch (userData.role) {
-        case "student":
-          navigate("/student");
+        case 'student':
+          navigate('/student');
           break;
-        case "admin":
-          navigate("/admin");
+        case 'admin':
+          navigate('/admin');
           break;
         default:
-          console.warn("Unknown role:", userData.role);
+          console.warn('Unknown role:', userData.role);
           setError(`Role tidak dikenal: ${userData.role}`);
           return;
       }
     } catch (error) {
-      console.error("Login failed:", error);
-      setError(error.message || "Login gagal. Silakan coba lagi.");
+      console.error('Login failed:', error);
+      setError(error.message || 'Login gagal. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +61,7 @@ function Login() {
 
   // Fungsi untuk kembali ke landing page
   const handleBackToHome = () => {
-    navigate("/");
+    navigate('/');
   };
 
   return (
@@ -165,7 +165,7 @@ function Login() {
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={credentials.password}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition pr-12"
@@ -219,10 +219,10 @@ function Login() {
             <button
               type="submit"
               className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: isLoading ? "#dc2626" : "#dc2626" }}
+              style={{ backgroundColor: isLoading ? '#dc2626' : '#dc2626' }}
               disabled={isLoading}
             >
-              {isLoading ? "Logging in..." : "Login"}
+              {isLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
         </div>
