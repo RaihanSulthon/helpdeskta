@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { getFAQsAPI, getFAQCategoriesAPI } from "../../services/api";
-import SearchBar from "../../components/SearchBar";
+import React, { useState, useEffect, useCallback } from 'react';
+import { getFAQsAPI, getFAQCategoriesAPI } from '../../services/api';
 
 const StudentAskedUs = () => {
   const [faqData, setFaqData] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   // Filter states
-  const [statusFilter, setStatusFilter] = useState("Published");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState('Published');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -39,17 +38,17 @@ const StudentAskedUs = () => {
   // Load categories
   const loadCategories = useCallback(async () => {
     try {
-      console.log("Loading categories...");
+      console.log('Loading categories...');
       const categoriesData = await getFAQCategoriesAPI();
       setCategories(categoriesData);
-      console.log("Categories loaded:", categoriesData);
+      console.log('Categories loaded:', categoriesData);
     } catch (error) {
-      console.error("Error loading categories:", error);
+      console.error('Error loading categories:', error);
       // Fallback categories
       setCategories([
-        { id: 1, name: "Facilities", faqs_count: 0 },
-        { id: 2, name: "Academic", faqs_count: 0 },
-        { id: 3, name: "General", faqs_count: 0 },
+        { id: 1, name: 'Facilities', faqs_count: 0 },
+        { id: 2, name: 'Academic', faqs_count: 0 },
+        { id: 3, name: 'General', faqs_count: 0 },
       ]);
     }
   }, []);
@@ -59,9 +58,9 @@ const StudentAskedUs = () => {
     async (filters = {}) => {
       try {
         setLoading(true);
-        setError("");
+        setError('');
 
-        console.log("=== LOADING FAQs FOR STUDENTS ===");
+        console.log('=== LOADING FAQs FOR STUDENTS ===');
 
         // Prepare filters based on current state
         const apiFilters = {
@@ -71,7 +70,7 @@ const StudentAskedUs = () => {
         };
 
         // Add category filter if selected
-        if (categoryFilter && categoryFilter !== "") {
+        if (categoryFilter && categoryFilter !== '') {
           apiFilters.category_id = categoryFilter;
         }
 
@@ -80,10 +79,10 @@ const StudentAskedUs = () => {
           apiFilters.search = searchQuery.trim();
         }
 
-        console.log("API Filters:", apiFilters);
+        console.log('API Filters:', apiFilters);
 
         const result = await getFAQsAPI(apiFilters);
-        console.log("=== FULL API RESPONSE ===", result);
+        console.log('=== FULL API RESPONSE ===', result);
 
         // Handle different response structures
         let faqsArray = [];
@@ -109,49 +108,49 @@ const StudentAskedUs = () => {
         } else if (Array.isArray(result)) {
           faqsArray = result;
         } else {
-          console.warn("No FAQ array found, trying fallback...");
+          console.warn('No FAQ array found, trying fallback...');
 
           // Set fallback data untuk testing
           const fallbackData = [
             {
               id: 1,
-              question: "Bagaimana cara mengajukan SK TA/Thesis/Disertasi?",
+              question: 'Bagaimana cara mengajukan SK TA/Thesis/Disertasi?',
               answer:
-                "Untuk mengajukan SK TA/Thesis/Disertasi, Anda perlu mengikuti langkah-langkah berikut:\n\n1. Siapkan dokumen yang diperlukan seperti transkrip nilai dan proposal\n2. Submit aplikasi melalui portal online mahasiswa\n3. Tunggu verifikasi dari bagian akademik\n4. Setelah disetujui, SK akan diterbitkan\n\nProses ini biasanya memakan waktu 3-5 hari kerja.",
+                'Untuk mengajukan SK TA/Thesis/Disertasi, Anda perlu mengikuti langkah-langkah berikut:\n\n1. Siapkan dokumen yang diperlukan seperti transkrip nilai dan proposal\n2. Submit aplikasi melalui portal online mahasiswa\n3. Tunggu verifikasi dari bagian akademik\n4. Setelah disetujui, SK akan diterbitkan\n\nProses ini biasanya memakan waktu 3-5 hari kerja.',
               category_id: 1,
-              category: { name: "Academic" },
+              category: { name: 'Academic' },
               is_public: true,
               view_count: 25,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-              user_id: "admin",
+              user_id: 'admin',
             },
             {
               id: 2,
               question:
-                "Bisakah saya mengganti dosen pembimbing setelah SK terbit?",
+                'Bisakah saya mengganti dosen pembimbing setelah SK terbit?',
               answer:
-                "Ya, Anda dapat mengganti dosen pembimbing dengan ketentuan sebagai berikut:\n\n1. Mengajukan permohonan tertulis ke bagian akademik\n2. Menyertakan alasan yang jelas dan dapat dipertanggungjawabkan\n3. Mendapat persetujuan dari dosen pembimbing lama\n4. Mendapat persetujuan dari dosen pembimbing baru\n5. Membayar biaya administrasi sesuai ketentuan\n\nProses ini memerlukan waktu sekitar 1-2 minggu.",
+                'Ya, Anda dapat mengganti dosen pembimbing dengan ketentuan sebagai berikut:\n\n1. Mengajukan permohonan tertulis ke bagian akademik\n2. Menyertakan alasan yang jelas dan dapat dipertanggungjawabkan\n3. Mendapat persetujuan dari dosen pembimbing lama\n4. Mendapat persetujuan dari dosen pembimbing baru\n5. Membayar biaya administrasi sesuai ketentuan\n\nProses ini memerlukan waktu sekitar 1-2 minggu.',
               category_id: 1,
-              category: { name: "Academic" },
+              category: { name: 'Academic' },
               is_public: true,
               view_count: 18,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-              user_id: "admin",
+              user_id: 'admin',
             },
             {
               id: 3,
-              question: "Apakah saya bisa mulai bimbingan sebelum SK terbit?",
+              question: 'Apakah saya bisa mulai bimbingan sebelum SK terbit?',
               answer:
-                "Secara teknis, bimbingan dapat dimulai setelah proposal Anda disetujui, namun:\n\n1. SK tetap diperlukan untuk validasi formal\n2. Konsultasi awal dapat dilakukan dengan dosen pembimbing\n3. Progress bimbingan akan dicatat setelah SK terbit\n4. Disarankan untuk segera mengurus SK agar tidak mengganggu jadwal\n\nUntuk kepastian, konsultasikan dengan bagian akademik.",
+                'Secara teknis, bimbingan dapat dimulai setelah proposal Anda disetujui, namun:\n\n1. SK tetap diperlukan untuk validasi formal\n2. Konsultasi awal dapat dilakukan dengan dosen pembimbing\n3. Progress bimbingan akan dicatat setelah SK terbit\n4. Disarankan untuk segera mengurus SK agar tidak mengganggu jadwal\n\nUntuk kepastian, konsultasikan dengan bagian akademik.',
               category_id: 1,
-              category: { name: "Academic" },
+              category: { name: 'Academic' },
               is_public: true,
               view_count: 12,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-              user_id: "admin",
+              user_id: 'admin',
             },
           ];
 
@@ -173,10 +172,10 @@ const StudentAskedUs = () => {
           })
           .map((faq) => ({
             id: faq.id,
-            question: faq.question || "No question",
-            answer: faq.answer || "No answer available",
+            question: faq.question || 'No question',
+            answer: faq.answer || 'No answer available',
             category_id: faq.category_id,
-            category: faq.category?.name || "Umum",
+            category: faq.category?.name || 'Umum',
             is_public: faq.is_public,
             view_count: faq.view_count || 0,
             created_at: faq.created_at || new Date().toISOString(),
@@ -192,17 +191,17 @@ const StudentAskedUs = () => {
           total: transformedFAQs.length,
         });
       } catch (error) {
-        console.error("Error loading FAQs:", error);
-        setError("Gagal memuat data FAQ: " + error.message);
+        console.error('Error loading FAQs:', error);
+        setError('Gagal memuat data FAQ: ' + error.message);
 
         // Error fallback data
         const errorFallbackData = [
           {
             id: 999,
-            question: "Test FAQ - Error Fallback",
+            question: 'Test FAQ - Error Fallback',
             answer:
-              "Ini adalah data test karena terjadi error saat memuat FAQ dari server. Silakan coba refresh halaman atau hubungi administrator.",
-            category: "System",
+              'Ini adalah data test karena terjadi error saat memuat FAQ dari server. Silakan coba refresh halaman atau hubungi administrator.',
+            category: 'System',
             view_count: 0,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -230,14 +229,9 @@ const StudentAskedUs = () => {
     initializeData();
   }, [loadCategories, loadFAQs]);
 
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-    loadFAQs();
-  };
-  
-  const handleClearSearch = () => {
-    setSearchQuery("");
-    loadFAQs();
+  // Handle filter changes
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
   };
 
   const handleCategoryFilterChange = (e) => {
@@ -251,9 +245,9 @@ const StudentAskedUs = () => {
 
   // Handle reset filter
   const handleResetFilter = () => {
-    setStatusFilter("Published");
-    setCategoryFilter("");
-    setSearchQuery("");
+    setStatusFilter('Published');
+    setCategoryFilter('');
+    setSearchQuery('');
     setExpandedItems(new Set());
     loadFAQs({});
   };
@@ -295,7 +289,7 @@ const StudentAskedUs = () => {
                 <p className="text-sm">{error}</p>
               </div>
               <button
-                onClick={() => setError("")}
+                onClick={() => setError('')}
                 className="text-red-500 hover:text-red-700"
               >
                 ×
@@ -381,8 +375,8 @@ const StudentAskedUs = () => {
               <p className="text-lg font-medium mb-2">Tidak ada FAQ</p>
               <p className="text-sm">
                 {searchQuery || categoryFilter
-                  ? "Tidak ada FAQ yang cocok dengan pencarian atau filter"
-                  : "Belum ada FAQ yang tersedia"}
+                  ? 'Tidak ada FAQ yang cocok dengan pencarian atau filter'
+                  : 'Belum ada FAQ yang tersedia'}
               </p>
             </div>
           ) : (
@@ -406,7 +400,7 @@ const StudentAskedUs = () => {
                     <div className="flex-shrink-0">
                       <svg
                         className={`w-5 h-5  transform transition-transform duration-500 ease-in-out ${
-                          expandedItems.has(item.id) ? "rotate-180" : ""
+                          expandedItems.has(item.id) ? 'rotate-180' : ''
                         }`}
                         fill="none"
                         stroke="currentColor"
@@ -426,8 +420,8 @@ const StudentAskedUs = () => {
                 <div
                   className={`overflow-hidden transition-all duration-1000 ease-in-out ${
                     expandedItems.has(item.id)
-                      ? "max-h-96 opacity-100"
-                      : "max-h-0 opacity-0"
+                      ? 'max-h-96 opacity-100'
+                      : 'max-h-0 opacity-0'
                   }`}
                 >
                   <div className="px-6 pb-6 border-t border-gray-150 bg-gray-50">
@@ -459,13 +453,13 @@ const StudentAskedUs = () => {
                           </span>
 
                           <span>
-                            Dipublikasikan:{" "}
+                            Dipublikasikan:{' '}
                             {new Date(item.created_at).toLocaleDateString(
-                              "id-ID",
+                              'id-ID',
                               {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
                               }
                             )}
                           </span>
@@ -495,8 +489,8 @@ const StudentAskedUs = () => {
               className="text-grey-300 text-sm font-bold underline"
             >
               {expandedItems.size === filteredFAQs.length
-                ? "Tutup Semua"
-                : "Buka Semua"}
+                ? 'Tutup Semua'
+                : 'Buka Semua'}
             </button>
           </div>
         )}
