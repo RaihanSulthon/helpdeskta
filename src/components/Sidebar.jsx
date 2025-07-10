@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { SPLManager } from "../config/splConfig";
-import { getTicketsAPI, getAdminTicketsAPI } from "../services/api";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { SPLManager } from '../config/splConfig';
+import { getTicketsAPI, getAdminTicketsAPI } from '../services/api';
 
 const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
-  const [activeMenuItem, setActiveMenuItem] = useState("tickets");
+  const [activeMenuItem, setActiveMenuItem] = useState('tickets');
   const [userRole, setUserRole] = useState(null);
   const [ticketCount, setTicketCount] = useState(0);
   const [loadingCount, setLoadingCount] = useState(false);
@@ -20,12 +20,12 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
   useEffect(() => {
     // Try to get role from different sources
     const roleFromAuth = user?.role;
-    const roleFromLocalStorage = localStorage.getItem("userRole");
+    const roleFromLocalStorage = localStorage.getItem('userRole');
     const roleFromUser = user?.userRole;
 
     // Use the first available role
     const currentRole =
-      roleFromAuth || roleFromLocalStorage || roleFromUser || "student";
+      roleFromAuth || roleFromLocalStorage || roleFromUser || 'student';
 
     setUserRole(currentRole);
   }, [user]);
@@ -33,20 +33,20 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
   // Set active menu based on current route
   useEffect(() => {
     const path = location.pathname;
-    if (path.includes("/sampaikan")) {
-      setActiveMenuItem("sampaikan");
-    } else if (path.includes("/tickets")) {
-      setActiveMenuItem("tickets");
-    } else if (path.includes("/askedus")) {
-      setActiveMenuItem("askedus");
-    } else if (path.includes("/users")) {
-      setActiveMenuItem("users");
-    } else if (path.includes("/emails")) {
-      setActiveMenuItem("emails");
-    } else if (path.includes("/statistics")) {
-      setActiveMenuItem("statistics");
-    } else if (path.includes("/reachus")) {
-      setActiveMenuItem("reachus");
+    if (path.includes('/sampaikan')) {
+      setActiveMenuItem('sampaikan');
+    } else if (path.includes('/tickets')) {
+      setActiveMenuItem('tickets');
+    } else if (path.includes('/askedus')) {
+      setActiveMenuItem('askedus');
+    } else if (path.includes('/users')) {
+      setActiveMenuItem('users');
+    } else if (path.includes('/emails')) {
+      setActiveMenuItem('emails');
+    } else if (path.includes('/statistics')) {
+      setActiveMenuItem('statistics');
+    } else if (path.includes('/reachus')) {
+      setActiveMenuItem('reachus');
     }
   }, [location.pathname]);
 
@@ -58,14 +58,14 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
       setLoadingCount(true);
       try {
         let ticketsData;
-        if (userRole === "admin") {
+        if (userRole === 'admin') {
           ticketsData = await getAdminTicketsAPI();
         } else {
           ticketsData = await getTicketsAPI();
         }
         setTicketCount(ticketsData?.length || 0);
       } catch (error) {
-        console.error("Error loading ticket count:", error);
+        console.error('Error loading ticket count:', error);
         setTicketCount(0);
       } finally {
         setLoadingCount(false);
@@ -79,22 +79,22 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
   const handleMenuClick = (menuId) => {
     setActiveMenuItem(menuId);
 
-    if (menuId === "tickets") {
-      if (userRole === "admin") {
-        navigate("/admin/tickets"); // AdminDashboard
+    if (menuId === 'tickets') {
+      if (userRole === 'admin') {
+        navigate('/admin/tickets'); // AdminDashboard
       } else {
-        navigate("/student/tickets"); // StudentDashboard
+        navigate('/student/tickets'); // StudentDashboard
       }
-    } else if (menuId === "statistics" && userRole === "admin") {
-      navigate("/admin/statistics"); // AdminTicketStatistics - admin only
-    } else if (menuId === "askedus") {
+    } else if (menuId === 'statistics' && userRole === 'admin') {
+      navigate('/admin/statistics'); // AdminTicketStatistics - admin only
+    } else if (menuId === 'askedus') {
       navigate(`/${userRole}/askedus`);
-    } else if (menuId === "users" && userRole === "admin") {
-      navigate("/admin/users");
-    } else if (menuId === "emails" && userRole === "admin") {
-      navigate("/admin/emails");
-    } else if (menuId === "sampaikan" && userRole === "student") {
-      navigate("/student/sampaikan");
+    } else if (menuId === 'users' && userRole === 'admin') {
+      navigate('/admin/users');
+    } else if (menuId === 'emails' && userRole === 'admin') {
+      navigate('/admin/emails');
+    } else if (menuId === 'sampaikan' && userRole === 'student') {
+      navigate('/student/sampaikan');
     }
 
     if (onMenuClick) {
@@ -103,10 +103,10 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
   };
 
   const handleComposeClick = () => {
-    setActiveMenuItem("sampaikan");
-    navigate("/student/sampaikan");
+    setActiveMenuItem('sampaikan');
+    navigate('/student/sampaikan');
     if (onMenuClick) {
-      onMenuClick("sampaikan");
+      onMenuClick('sampaikan');
     }
   };
 
@@ -180,7 +180,7 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
   }
 
   return (
-    <div 
+    <div
       className={`bg-white h-full shadow-lg flex flex-col transition-all duration-500 ease-in-out overflow-y-auto rounded-tr-3xl ${
         isExpanded ? 'w-80' : 'w-16'
       }`}
@@ -188,14 +188,24 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Profile Section - Paling Atas */}
-      <div className={`${isExpanded ? 'p-6' : 'p-2'} border-b border-gray-200 bg-gray-50 transition-all duration-500`}>
+      <div
+        className={`${isExpanded ? 'p-6' : 'p-2'} border-b border-gray-200 bg-gray-50 transition-all duration-500`}
+      >
         <div className="flex flex-col items-center text-center">
           {/* Profile Picture */}
-          <div className={`${isExpanded ? 'w-16 h-16' : 'w-10 h-10'} bg-gray-300 rounded-full ${isExpanded ? 'mb-3' : 'mb-1'} flex items-center justify-center transition-all duration-500`}>
-            <span className={`${isExpanded ? 'text-lg' : 'text-sm'} font-bold text-gray-600 transition-all duration-500`}>
-              {user?.name ? user.name.charAt(0).toUpperCase() : 
-              user?.displayName ? user.displayName.charAt(0).toUpperCase() : 
-              user?.email ? user.email.charAt(0).toUpperCase() : "U"}
+          <div
+            className={`${isExpanded ? 'w-16 h-16' : 'w-10 h-10'} bg-gray-300 rounded-full ${isExpanded ? 'mb-3' : 'mb-1'} flex items-center justify-center transition-all duration-500`}
+          >
+            <span
+              className={`${isExpanded ? 'text-lg' : 'text-sm'} font-bold text-gray-600 transition-all duration-500`}
+            >
+              {user?.name
+                ? user.name.charAt(0).toUpperCase()
+                : user?.displayName
+                  ? user.displayName.charAt(0).toUpperCase()
+                  : user?.email
+                    ? user.email.charAt(0).toUpperCase()
+                    : 'U'}
             </span>
           </div>
 
@@ -205,8 +215,8 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
               <div className="text-gray-800 font-bold text-sm mb-1">
                 {user?.name ||
                   user?.displayName ||
-                  user?.email?.split("@")[0] ||
-                  "User"}
+                  user?.email?.split('@')[0] ||
+                  'User'}
               </div>
               <div className="text-xs text-red-800 font-bold mb-2 bg-red-100 px-2 py-1 rounded">
                 {userRole?.toUpperCase()}
@@ -217,24 +227,24 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
       </div>
 
       {/* Sampaikan Button - STUDENT ONLY */}
-      {userRole === "student" && (
+      {userRole === 'student' && (
         <div
           className={`${
-            isExpanded ? "p-6" : "p-2"
+            isExpanded ? 'p-6' : 'p-2'
           } transition-all duration-300`}
         >
           <button
             onClick={handleComposeClick}
             className={`w-full rounded-full ${
-              isExpanded ? "px-6 py-3" : "p-3"
+              isExpanded ? 'px-6 py-3' : 'p-3'
             } flex items-center ${
-              isExpanded ? "justify-center space-x-3" : "justify-center"
+              isExpanded ? 'justify-center space-x-3' : 'justify-center'
             } transition-all duration-300 shadow-md text-base ${
-              activeMenuItem === "sampaikan"
-                ? "bg-red-600 text-white"
-                : "bg-red-600 text-white hover:bg-red-700"
+              activeMenuItem === 'sampaikan'
+                ? 'bg-red-600 text-white'
+                : 'bg-red-600 text-white hover:bg-red-700'
             }`}
-            title={!isExpanded ? "Sampaikan" : ""}
+            title={!isExpanded ? 'Sampaikan' : ''}
           >
             <ComposeIcon />
             {isExpanded && <span className="font-medium">Ajukan Tiket</span>}
@@ -257,34 +267,40 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
           <div className="space-y-2">
             {/* Tickets Menu - Available for both roles */}
             <button
-              onClick={() => handleMenuClick("tickets")}
+              onClick={() => handleMenuClick('tickets')}
               className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-lg' : 'justify-center px-5 py-2 rounded-lg'} transition-all duration-300 mt-4 ${
-                    activeMenuItem === "tickets"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-md" : "bg-red-100 text-gray-800"}`
-                      : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
-                  }`}
-              title={!isExpanded ? (userRole === "admin" ? "Kelola Tiket" : "My Ticket") : ""}
+                activeMenuItem === 'tickets'
+                  ? `${isExpanded ? 'bg-red-100 text-gray-800 shadow-md' : 'bg-red-100 text-gray-800'}`
+                  : `${isExpanded ? 'bg-white hover:bg-gray-50' : 'bg-white hover:bg-gray-50'}`
+              }`}
+              title={
+                !isExpanded
+                  ? userRole === 'admin'
+                    ? 'Kelola Tiket'
+                    : 'My Ticket'
+                  : ''
+              }
             >
               {isExpanded ? (
                 <>
                   <div className="flex items-center space-x-3">
                     <div
                       className={`${
-                        activeMenuItem === "tickets"
-                          ? "text-gray-800"
-                          : "text-gray-600"
+                        activeMenuItem === 'tickets'
+                          ? 'text-gray-800'
+                          : 'text-gray-600'
                       } flex-shrink-0`}
                     >
                       <TicketIcon />
                     </div>
                     <span
                       className={`text-base font-medium ${
-                        activeMenuItem === "tickets"
-                          ? "text-gray-800"
-                          : "text-gray-800"
+                        activeMenuItem === 'tickets'
+                          ? 'text-gray-800'
+                          : 'text-gray-800'
                       }`}
                     >
-                      {userRole === "admin" ? "Kelola Tiket" : "My Ticket"}
+                      {userRole === 'admin' ? 'Kelola Tiket' : 'My Ticket'}
                     </span>
                   </div>
                   <div className="flex items-center">
@@ -293,9 +309,9 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                     ) : (
                       <span
                         className={`font-semibold text-sm ${
-                          activeMenuItem === "tickets"
-                            ? "text-gray-800"
-                            : "text-gray-600"
+                          activeMenuItem === 'tickets'
+                            ? 'text-gray-800'
+                            : 'text-gray-600'
                         }`}
                       >
                         {ticketCount.toLocaleString()}
@@ -306,9 +322,9 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
               ) : (
                 <div
                   className={`${
-                    activeMenuItem === "tickets"
-                      ? "text-gray-800"
-                      : "text-gray-600"
+                    activeMenuItem === 'tickets'
+                      ? 'text-gray-800'
+                      : 'text-gray-600'
                   }`}
                 >
                   <TicketIcon />
@@ -330,61 +346,69 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
 
           <div className="space-y-2">
             {/* ADMIN ONLY MENUS */}
-            {userRole === "admin" && (
+            {userRole === 'admin' && (
               <>
                 {/* Statistics Menu - ADMIN ONLY */}
                 <button
-                  onClick={() => handleMenuClick("statistics")}
+                  onClick={() => handleMenuClick('statistics')}
                   className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-lg' : 'justify-center px-5 py-2 rounded-lg'} transition-all duration-300 mt-4 ${
-                    activeMenuItem === "statistics"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-md" : "bg-red-100 text-gray-800"}`
-                      : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
+                    activeMenuItem === 'statistics'
+                      ? `${isExpanded ? 'bg-red-100 text-gray-800 shadow-md' : 'bg-red-100 text-gray-800'}`
+                      : `${isExpanded ? 'bg-white hover:bg-gray-50' : 'bg-white hover:bg-gray-50'}`
                   }`}
-                  title={!isExpanded ? "Statistik Tiket" : ""}
+                  title={!isExpanded ? 'Statistik Tiket' : ''}
                 >
                   {isExpanded ? (
                     <div className="flex items-center space-x-3">
-                      <div className={`${activeMenuItem === "statistics" ? "text-gray-800" : "text-gray-600"} flex-shrink-0`}>
+                      <div
+                        className={`${activeMenuItem === 'statistics' ? 'text-gray-800' : 'text-gray-600'} flex-shrink-0`}
+                      >
                         <StatisticsIcon />
                       </div>
-                      <span className={`text-base font-medium ${
-                        activeMenuItem === "statistics" ? "text-gray-800" : "text-gray-800"
-                      }`}>
+                      <span
+                        className={`text-base font-medium ${
+                          activeMenuItem === 'statistics'
+                            ? 'text-gray-800'
+                            : 'text-gray-800'
+                        }`}
+                      >
                         Statistik Tiket
                       </span>
                     </div>
                   ) : (
-                    <div className={`${activeMenuItem === "statistics" ? "text-gray-800" : "text-gray-600"}`}>
+                    <div
+                      className={`${activeMenuItem === 'statistics' ? 'text-gray-800' : 'text-gray-600'}`}
+                    >
                       <StatisticsIcon />
                     </div>
                   )}
                 </button>
                 {/* Users Menu - ADMIN ONLY */}
                 <button
-                  onClick={() => handleMenuClick("users")}
+                  onClick={() => handleMenuClick('users')}
                   className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-lg' : 'justify-center px-5 py-2 rounded-lg'} transition-all duration-300 mt-4 ${
-                    activeMenuItem === "users"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-md" : "bg-red-100 text-gray-800"}`
-                      : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
+                    activeMenuItem === 'users'
+                      ? `${isExpanded ? 'bg-red-100 text-gray-800 shadow-md' : 'bg-red-100 text-gray-800'}`
+                      : `${isExpanded ? 'bg-white hover:bg-gray-50' : 'bg-white hover:bg-gray-50'}`
                   }`}
-                  title={!isExpanded ? "Data Mahasiswa" : ""}
+                  title={!isExpanded ? 'Data Mahasiswa' : ''}
                 >
                   {isExpanded ? (
                     <div className="flex items-center space-x-3">
                       <div
                         className={`${
-                          activeMenuItem === "users"
-                            ? "text-gray-800"
-                            : "text-gray-600"
+                          activeMenuItem === 'users'
+                            ? 'text-gray-800'
+                            : 'text-gray-600'
                         } flex-shrink-0`}
                       >
                         <UsersIcon />
                       </div>
                       <span
                         className={`text-base font-medium ${
-                          activeMenuItem === "users"
-                            ? "text-gray-800"
-                            : "text-gray-800"
+                          activeMenuItem === 'users'
+                            ? 'text-gray-800'
+                            : 'text-gray-800'
                         }`}
                       >
                         Data Mahasiswa
@@ -393,9 +417,9 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                   ) : (
                     <div
                       className={`${
-                        activeMenuItem === "users"
-                          ? "text-gray-800"
-                          : "text-gray-600"
+                        activeMenuItem === 'users'
+                          ? 'text-gray-800'
+                          : 'text-gray-600'
                       }`}
                     >
                       <UsersIcon />
@@ -405,30 +429,30 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
 
                 {/* AskedUs Menu - ADMIN */}
                 <button
-                  onClick={() => handleMenuClick("askedus")}
+                  onClick={() => handleMenuClick('askedus')}
                   className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-lg' : 'justify-center px-5 py-2 rounded-lg'} transition-all duration-300 mt-4 ${
-                    activeMenuItem === "askedus"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-md" : "bg-red-100 text-gray-800"}`
-                      : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
+                    activeMenuItem === 'askedus'
+                      ? `${isExpanded ? 'bg-red-100 text-gray-800 shadow-md' : 'bg-red-100 text-gray-800'}`
+                      : `${isExpanded ? 'bg-white hover:bg-gray-50' : 'bg-white hover:bg-gray-50'}`
                   }`}
-                  title={!isExpanded ? "Kelola Asked Us (FAQ)" : ""}
+                  title={!isExpanded ? 'Kelola Asked Us (FAQ)' : ''}
                 >
                   {isExpanded ? (
                     <div className="flex items-center space-x-3">
                       <div
                         className={`${
-                          activeMenuItem === "askedus"
-                            ? "text-gray-800"
-                            : "text-gray-600"
+                          activeMenuItem === 'askedus'
+                            ? 'text-gray-800'
+                            : 'text-gray-600'
                         } flex-shrink-0`}
                       >
                         <QuestionIcon />
                       </div>
                       <span
                         className={`text-base font-medium ${
-                          activeMenuItem === "askedus"
-                            ? "text-gray-800"
-                            : "text-gray-800"
+                          activeMenuItem === 'askedus'
+                            ? 'text-gray-800'
+                            : 'text-gray-800'
                         }`}
                       >
                         Kelola Asked Us (FAQ)
@@ -437,56 +461,12 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                   ) : (
                     <div
                       className={`${
-                        activeMenuItem === "askedus"
-                          ? "text-gray-800"
-                          : "text-gray-600"
+                        activeMenuItem === 'askedus'
+                          ? 'text-gray-800'
+                          : 'text-gray-600'
                       }`}
                     >
                       <QuestionIcon />
-                    </div>
-                  )}
-                </button>
-
-                {/* Email Management Menu - ADMIN ONLY */}
-                <button
-                  onClick={() => handleMenuClick("emails")}
-                  className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-lg' : 'justify-center px-5 py-2 rounded-lg'} transition-all duration-300 mt-4 ${
-                    activeMenuItem === "emails"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-md" : "bg-red-100 text-gray-800"}`
-                      : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
-                  }`}
-                  title={!isExpanded ? "Email Management" : ""}
-                >
-                  {isExpanded ? (
-                    <div className="flex items-center space-x-3">
-                      <div
-                        className={`${
-                          activeMenuItem === "emails"
-                            ? "text-gray-800"
-                            : "text-gray-600"
-                        } flex-shrink-0`}
-                      >
-                        <EmailIcon />
-                      </div>
-                      <span
-                        className={`text-base font-medium ${
-                          activeMenuItem === "emails"
-                            ? "text-gray-800"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        Email Management
-                      </span>
-                    </div>
-                  ) : (
-                    <div
-                      className={`${
-                        activeMenuItem === "emails"
-                          ? "text-gray-800"
-                          : "text-gray-600"
-                      }`}
-                    >
-                      <EmailIcon />
                     </div>
                   )}
                 </button>
@@ -494,34 +474,34 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
             )}
 
             {/* STUDENT ONLY MENUS */}
-            {userRole === "student" && (
+            {userRole === 'student' && (
               <>
                 {/* AskedUs Menu - STUDENT */}
                 <button
-                  onClick={() => handleMenuClick("askedus")}
+                  onClick={() => handleMenuClick('askedus')}
                   className={`w-full flex items-center ${isExpanded ? 'justify-between px-4 py-3 rounded-lg' : 'justify-center px-5 py-2 rounded-lg'} transition-all duration-300 mt-4 ${
-                    activeMenuItem === "askedus"
-                      ? `${isExpanded ? "bg-red-100 text-gray-800 shadow-md" : "bg-red-100 text-gray-800"}`
-                      : `${isExpanded ? "bg-white hover:bg-gray-50" : "bg-white hover:bg-gray-50"}`
+                    activeMenuItem === 'askedus'
+                      ? `${isExpanded ? 'bg-red-100 text-gray-800 shadow-md' : 'bg-red-100 text-gray-800'}`
+                      : `${isExpanded ? 'bg-white hover:bg-gray-50' : 'bg-white hover:bg-gray-50'}`
                   }`}
-                  title={!isExpanded ? "AskedUs" : ""}
+                  title={!isExpanded ? 'AskedUs' : ''}
                 >
                   {isExpanded ? (
                     <div className="flex items-center space-x-3">
                       <div
                         className={`${
-                          activeMenuItem === "askedus"
-                            ? "text-gray-800"
-                            : "text-gray-600"
+                          activeMenuItem === 'askedus'
+                            ? 'text-gray-800'
+                            : 'text-gray-600'
                         } flex-shrink-0`}
                       >
                         <QuestionIcon />
                       </div>
                       <span
                         className={`text-base font-medium ${
-                          activeMenuItem === "askedus"
-                            ? "text-gray-800"
-                            : "text-gray-600"
+                          activeMenuItem === 'askedus'
+                            ? 'text-gray-800'
+                            : 'text-gray-600'
                         }`}
                       >
                         AskedUs
@@ -530,9 +510,9 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
                   ) : (
                     <div
                       className={`${
-                        activeMenuItem === "askedus"
-                          ? "text-gray-800"
-                          : "text-gray-600"
+                        activeMenuItem === 'askedus'
+                          ? 'text-gray-800'
+                          : 'text-gray-600'
                       }`}
                     >
                       <QuestionIcon />

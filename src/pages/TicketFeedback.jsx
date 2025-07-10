@@ -380,7 +380,7 @@ const TicketFeedback = () => {
       'image/jpg',
       'application/pdf',
     ];
-    const maxSize = 10 * 1024 * 1024;
+    const maxSize = 10 * 1024 * 1024; // 10MB
 
     if (!allowedTypes.includes(file.type)) {
       setError('Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.');
@@ -427,11 +427,67 @@ const TicketFeedback = () => {
       setSending(true);
       setError('');
 
+      console.log('Sending feedback message:', {
+        message: newFeedback,
+        file: selectedFile?.name,
+      });
+
       const messageToSend = newFeedback.trim() || '📎 File attachment';
+
+      // ✅ TAMBAHKAN DEBUG: Capture response dari send message
+      const sendResponse = await sendChatMessageAPI(
+        ticketId,
+        messageToSend,
+        selectedFile
+      );
+
+      // ✅ DEBUG: Log response lengkap
+      console.log('=== SEND MESSAGE RESPONSE ===');
+      console.log('Full response:', sendResponse);
+
+      // ✅ DEBUG: Cek apakah ada attachment info di response
+      if (sendResponse.attachments) {
+        console.log('Attachments in response:', sendResponse.attachments);
+        sendResponse.attachments.forEach((attachment, index) => {
+          console.log(`Attachment ${index + 1}:`, attachment);
+          console.log(`File URL: ${attachment.file_url}`);
+
+          // ✅ TEST: Coba akses link gambar langsung
+          fetch(attachment.file_url, { method: 'HEAD' })
+            .then((response) => {
+              console.log(
+                `Link ${attachment.file_url} status:`,
+                response.status
+              );
+              if (response.status === 403) {
+                console.error('❌ 403 FORBIDDEN - Backend access issue!');
+              } else if (response.status === 200) {
+                console.log('✅ Link accessible');
+              }
+            })
+            .catch((error) => {
+              console.error('❌ Error accessing link:', error);
+            });
+        });
+      }
+
+      // ✅ DEBUG: Cek struktur message yang baru dibuat
+      if (sendResponse.message) {
+        console.log('New message created:', sendResponse.message);
+        if (sendResponse.message.attachments) {
+          console.log('Message attachments:', sendResponse.message.attachments);
+        }
+      }
+
       // Clear input and reload messages
       setNewFeedback('');
       handleRemoveFile();
+
+      // ✅ TAMBAHKAN DEBUG: Log reload messages
+      console.log('=== RELOADING MESSAGES ===');
       await loadChatMessages();
+
+      console.log('Feedback sent successfully!');
     } catch (error) {
       console.error('Error sending feedback:', error);
       setError('Gagal mengirim feedback: ' + error.message);

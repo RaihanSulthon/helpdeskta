@@ -804,35 +804,17 @@ const AdminDashboard = () => {
   // 11. MAIN RENDER
   return (
     <div className="p-6">
-      {/* Page Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Kelola Tiket</h1>
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Kelola Tiket</h1>
         </div>
       </div>
 
-      {/* Error Alert */}
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-          <div className="flex items-center justify-between">
-            <span>{error}</span>
-            <button
-              onClick={() => setError('')}
-              className="text-red-500 hover:text-red-700"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
-
       <div className="bg-white rounded-lg shadow min-h-[600px]">
         {/* Filters */}
-        <Navigation topOffset=''>
+        <Navigation topOffset="">
           <div className="flex items-center gap-4 pt-6">
-            <div className="w-80">
+            <div className="w-80 shadow-md shadow-gray-300">
               <SearchBar
                 placeholder="Cari id / judul / nama mahasiswa"
                 onSearch={handleSearch}
@@ -859,7 +841,7 @@ const AdminDashboard = () => {
                       setTimeout(() => setShowCategoryDropdown(true), 10);
                     }
                   }}
-                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
+                  className={`border-2 border-gray-400 shadow-md shadow-gray-300 text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
                     selectedCategory
                       ? 'bg-red-200 font-semibold'
                       : 'bg-white hover:bg-red-100'
@@ -1183,7 +1165,7 @@ const AdminDashboard = () => {
                       setTimeout(() => setShowUnreadDropdown(true), 10);
                     }
                   }}
-                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
+                  className={`border-2 border-gray-400 text-sm px-3 py-2 shadow-md shadow-gray-300 rounded-lg flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
                     unreadFilter && unreadFilter !== 'Belum Dibaca'
                       ? 'bg-red-200 font-semibold'
                       : 'bg-white hover:bg-red-100'

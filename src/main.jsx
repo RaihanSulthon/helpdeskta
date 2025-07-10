@@ -1,47 +1,47 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/Login";
-import LandingPage from "./pages/LandingPage";
-import Layout from "./pages/Layout";
-import StudentDashboard from "./pages/student/StudentDashboard";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import { AuthProvider } from "./context/AuthContext";
-import Form from "./components/student/Form";
-import DetailTicket from "./pages/TicketDetail";
-import TicketFeedback from "./pages/TicketFeedback";
-import { SPLManager } from "./config/splConfig";
-import AdminEmailManagement from "./pages/admin/AdminEmailManagement";
-import AdminTicketStatistics from "./pages/admin/AdminTicketStatistics";
-import BaseLayout from "./components/BaseLayout";
-import "./index.css";
-
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import LandingPage from './pages/LandingPage';
+import Layout from './pages/Layout';
+import StudentDashboard from './pages/student/StudentDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import { AuthProvider } from './context/AuthContext';
+import Form from './components/student/Form';
+import DetailTicket from './pages/TicketDetail';
+import TicketFeedback from './pages/TicketFeedback';
+import { SPLManager } from './config/splConfig';
+import AdminEmailManagement from './pages/admin/AdminEmailManagement';
+import AdminTicketStatistics from './pages/admin/AdminTicketStatistics';
+import BaseLayout from './components/BaseLayout';
+import './index.css';
+import DetailUser from './pages/admin/DetailUser';
 // Import AskedUs components
-import StudentAskedUs from "./pages/student/StudentAskedUs";
-import AdminAskedUs from "./pages/admin/AdminAskedUs";
-import ManageUsers from "./pages/admin/ManageUsers";
+import StudentAskedUs from './pages/student/StudentAskedUs';
+import AdminAskedUs from './pages/admin/AdminAskedUs';
+import ManageUsers from './pages/admin/ManageUsers';
 
 // SPL-aware Role-based redirect component
 const RoleBasedRedirect = () => {
-  const userRole = localStorage.getItem("userRole");
+  const userRole = localStorage.getItem('userRole');
   const config = SPLManager.getCurrentConfig();
 
   // Validate if user has access to requested features
   const getRedirectPath = () => {
     switch (userRole) {
-      case "student":
-        return "/student/tickets";
-      case "admin":
-        return "/admin/tickets";
+      case 'student':
+        return '/student/tickets';
+      case 'admin':
+        return '/admin/tickets';
       default:
-        return "/login";
+        return '/login';
     }
   };
 
   return <Navigate to={getRedirectPath()} replace />;
 };
 
-createRoot(document.getElementById("root")).render(
+createRoot(document.getElementById('root')).render(
   <AuthProvider>
     <BrowserRouter>
       <Routes>
@@ -61,6 +61,16 @@ createRoot(document.getElementById("root")).render(
             <BaseLayout>
               <Layout>
                 <Form />
+              </Layout>
+            </BaseLayout>
+          }
+        />
+        <Route
+          path="/student/detailmanage/:userId"
+          element={
+            <BaseLayout>
+              <Layout>
+                <DetailUser />
               </Layout>
             </BaseLayout>
           }
@@ -87,6 +97,7 @@ createRoot(document.getElementById("root")).render(
             </BaseLayout>
           }
         />
+
         {/* Student Detail */}
         <Route
           path="/ticket/:ticketId"
