@@ -274,8 +274,8 @@ const StudentAskedUs = () => {
   return (
     <div className="mb-6 font-handline">
       <div>
-        <h1 className="text-2xl font-bold text-gray-800">AskedUs (FAQ)</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-2xl font-bold text-white">AskedUs (FAQ)</h1>
+        <p className="text-white mt-1">
           Temukan jawaban untuk pertanyaan yang sering diajukan
         </p>
       </div>
@@ -297,63 +297,6 @@ const StudentAskedUs = () => {
             </div>
           </div>
         )}
-
-        {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow-sm mb-6 p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Search Input */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cari FAQ
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  placeholder="Cari berdasarkan pertanyaan atau jawaban..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Category Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Kategori
-              </label>
-              <select
-                value={categoryFilter}
-                onChange={handleCategoryFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Semua Kategori</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name} ({category.faqs_count || 0})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-        </div>
 
         {/* Clean Accordion List - New Design */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">

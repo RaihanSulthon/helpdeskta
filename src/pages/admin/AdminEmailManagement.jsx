@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { sendEmailAPI, getEmailLogsAPI } from '../../services/api';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const AdminEmailManagement = () => {
   const [activeTab, setActiveTab] = useState('compose');
@@ -31,7 +32,26 @@ const AdminEmailManagement = () => {
     to_email: '',
     subject: '',
   });
-
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ticketInfo = location.state;
+  const handleBack = () => {
+    if (location.state?.from) {
+      navigate(location.state.from);
+    } else {
+      // Default kembali ke admin dashboard
+      navigate('/admin/tickets');
+    }
+  };
+  // const handleBack = () => {
+  //   if (location.state?.from) {
+  //     navigate(location.state.from);  // ✅ Kembali ke ticket detail
+  //   } else if (location.state?.ticketId) {
+  //     navigate(`/ticket/${location.state.ticketId}`);  // ✅ Fallback ke ticket detail
+  //   } else {
+  //     navigate('/admin/tickets');  // ✅ Fallback terakhir ke dashboard
+  //   }
+  // };
   // Load email logs
   useEffect(() => {
     if (activeTab === 'logs') {
@@ -291,11 +311,39 @@ const AdminEmailManagement = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Email Management</h1>
-        <p className="text-gray-600 mt-1">
-          Kelola dan kirim email kepada pengguna sistem
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          {/* Back Button */}
+          <button
+            onClick={handleBack}
+            className="p-2 hover:bg-gray-100 rounded transition-all hover:shadow-xl hover:scale-105 duration-300"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M2 10H18M2 10L10 2M2 10L10 18"
+                stroke="#444746"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">
+              Email Management
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Kelola dan kirim email kepada pengguna sistem
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Tabs */}
