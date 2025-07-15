@@ -1,42 +1,51 @@
 // components/student/Form.jsx - FIXED VERSION
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import Button from "../Button";
-import TextField from "../TextField";
-import TextArea from "../TextArea";
-import Label from "../Label";
-import Select from "../Select";
-import Icon from "../Icon";
-import { submitTicketAPI, getCategoriesAPI } from "../../services/api";
-import { useAuth } from "../../context/AuthContext";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Button from '../Button';
+import TextField from '../TextField';
+import TextArea from '../TextArea';
+import Label from '../Label';
+import Select from '../Select';
+import Icon from '../Icon';
+import { submitTicketAPI, getCategoriesAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 function Form() {
   const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [submittedTicketId, setSubmittedTicketId] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    jenis: "PENGADUAN",
-    judul: "",
-    isi: "",
-    tanggal: "",
-    lokasi: "",
-    kategori: "",
-    subKategori: "",
-    nama: "",
-    nim: "",
-    prodi: "",
-    semester: "",
-    email: user?.email || "",
-    noHp: "",
+    jenis: 'PENGADUAN',
+    judul: '',
+    isi: '',
+    tanggal: '',
+    lokasi: '',
+    kategori: '',
+    subKategori: '',
+    nama: '',
+    nim: '',
+    prodi: '',
+    semester: '',
+    email: user?.email || '',
+    noHp: '',
     anonymous: false,
   });
-
+  useEffect(() => {
+    if (user && !formData.anonymous) {
+      setFormData((prev) => ({
+        ...prev,
+        email: user.email || prev.email,
+        nama: user.name || prev.nama,
+        // Tambahkan field lain jika tersedia di user object
+      }));
+    }
+  }, [user, formData.anonymous]);
   // Load categories on component mount
   useEffect(() => {
     loadCategories();
@@ -56,51 +65,51 @@ function Form() {
       const categoriesData = await getCategoriesAPI();
       setCategories(categoriesData);
     } catch (error) {
-      console.error("Error loading categories:", error);
+      console.error('Error loading categories:', error);
       // Use fallback categories if API fails
       setCategories([
         {
           id: 1,
-          name: "Pendidikan",
+          name: 'Pendidikan',
           sub_categories: [
-            { id: 1, name: "Kurikulum" },
-            { id: 2, name: "Tenaga Pengajar" },
-            { id: 3, name: "Fasilitas Pendidikan" },
-            { id: 4, name: "Lainnya" },
+            { id: 1, name: 'Kurikulum' },
+            { id: 2, name: 'Tenaga Pengajar' },
+            { id: 3, name: 'Fasilitas Pendidikan' },
+            { id: 4, name: 'Lainnya' },
           ],
         },
         {
           id: 2,
-          name: "Kesehatan",
+          name: 'Kesehatan',
           sub_categories: [
-            { id: 5, name: "Fasilitas Kesehatan" },
-            { id: 6, name: "Layanan Kesehatan" },
-            { id: 7, name: "Lainnya" },
+            { id: 5, name: 'Fasilitas Kesehatan' },
+            { id: 6, name: 'Layanan Kesehatan' },
+            { id: 7, name: 'Lainnya' },
           ],
         },
         {
           id: 3,
-          name: "Infrastruktur",
+          name: 'Infrastruktur',
           sub_categories: [
-            { id: 8, name: "Jalan" },
-            { id: 9, name: "Bangunan" },
-            { id: 10, name: "Air Bersih" },
-            { id: 11, name: "Lainnya" },
+            { id: 8, name: 'Jalan' },
+            { id: 9, name: 'Bangunan' },
+            { id: 10, name: 'Air Bersih' },
+            { id: 11, name: 'Lainnya' },
           ],
         },
         {
           id: 4,
-          name: "Pelayanan Publik",
+          name: 'Pelayanan Publik',
           sub_categories: [
-            { id: 12, name: "Layanan Administrasi" },
-            { id: 13, name: "Layanan Online" },
-            { id: 14, name: "Lainnya" },
+            { id: 12, name: 'Layanan Administrasi' },
+            { id: 13, name: 'Layanan Online' },
+            { id: 14, name: 'Lainnya' },
           ],
         },
         {
           id: 5,
-          name: "Lainnya",
-          sub_categories: [{ id: 15, name: "Lainnya" }],
+          name: 'Lainnya',
+          sub_categories: [{ id: 15, name: 'Lainnya' }],
         },
       ]);
     }
@@ -108,7 +117,7 @@ function Form() {
 
   // Create kategori options from API data
   const kategoriOptions = [
-    { value: "", label: "Pilih Kategori" },
+    { value: '', label: 'Pilih Kategori' },
     ...categories.map((cat) => ({
       value: cat.id.toString(),
       label: cat.name,
@@ -125,7 +134,7 @@ function Form() {
     if (!selectedCategory || !selectedCategory.sub_categories) return [];
 
     return [
-      { value: "", label: "Pilih Sub Kategori" },
+      { value: '', label: 'Pilih Sub Kategori' },
       ...selectedCategory.sub_categories.map((subCat) => ({
         value: subCat.id.toString(),
         label: subCat.name,
@@ -136,14 +145,29 @@ function Form() {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    if (type === "checkbox") {
-      setFormData({
+    if (type === 'checkbox') {
+      const newFormData = {
         ...formData,
         [name]: checked,
-      });
+      };
+
+      // Reset identity fields jika switch ke anonim
+      if (name === 'anonymous' && checked) {
+        newFormData.nama = '';
+        newFormData.nim = '';
+        newFormData.prodi = '';
+        newFormData.semester = '';
+        newFormData.noHp = '';
+        // Email tetap dipertahankan jika user sudah login
+        if (!user?.email) {
+          newFormData.email = '';
+        }
+      }
+
+      setFormData(newFormData);
     } else {
       // Mencegah perubahan email jika user sudah login dan tidak anonymous
-      if (name === "email" && user?.email && !formData.anonymous) {
+      if (name === 'email' && user?.email && !formData.anonymous) {
         return; // Tidak mengizinkan perubahan email
       }
 
@@ -153,10 +177,10 @@ function Form() {
       });
 
       // Reset sub-kategori jika kategori berubah
-      if (name === "kategori") {
+      if (name === 'kategori') {
         setFormData((prev) => ({
           ...prev,
-          subKategori: "",
+          subKategori: '',
         }));
       }
     }
@@ -167,69 +191,69 @@ function Form() {
     const errors = [];
 
     // Basic validation
-    if (!formData.judul || formData.judul.trim() === "") {
-      errors.push("Judul laporan harus diisi");
+    if (!formData.judul || formData.judul.trim() === '') {
+      errors.push('Judul laporan harus diisi');
     } else if (formData.judul.trim().length < 5) {
-      errors.push("Judul laporan minimal 5 karakter");
+      errors.push('Judul laporan minimal 5 karakter');
     }
 
-    if (!formData.isi || formData.isi.trim() === "") {
-      errors.push("Deskripsi harus diisi");
+    if (!formData.isi || formData.isi.trim() === '') {
+      errors.push('Deskripsi harus diisi');
     } else if (formData.isi.trim().length < 10) {
-      errors.push("Deskripsi minimal 10 karakter");
+      errors.push('Deskripsi minimal 10 karakter');
     }
 
-    if (!formData.kategori || formData.kategori === "") {
-      errors.push("Kategori harus dipilih");
+    if (!formData.kategori || formData.kategori === '') {
+      errors.push('Kategori harus dipilih');
     }
 
-    if (!formData.subKategori || formData.subKategori === "") {
-      errors.push("Sub kategori harus dipilih");
+    if (!formData.subKategori || formData.subKategori === '') {
+      errors.push('Sub kategori harus dipilih');
     }
 
     // Validate identity fields only if not anonymous
     if (!formData.anonymous) {
-      if (!formData.nama || formData.nama.trim() === "") {
-        errors.push("Nama lengkap harus diisi");
+      if (!formData.nama || formData.nama.trim() === '') {
+        errors.push('Nama lengkap harus diisi');
       }
 
-      if (!formData.nim || formData.nim.trim() === "") {
-        errors.push("NIM/NIK harus diisi");
+      if (!formData.nim || formData.nim.trim() === '') {
+        errors.push('NIM/NIK harus diisi');
       } else if (!/^[0-9]+$/.test(formData.nim.trim())) {
-        errors.push("NIM/NIK harus berupa angka");
+        errors.push('NIM/NIK harus berupa angka');
       }
 
-      if (!formData.email || formData.email.trim() === "") {
-        errors.push("Email harus diisi");
-      } else {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email.trim())) {
-          errors.push("Format email tidak valid");
+      if (!formData.anonymous && !user?.email) {
+        if (!formData.email || formData.email.trim() === '') {
+          errors.push('Email harus diisi');
+        } else {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(formData.email.trim())) {
+            errors.push('Format email tidak valid');
+          }
         }
       }
     }
 
     if (errors.length > 0) {
-      setError(errors.join(". "));
+      setError(errors.join('. '));
       return false;
     }
 
-    setError("");
+    setError('');
     return true;
   };
 
   // FIXED SUBMIT FUNCTION
+  // Modified handleSubmit function in Form.jsx
+  // This version always sends email data, regardless of anonymous status
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("=== FORM SUBMISSION DEBUG ===");
-    console.log("Original Form Data:", formData);
-
-    setError("");
-
     // Validate form first
     if (!validateForm()) {
-      console.log("Validation failed");
+      console.log('Validation failed');
       return;
     }
 
@@ -243,37 +267,39 @@ function Form() {
         deskripsi: formData.isi.trim(), // API expects 'deskripsi', not 'isi'
         category_id: parseInt(formData.kategori),
         sub_category_id: parseInt(formData.subKategori),
-        anonymous: Boolean(formData.anonymous),
+        anonymous: formData.anonymous, // Will be converted to string in API
 
-        // Identity data - send empty strings if anonymous
-        nama: formData.anonymous ? "" : (formData.nama || "").trim(),
-        nim: formData.anonymous ? "" : (formData.nim || "").trim(),
-        prodi: formData.anonymous ? "" : (formData.prodi || "").trim(),
+        // MODIFIED: Always send actual email data
+        // For anonymous: send empty strings for identity fields except email
+        // For non-anonymous: send all actual data
+        nama: formData.anonymous ? '' : (formData.nama || '').trim(),
+        nim: formData.anonymous ? '' : (formData.nim || '').trim(),
+        prodi: formData.anonymous ? '' : (formData.prodi || '').trim(),
         semester: formData.anonymous
-          ? ""
-          : (formData.semester || "").toString(),
-        email: formData.anonymous ? "" : (formData.email || "").trim(),
-        no_hp: formData.anonymous ? "" : (formData.noHp || "").trim(),
+          ? ''
+          : (formData.semester || '').toString(),
+        email: (formData.email || '').trim(), // Always send actual email
+        no_hp: formData.anonymous ? '' : (formData.noHp || '').trim(),
       };
 
-      console.log("Prepared Submit Data:", submitData);
+      console.log('Prepared Submit Data:', submitData);
 
       // Final validation before API call
       if (isNaN(submitData.category_id) || submitData.category_id <= 0) {
-        throw new Error("Kategori tidak valid");
+        throw new Error('Kategori tidak valid');
       }
 
       if (
         isNaN(submitData.sub_category_id) ||
         submitData.sub_category_id <= 0
       ) {
-        throw new Error("Sub kategori tidak valid");
+        throw new Error('Sub kategori tidak valid');
       }
 
-      console.log("Calling API with data:", submitData);
+      console.log('Calling API with data:', submitData);
 
       const response = await submitTicketAPI(submitData);
-      console.log("API Response:", response);
+      console.log('API Response:', response);
 
       // Extract ticket ID from response
       let ticketId = null;
@@ -292,19 +318,19 @@ function Form() {
 
       // Reset form
       setFormData({
-        jenis: "PENGADUAN",
-        judul: "",
-        isi: "",
-        tanggal: "",
-        lokasi: "",
-        kategori: "",
-        subKategori: "",
-        nama: "",
-        nim: "",
-        prodi: "",
-        semester: "",
-        email: "",
-        noHp: "",
+        jenis: 'PENGADUAN',
+        judul: '',
+        isi: '',
+        tanggal: '',
+        lokasi: '',
+        kategori: '',
+        subKategori: '',
+        nama: '',
+        nim: '',
+        prodi: '',
+        semester: '',
+        email: user?.email || '', // Keep user email if logged in
+        noHp: '',
         anonymous: false,
       });
 
@@ -313,49 +339,49 @@ function Form() {
         if (ticketId) {
           navigate(`/ticket/${ticketId}`);
         } else {
-          navigate("/student/tickets");
+          navigate('/student/tickets');
         }
       }, 3000);
     } catch (error) {
-      console.error("Submit Error Details:", error);
+      console.error('Submit Error Details:', error);
       setIsLoading(false);
 
       // Enhanced error handling
-      let errorMessage = "Terjadi kesalahan saat mengirim laporan";
+      let errorMessage = 'Terjadi kesalahan saat mengirim laporan';
 
       if (
-        error.message.includes("Validation failed") ||
-        error.message.includes("validation")
+        error.message.includes('Validation failed') ||
+        error.message.includes('validation')
       ) {
-        errorMessage = "Data form tidak valid: " + error.message;
+        errorMessage = 'Data form tidak valid: ' + error.message;
       } else if (
-        error.message.includes("kategori") ||
-        error.message.includes("category")
+        error.message.includes('kategori') ||
+        error.message.includes('category')
       ) {
         errorMessage =
-          "Kategori atau sub kategori tidak valid. Silakan pilih ulang.";
+          'Kategori atau sub kategori tidak valid. Silakan pilih ulang.';
       } else if (
-        error.message.includes("server") ||
-        error.message.includes("500")
+        error.message.includes('server') ||
+        error.message.includes('500')
       ) {
         errorMessage =
-          "Server sedang bermasalah. Silakan coba lagi dalam beberapa menit.";
+          'Server sedang bermasalah. Silakan coba lagi dalam beberapa menit.';
       } else if (
-        error.message.includes("network") ||
-        error.message.includes("fetch") ||
-        error.message.includes("koneksi")
+        error.message.includes('network') ||
+        error.message.includes('fetch') ||
+        error.message.includes('koneksi')
       ) {
         errorMessage =
-          "Koneksi internet bermasalah. Periksa koneksi Anda dan coba lagi.";
+          'Koneksi internet bermasalah. Periksa koneksi Anda dan coba lagi.';
       } else if (
-        error.message.includes("token") ||
-        error.message.includes("401")
+        error.message.includes('token') ||
+        error.message.includes('401')
       ) {
-        errorMessage = "Sesi Anda telah berakhir. Silakan login ulang.";
-        setTimeout(() => navigate("/login"), 2000);
-      } else if (error.message.includes("CORS")) {
+        errorMessage = 'Sesi Anda telah berakhir. Silakan login ulang.';
+        setTimeout(() => navigate('/login'), 2000);
+      } else if (error.message.includes('CORS')) {
         errorMessage =
-          "Ada masalah dengan server. Silakan hubungi administrator.";
+          'Ada masalah dengan server. Silakan hubungi administrator.';
       } else {
         errorMessage = error.message || errorMessage;
       }
@@ -367,7 +393,7 @@ function Form() {
 
   // Retry submit function
   const handleRetrySubmit = () => {
-    setError("");
+    setError('');
     handleSubmit({ preventDefault: () => {} });
   };
 
@@ -376,7 +402,7 @@ function Form() {
     if (submittedTicketId) {
       navigate(`/ticket/${submittedTicketId}`);
     } else {
-      navigate("/student/tickets");
+      navigate('/student/tickets');
     }
   };
 
@@ -388,7 +414,7 @@ function Form() {
           <strong className="font-bold">🎉 Berhasil! </strong>
           <span className="block sm:inline">
             Laporan Anda telah berhasil dikirim
-            {submittedTicketId ? ` dengan ID #${submittedTicketId}` : ""}.
+            {submittedTicketId ? ` dengan ID #${submittedTicketId}` : ''}.
           </span>
         </div>
         <div className="flex space-x-2">
@@ -396,13 +422,13 @@ function Form() {
             onClick={handleViewTicket}
             className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
           >
-            Lihat {submittedTicketId ? "Detail" : "Dashboard"}
+            Lihat {submittedTicketId ? 'Detail' : 'Dashboard'}
           </button>
         </div>
       </div>
       <div className="mt-2 text-sm">
-        Anda akan dialihkan ke halaman{" "}
-        {submittedTicketId ? "detail tiket" : "dashboard"} dalam 3 detik...
+        Anda akan dialihkan ke halaman{' '}
+        {submittedTicketId ? 'detail tiket' : 'dashboard'} dalam 3 detik...
       </div>
     </div>
   );
@@ -415,14 +441,14 @@ function Form() {
           <strong className="font-bold">❌ Error! </strong>
           <span className="block mt-1">{error}</span>
 
-          {error.includes("server") && (
+          {error.includes('server') && (
             <div className="mt-2 text-sm bg-red-50 p-2 rounded">
               <strong>Tips:</strong> Server mungkin sedang maintenance. Coba
               lagi dalam beberapa menit.
             </div>
           )}
 
-          {error.includes("koneksi") && (
+          {error.includes('koneksi') && (
             <div className="mt-2 text-sm bg-red-50 p-2 rounded">
               <strong>Tips:</strong>
               <ul className="list-disc list-inside mt-1">
@@ -441,11 +467,11 @@ function Form() {
               disabled={isLoading}
               className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors disabled:opacity-50"
             >
-              {isLoading ? "Mencoba..." : "Coba Lagi"}
+              {isLoading ? 'Mencoba...' : 'Coba Lagi'}
             </button>
           )}
           <button
-            onClick={() => setError("")}
+            onClick={() => setError('')}
             className="text-red-500 hover:text-red-700 text-lg font-bold"
           >
             ×
@@ -553,7 +579,7 @@ function Form() {
                 placeholder="Masukkan email Anda"
                 disabled={formData.anonymous || !!user?.email} // Disabled
                 className={`mt-1 ${
-                  formData.anonymous || !!user?.email ? "bg-gray-100" : ""
+                  formData.anonymous || !!user?.email ? 'bg-gray-100' : ''
                 }`}
                 required={!formData.anonymous}
               />
@@ -687,7 +713,7 @@ function Form() {
                       />
                     </svg>
                     <p className="mb-2 text-sm text-gray-500">
-                      <span className="font-semibold">Klik untuk Upload</span>{" "}
+                      <span className="font-semibold">Klik untuk Upload</span>{' '}
                       atau drag and drop
                     </p>
                     <p className="text-xs text-gray-500">
@@ -732,7 +758,7 @@ function Form() {
                   ></path>
                 </svg>
                 <span>
-                  Mengirim...{" "}
+                  Mengirim...{' '}
                   {retryCount > 0 && `(Percobaan ${retryCount + 1})`}
                 </span>
               </>
@@ -761,7 +787,7 @@ function Form() {
         <div className="border-t pt-6">
           <div className="text-sm text-gray-600 mb-6">
             <p className="mb-2">
-              <span className="font-medium">Catatan:</span> Kolom bertanda{" "}
+              <span className="font-medium">Catatan:</span> Kolom bertanda{' '}
               <span className="text-red-500">*</span> wajib diisi
             </p>
             <p>Laporan Anda akan ditindaklanjuti dalam waktu 3x24 jam kerja.</p>

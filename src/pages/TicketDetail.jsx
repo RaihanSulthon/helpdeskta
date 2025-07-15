@@ -99,10 +99,8 @@ const DetailTicket = () => {
           data.anonymous === true
             ? 'Anonim'
             : data.nama || data.name || 'Tidak diketahui',
-        email:
-          data.anonymous === true
-            ? 'anonim@email.com'
-            : data.email || 'tidak diketahui',
+        // UBAH INI: Selalu tampilkan email asli
+        email: data.email || 'tidak diketahui', // Remove anonymous email override
         date: formatDate(data.created_at),
         status: mapStatus(data.status),
         lastUpdate: formatDate(data.updated_at || data.created_at),
@@ -119,19 +117,14 @@ const DetailTicket = () => {
           data.read_by_disposisi === true || data.read_by_disposisi === 1,
         readByStudent:
           data.read_by_student === true || data.read_by_student === 1,
-        // User data fields from API response
         nim: data.nim || '',
         prodi: data.prodi || '',
         semester: data.semester ? data.semester.toString() : '',
         noHp: data.no_hp || '',
         anonymous: data.anonymous === true || data.anonymous === 1,
-        userId: data.user_id,
-        unread: data.unread_chat_count,
-        read: data.chat_count,
       };
+
       setTicketData(transformedData);
-      setTotalFeedbackCount(transformedData.read || 0);
-      setNewFeedbackCount(transformedData.unread || 0);
     } catch (error) {
       console.error('Error loading ticket detail:', error);
       setError(error.message || 'Gagal memuat detail tiket');

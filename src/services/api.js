@@ -543,6 +543,9 @@ export const logoutAPI = async () => {
 };
 
 // Submit Ticket API
+// Modified submitTicketAPI function in api.js
+// This version always sends the actual email, regardless of anonymous status
+
 export const submitTicketAPI = async (formData) => {
   try {
     const token = localStorage.getItem('token');
@@ -574,7 +577,6 @@ export const submitTicketAPI = async (formData) => {
       throw new Error('Sub kategori harus dipilih');
     }
 
-    // Prepare request body with EXACT field names expected by API
     const requestBody = {
       judul: formData.judul.trim(),
       deskripsi: formData.deskripsi.trim(),
@@ -583,24 +585,26 @@ export const submitTicketAPI = async (formData) => {
       anonymous: formData.anonymous ? '1' : '0',
     };
 
-    // Add identity fields - send even if empty for anonymous users
-    requestBody.nama = formData.nama ? formData.nama.trim() : '';
-    requestBody.nim = formData.nim ? formData.nim.trim() : '';
-    requestBody.prodi = formData.prodi ? formData.prodi.trim() : '';
-    requestBody.semester = formData.semester
-      ? formData.semester.toString()
-      : '';
-    requestBody.email = formData.email ? formData.email.trim() : '';
-    requestBody.no_hp = formData.no_hp ? formData.no_hp.trim() : '';
-
-    // Remove empty fields for anonymous users except required ones
+    // MODIFIED: Always send actual data, but for anonymous users,
+    // send empty/default values except for email
     if (formData.anonymous) {
-      requestBody.nama = '';
-      requestBody.nim = '';
-      requestBody.prodi = '';
-      requestBody.semester = '';
-      requestBody.email = '';
-      requestBody.no_hp = '';
+      // For anonymous users: send default values but keep actual email
+      requestBody.nama = 'Anonim';
+      requestBody.nim = '0';
+      requestBody.prodi = 'Anonim';
+      requestBody.semester = '0';
+      requestBody.email = formData.email ? formData.email.trim() : ''; // Keep actual email
+      requestBody.no_hp = '0';
+    } else {
+      // For non-anonymous users: send all actual data
+      requestBody.nama = formData.nama ? formData.nama.trim() : '';
+      requestBody.nim = formData.nim ? formData.nim.trim() : '';
+      requestBody.prodi = formData.prodi ? formData.prodi.trim() : '';
+      requestBody.semester = formData.semester
+        ? formData.semester.toString()
+        : '';
+      requestBody.email = formData.email ? formData.email.trim() : '';
+      requestBody.no_hp = formData.no_hp ? formData.no_hp.trim() : '';
     }
 
     console.log('Final request body:', requestBody);

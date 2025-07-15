@@ -189,10 +189,8 @@ const AdminDashboard = () => {
         ticket.anonymous === true
           ? 'Anonim'
           : ticket.nama || ticket.name || 'Tidak diketahui',
-      email:
-        ticket.anonymous === true
-          ? 'anonim@email.com'
-          : ticket.email || 'tidak diketahui',
+      // UBAH INI: Selalu tampilkan email asli
+      email: ticket.email || 'tidak diketahui', // Remove anonymous email override
       date: formatDate(ticket.created_at),
       subject: ticket.judul || ticket.title || 'Tidak ada judul',
       category: mapStatusToCategory(ticket.status),
@@ -201,8 +199,7 @@ const AdminDashboard = () => {
       priority: ticket.priority || 'medium',
       isRead: ticket.read_by_admin === true || ticket.read_by_admin === 1,
       status: ticket.status,
-      rawTicket: ticket, // Keep original data for reference
-      // Additional admin fields
+      rawTicket: ticket,
       nim: ticket.nim || '',
       prodi: ticket.prodi || '',
       semester: ticket.semester || '',
@@ -214,8 +211,8 @@ const AdminDashboard = () => {
       readByStudent:
         ticket.read_by_student === true || ticket.read_by_student === 1,
       assignedTo: ticket.assigned_to,
-      feedback: Math.floor(Math.random() * 5) + 1, // Mock feedback for now
-      feedbackType: 'warning', // Mock feedback type
+      feedback: Math.floor(Math.random() * 5) + 1,
+      feedbackType: 'warning',
     };
   };
 

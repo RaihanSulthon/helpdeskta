@@ -673,25 +673,20 @@ const StudentDashboard = () => {
             ticket.anonymous === true
               ? 'Anonim'
               : ticket.nama || ticket.name || 'Tidak diketahui',
-          email:
-            ticket.anonymous === true
-              ? 'anonim@email.com'
-              : ticket.email || 'tidak diketahui',
+          // UBAH INI: Selalu tampilkan email asli
+          email: ticket.email || 'tidak diketahui', // Remove anonymous email override
           date: formatDate(ticket.created_at),
           originalDate: ticket.updated_at || ticket.created_at,
           subject: ticket.judul || ticket.title || 'Tidak ada judul',
           category: ticketCategory,
           categoryType: ticket.category?.name || 'Umum',
           subCategory: ticket.sub_category?.name || 'Umum',
-
-          // ✅ isRead menggunakan status-specific clicked tracking
           isRead:
             ticket.read_by_student === true ||
             ticket.read_by_student === 1 ||
             ticket.read_by_student === '1',
           isClickedForCurrentStatus:
             clickedTicketsByStatus[ticketCategory]?.has(ticket.id) || false,
-
           status: ticket.status,
           priority: ticket.priority || 'medium',
           description: ticket.deskripsi || ticket.description || '',

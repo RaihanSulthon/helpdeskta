@@ -83,10 +83,8 @@ const TicketCard = ({
           data.anonymous === true
             ? 'Anonim'
             : data.nama || data.name || 'Tidak diketahui',
-        email:
-          data.anonymous === true
-            ? 'anonim@email.com'
-            : data.email || 'tidak diketahui',
+        // FIX: Hapus kondisi anonymous untuk email, selalu gunakan email asli
+        email: data.email || 'tidak diketahui', // Hapus bagian anonymous check
         date: data.created_at,
         status: data.status,
         lastUpdate: data.updated_at || data.created_at,
