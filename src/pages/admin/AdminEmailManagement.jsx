@@ -574,7 +574,7 @@ const AdminEmailManagement = () => {
         ></div>
 
         {/* Main Container (All Email Section) */}
-        <div className="px-8 pt-4 pb-6 space-y-6 pl-[50px]">
+        <div className="px-8 pt-4 pb-6 pl-[50px]">
           {ticketData?.title && (
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-gray-900 leading-tight">
@@ -583,145 +583,179 @@ const AdminEmailManagement = () => {
             </div>
           )}
 
-          {/* Email Form */}
-          <form onSubmit={handleSendEmail} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Tujuan <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                name="to_email"
-                value={emailForm.to_email}
-                onChange={handleEmailFormChange}
-                required
-                placeholder="contoh@telkomuniversity.ac.id"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-              />
-            </div>
+          {/* Label Disposisi (Email) */}
+          <h2 className="text-sm font-medium text-gray-700">
+            Disposisi (Email)
+          </h2>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Subject <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="subject"
-                value={emailForm.subject}
-                onChange={handleEmailFormChange}
-                required
-                placeholder="Masukkan subject email..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-              />
-            </div>
-
-            {/* Isi Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Isi Email <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                name="body"
-                value={emailForm.body}
-                onChange={handleEmailFormChange}
-                required
-                rows={8}
-                placeholder="Tulis isi email di sini..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-              />
-            </div>
-
-            {/* Submit button */}
-            <div className="flex justify-end space-x-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setEmailForm({ to_email: '', subject: '', body: '' });
-                  setError('');
-                  setSuccess('');
-                }}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Clear
-              </button>
-              <button
-                type="submit"
-                disabled={sending}
-                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-              >
-                {sending ? (
-                  <>
-                    <svg
-                      className="animate-spin h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    <span>Mengirim...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                      />
-                    </svg>
-                    <span>Kirim Email</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* Alert Messages */}
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-              <div className="flex items-center justify-between">
-                <span>{error}</span>
-                <button
-                  onClick={() => setError('')}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  ×
-                </button>
+          <div className="border border-blue-400 rounded-lg p-6 bg-white">
+            {/* Email Form */}
+            <form onSubmit={handleSendEmail} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tujuan <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="to_email"
+                  value={emailForm.to_email}
+                  onChange={handleEmailFormChange}
+                  required
+                  placeholder="contoh@telkomuniversity.ac.id"
+                  className="w-full px-3 py-2 border-2 border-gray-500 rounded-lg"
+                />
               </div>
-            </div>
-          )}
 
-          {success && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-              <div className="flex items-center justify-between">
-                <span>{success}</span>
-                <button
-                  onClick={() => setSuccess('')}
-                  className="text-green-500 hover:text-green-700"
-                >
-                  ×
-                </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subjek <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="subject"
+                  value={emailForm.subject}
+                  onChange={handleEmailFormChange}
+                  required
+                  placeholder="Masukkan subjek"
+                  className="w-full px-3 py-2 border-2 border-gray-500 rounded-lg"
+                />
               </div>
-            </div>
-          )}
+
+              {/* Isi Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Isi Email <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="body"
+                  value={emailForm.body}
+                  onChange={handleEmailFormChange}
+                  required
+                  rows={8}
+                  placeholder="Ketik isi email"
+                  className="w-full px-3 py-2 border-2 border-gray-500 rounded-lg"
+                />
+              </div>
+
+              {/* Info Box dan Buttons dalam satu baris */}
+              <div className="flex items-center justify-between">
+                {/* Info section - kiri dengan background biru */}
+                <div className="flex items-start space-x-3 bg-blue-50 border border-blue-200 rounded-lg p-4 flex-1 mr-4">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M10 0.75C12.4533 0.75 14.8063 1.72427 16.541 3.45898C18.2757 5.1937 19.25 7.54675 19.25 10C19.25 12.4533 18.2757 14.8063 16.541 16.541C14.8063 18.2757 12.4533 19.25 10 19.25C7.54675 19.25 5.1937 18.2757 3.45898 16.541C1.72427 14.8063 0.75 12.4533 0.75 10C0.75 7.54675 1.72427 5.1937 3.45898 3.45898C5.1937 1.72427 7.54675 0.75 10 0.75ZM10 4.25C9.46956 4.25 8.96101 4.46087 8.58594 4.83594C8.21087 5.21101 8 5.71957 8 6.25C8 6.78043 8.21087 7.28899 8.58594 7.66406C8.71987 7.798 8.87126 7.91009 9.03418 8H8.75C8.30245 8 7.87311 8.17767 7.55664 8.49414C7.24017 8.81061 7.0625 9.23995 7.0625 9.6875C7.0625 10.1351 7.24017 10.5644 7.55664 10.8809C7.76755 11.0918 8.02938 11.2383 8.3125 11.3145V12.375H7.8125C7.36495 12.375 6.93561 12.5527 6.61914 12.8691C6.30267 13.1856 6.125 13.6149 6.125 14.0625C6.125 14.5101 6.30267 14.9394 6.61914 15.2559C6.93561 15.5723 7.36495 15.75 7.8125 15.75H12.1875C12.6351 15.75 13.0644 15.5723 13.3809 15.2559C13.6973 14.9394 13.875 14.5101 13.875 14.0625C13.875 13.6149 13.6973 13.1856 13.3809 12.8691C13.0644 12.5527 12.6351 12.375 12.1875 12.375H11.6875V8H10.9658C11.1287 7.91009 11.2801 7.798 11.4141 7.66406C11.7891 7.28899 12 6.78043 12 6.25C12 5.71957 11.7891 5.21101 11.4141 4.83594C11.039 4.46087 10.5304 4.25 10 4.25Z"
+                      fill="#0072C6"
+                      stroke="#0072C6"
+                      strokeWidth="1.5"
+                    />
+                  </svg>
+                  <p className="text-sm text-blue-800">
+                    <strong>Info:</strong> Email akan berisi detail lengkap
+                    tiket dengan format yang rapi seperti yang Anda lihat di
+                    sistem ini.
+                  </p>
+                </div>
+
+                {/* Buttons section - kanan tanpa background */}
+                <div className="flex space-x-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmailForm({ to_email: '', subject: '', body: '' });
+                      setError('');
+                      setSuccess('');
+                    }}
+                    className="px-6 hover:scale-105 hover:shadow-lg transition-all duration-300 border-2 border-blue-700 text-blue-700 rounded-lg hover:bg-gray-50"
+                  >
+                    <span className='font-bold'>Clear</span>
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={sending}
+                    className="px-6 py-2 hover:shadow-lg hover:scale-105 transition-all duration-300 bg-blue-400 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  >
+                    {sending ? (
+                      <>
+                        <svg
+                          className="animate-spin h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        <span>Mengirim...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          width="24"
+                          height="22"
+                          viewBox="0 0 24 22"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            clipRule="evenodd"
+                            d="M1.69299 0.818655C1.53414 0.750422 1.35891 0.732531 1.18999 0.767305C1.02108 0.802079 0.866291 0.887912 0.745694 1.01367C0.625098 1.13943 0.54426 1.29932 0.513664 1.4726C0.483068 1.64588 0.504126 1.82455 0.574106 1.98545L4.1199 10.1214H12.8233C13.0514 10.1214 13.27 10.214 13.4313 10.3787C13.5925 10.5435 13.6831 10.767 13.6831 11C13.6831 11.233 13.5925 11.4565 13.4313 11.6213C13.27 11.786 13.0514 11.8786 12.8233 11.8786H4.1199L0.574106 20.0146C0.504126 20.1755 0.483068 20.3541 0.513664 20.5274C0.54426 20.7007 0.625098 20.8606 0.745694 20.9863C0.866291 21.1121 1.02108 21.1979 1.18999 21.2327C1.35891 21.2675 1.53414 21.2496 1.69299 21.1813L23.4745 11.8095C23.6303 11.7423 23.7632 11.6297 23.8567 11.4857C23.9501 11.3417 24 11.1728 24 11C24 10.8272 23.9501 10.6583 23.8567 10.5143C23.7632 10.3703 23.6303 10.2577 23.4745 10.1905L1.69299 0.818655Z"
+                            fill="white"
+                          />
+                        </svg>
+                        <span>Kirim Email</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Alert Messages */}
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                  <div className="flex items-center justify-between">
+                    <span>{error}</span>
+                    <button
+                      onClick={() => setError('')}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {success && (
+                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+                  <div className="flex items-center justify-between">
+                    <span>{success}</span>
+                    <button
+                      onClick={() => setSuccess('')}
+                      className="text-green-500 hover:text-green-700"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )}
+            </form>
+          </div>
         </div>
       </div>
       {/* Delete Confirmation Modal */}
