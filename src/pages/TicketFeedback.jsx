@@ -86,6 +86,16 @@ const TicketFeedback = () => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
+  const handleEmailDisposition = () => {
+    navigate('/admin/emails', {
+      state: {
+        from: `/ticket/${ticketId}/feedback`,
+        ticketId: ticketId,
+        ticketTitle: ticketData?.title || 'Ticket Feedback',
+      },
+    });
+  };
+
   const handleDeleteTicket = () => {
     setShowDeleteModal(true);
   };
@@ -588,7 +598,10 @@ const TicketFeedback = () => {
             {isAdmin && (
               <>
                 {/* Disposisi Email Button */}
-                <button className="flex items-center gap-2 px-4 py-2 hover:scale-105 transition-all duration-300 bg-white hover:bg-[#f8caca] text-[#333333] border border-gray-500 rounded-md shadow-xl text-sm font-medium">
+                <button
+                  onClick={handleEmailDisposition}
+                  className="flex items-center gap-2 px-4 py-2 hover:scale-105 transition-all duration-300 bg-white hover:bg-[#f8caca] text-[#333333] border border-gray-500 rounded-md shadow-xl text-sm font-medium"
+                >
                   <svg
                     width="20"
                     height="20"

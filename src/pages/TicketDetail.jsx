@@ -388,6 +388,16 @@ const DetailTicket = () => {
     navigate(`/ticket/${ticketId}/feedback`);
   };
 
+  const handleEmailDisposition = () => {
+    navigate('/admin/emails', {
+      state: {
+        from: `/ticket/${ticketId}`,
+        ticketId: ticketId,
+        ticketTitle: ticketData?.title,
+      },
+    });
+  };
+
   const handleDownloadAttachment = (attachment) => {
     if (attachment.file_url) {
       window.open(attachment.file_url, '_blank');
@@ -485,7 +495,7 @@ const DetailTicket = () => {
             {isAdmin && (
               <>
                 <button
-                  onClick={() => navigate('/admin/emails')}
+                  onClick={handleEmailDisposition}
                   className="flex items-center gap-2 px-4 py-2 hover:scale-105 transition-all duration-300 bg-white hover:bg-[#f8caca] text-[#333333] border border-gray-500 rounded-md shadow-xl text-sm font-medium"
                 >
                   <svg
