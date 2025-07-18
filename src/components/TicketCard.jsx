@@ -254,14 +254,9 @@ const TicketCard = ({
       {/* Student Info Row: Name, Email, Created Date */}
       <div className="flex items-center justify-between mb-1">
         <div className="text-blue-800 text-xs font-semibold">
-          {(ticketData?.submitter || ticket.sender || 'Tidak diketahui')
-            .length > 10
-            ? (
-                ticketData?.submitter ||
-                ticket.sender ||
-                'Tidak diketahui'
-              ).slice(0, 10) + '...'
-            : ticketData?.submitter || ticket.sender || 'Tidak diketahui'}
+          {(ticketData?.submitter || 'Tidak diketahui').length > 10
+            ? (ticketData?.submitter || 'Tidak diketahui').slice(0, 10) + '...'
+            : ticketData?.submitter || 'Tidak diketahui'}
         </div>
 
         {/* Center email and right-align date */}

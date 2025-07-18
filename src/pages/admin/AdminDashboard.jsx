@@ -804,7 +804,7 @@ const AdminDashboard = () => {
   // 11. MAIN RENDER
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-3xl font-bold text-white">Kelola Tiket</h1>
         </div>
