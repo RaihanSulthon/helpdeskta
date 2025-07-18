@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 // Komponen Button sederhana
-function Button({ children, className = "", onClick }) {
+function Button({ children, className = '', onClick }) {
   return (
     <button
       onClick={onClick}
@@ -18,43 +18,52 @@ function LandingPage() {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated, getUserRole } = useAuth();
   const [userRole, setUserRole] = useState(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Check login status using AuthContext
   useEffect(() => {
     if (isAuthenticated() && user) {
       const role = getUserRole();
       setUserRole(role);
-      console.log("Landing page - User authenticated:", { user, role });
+      console.log('Landing page - User authenticated:', { user, role });
     } else {
       setUserRole(null);
-      console.log("Landing page - User not authenticated");
+      console.log('Landing page - User not authenticated');
     }
   }, [user, isAuthenticated, getUserRole]);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
     try {
-      await logout(); // This will handle API call and redirect
+      await logout();
     } catch (error) {
-      console.error("Logout error:", error);
-      // Fallback: force reload to clear state
-      window.location.href = "/";
+      console.error('Logout error:', error);
+      window.location.href = '/';
     }
+    setShowLogoutModal(false);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const handleDashboardClick = () => {
     const currentRole = getUserRole();
-    console.log("Dashboard click - Current role:", currentRole);
+    console.log('Dashboard click - Current role:', currentRole);
 
     switch (currentRole) {
-      case "admin":
-        navigate("/admin/tickets");
+      case 'admin':
+        navigate('/admin/tickets');
         break;
-      case "student":
-        navigate("/student/tickets");
+      case 'student':
+        navigate('/student/tickets');
         break;
       default:
-        console.warn("Unknown role, defaulting to student dashboard");
-        navigate("/student/tickets");
+        console.warn('Unknown role, defaulting to student dashboard');
+        navigate('/student/tickets');
         break;
     }
   };
@@ -62,7 +71,7 @@ function LandingPage() {
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      element.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -84,19 +93,19 @@ function LandingPage() {
           {/* Center section - Navigation Menu */}
           <nav className="hidden md:flex space-x-8">
             <button
-              onClick={() => scrollToSection("about-section")}
+              onClick={() => scrollToSection('about-section')}
               className="text-white hover:text-gray-200 font-medium"
             >
               AboutUs
             </button>
             <button
-              onClick={() => scrollToSection("asked-section")}
+              onClick={() => scrollToSection('asked-section')}
               className="text-white hover:text-gray-200 font-medium"
             >
               AskedUs
             </button>
             <button
-              onClick={() => scrollToSection("reach-us-section")}
+              onClick={() => scrollToSection('reach-us-section')}
               className="text-white hover:text-gray-200 font-medium"
             >
               ReachUs
@@ -108,7 +117,7 @@ function LandingPage() {
             <div className="flex space-x-4">
               <Button
                 className="bg-white text-red-600 hover:bg-gray-100 px-6 py-2 font-medium"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate('/login')}
               >
                 Login
               </Button>
@@ -122,14 +131,14 @@ function LandingPage() {
                 Dashboard
               </Button>
               <div className="text-white text-sm">
-                Welcome,{" "}
+                Welcome,{' '}
                 <span className="font-medium capitalize">
                   {user?.name || userRole}
                 </span>
               </div>
               <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                 <span className="text-white font-medium text-sm">
-                  {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                  {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </span>
               </div>
               <Button
@@ -169,7 +178,7 @@ function LandingPage() {
                 <>
                   <Button
                     className="bg-white text-red-600 hover:bg-gray-100 px-8 py-3 text-lg font-medium"
-                    onClick={() => navigate("/login")}
+                    onClick={() => navigate('/login')}
                   >
                     Get Started
                   </Button>
@@ -189,15 +198,15 @@ function LandingPage() {
                     className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
                     onClick={() =>
                       navigate(
-                        userRole === "student"
-                          ? "/student/sampaikan"
-                          : "/admin/tickets"
+                        userRole === 'student'
+                          ? '/student/sampaikan'
+                          : '/admin/tickets'
                       )
                     }
                   >
-                    {userRole === "student"
-                      ? "Create Ticket"
-                      : "Manage Tickets"}
+                    {userRole === 'student'
+                      ? 'Create Ticket'
+                      : 'Manage Tickets'}
                   </Button>
                 </>
               )}
@@ -645,7 +654,7 @@ function LandingPage() {
             <div className="text-center relative">
               <Button
                 className="bg-red-600 text-white hover:bg-red-700 px-6 py-3 rounded-lg font-medium relative z-10"
-                onClick={() => navigate("/daftar-kontak")}
+                onClick={() => navigate('/daftar-kontak')}
               >
                 Lihat Semua Kontak Dosen
               </Button>

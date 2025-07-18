@@ -3,35 +3,18 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import appLogo from '../assets/applogo.png';
 
-const Navbar = ({ onMenuToggle, sidebarExpanded }) => {
+const Navbar = ({ onMenuToggle, sidebarExpanded, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const { getUserRole } = useAuth();
+
   const dropdownRef = useRef(null);
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    onLogout();
     setShowUserDropdown(false);
-  };
-
-  const handleLogoClick = () => {
-    const currentRole = getUserRole();
-
-    switch (currentRole) {
-      case 'admin':
-        navigate('/');
-        break;
-      case 'student':
-        navigate('/');
-        break;
-      default:
-        navigate('/');
-        break;
-    }
   };
 
   const toggleDropdown = () => {
@@ -123,12 +106,7 @@ const Navbar = ({ onMenuToggle, sidebarExpanded }) => {
 
           {/* Page Title */}
           <div className="hidden sm:block">
-            <img
-              src={appLogo}
-              alt="App Logo"
-              className="h-8 w-auto ml-4 cursor-pointer hover:opacity-80 hover:scale-105 transition-all duration-300"
-              onClick={handleLogoClick}
-            />
+            <img src={appLogo} alt="App Logo" className="h-8 w-auto ml-4" />
           </div>
         </div>
 
@@ -192,7 +170,7 @@ const Navbar = ({ onMenuToggle, sidebarExpanded }) => {
                 </span>
               </div>
               <svg
-                className={`w-4 h-4 text-white transform transition-transform duration-300 ease-out hover:scale-105 marker:${
+                className={`w-4 h-4 text-white transform transition-transform duration-300 ease-out ${
                   showUserDropdown ? 'rotate-180' : 'rotate-0'
                 }`}
                 fill="none"
