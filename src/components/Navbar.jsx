@@ -2,15 +2,54 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import appLogo from '../assets/applogo.png';
+import NotificationModal from './NotificationModal';
+import { getNotificationsAPI } from '../services/api';
 
-const Navbar = ({ onMenuToggle, sidebarExpanded, onLogout }) => {
+const Navbar = ({ onMenuToggle, sidebarExpanded, onLogout, onNotificationToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef(null);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const result = await getNotificationsAPI({ read: false, per_page: 1 });
+      if (result.notifications?.total) {
+        setUnreadCount(result.notifications.total);
+      } else if (result.pagination?.total) {
+        setUnreadCount(result.pagination.total);
+      } else {
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+      setUnreadCount(0);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+
+    // Refresh count every 15 seconds (lebih sering)
+    const interval = setInterval(fetchUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    window.refreshNotificationCount = fetchUnreadCount;
+  }, []);
+
+  const handleCloseNotificationModal = () => {
+    setShowNotificationModal(false);
+    // Refresh count setelah modal ditutup
+    setTimeout(() => {
+      fetchUnreadCount();
+    }, 1000);
+  };
 
   const handleLogout = () => {
     onLogout();
@@ -124,7 +163,10 @@ const Navbar = ({ onMenuToggle, sidebarExpanded, onLogout }) => {
           </span>
 
           {/* Notifications */}
-          <button className="p-2 text-white hover:text-white hover:bg-white/20 rounded-md transition-colors relative">
+          <button
+            onClick={() => onNotificationToggle && onNotificationToggle()}
+            className="p-2 text-white hover:text-white hover:bg-white/20 rounded-md transition-colors relative"
+          >
             <svg
               width="20"
               height="22"
@@ -155,7 +197,9 @@ const Navbar = ({ onMenuToggle, sidebarExpanded, onLogout }) => {
               />
             </svg>
             {/* Notification badge */}
-            <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-400"></span>
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-400"></span>
+            )}
           </button>
 
           {/* Profile Dropdown */}

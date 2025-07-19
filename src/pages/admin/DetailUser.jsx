@@ -319,7 +319,7 @@ const DetailManage = () => {
             {/* Semua */}
             <div
               onClick={() => handleFilterClick('Semua')}
-              className={`border-2 border-gray-400 shadow-md shadow-gray-300 text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 shadow-lg cursor-pointer w-32 justify-center ${
+              className={`border-2 border-gray-400 shadow-gray-300 text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 shadow-lg cursor-pointer w-32 justify-center ${
                 activeFilter === 'Semua'
                   ? 'border-blue-700 bg-blue-200 text-black' // Active state
                   : 'border-gray-400 text-black hover:text-blue-800 hover:border-blue-600'
@@ -341,7 +341,7 @@ const DetailManage = () => {
             {/* Tiket Baru */}
             <div
               onClick={() => handleFilterClick('Tiket Baru')}
-              className={`border-2 shadow-md shadow-gray-300 text-sm px-1 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 shadow-lg cursor-pointer w-32 justify-center ${
+              className={`border-2 shadow-gray-300 text-sm px-1 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 shadow-lg cursor-pointer w-32 justify-center ${
                 activeFilter === 'Tiket Baru'
                   ? 'border-gray-500 bg-gray-200 text-black' // Active state
                   : 'border-gray-400 text-black hover:text-gray-800 hover:border-gray-500' // Default state
@@ -370,7 +370,7 @@ const DetailManage = () => {
             {/* Diproses */}
             <div
               onClick={() => handleFilterClick('Diproses')}
-              className={`border-2 border-gray-400 shadow-md shadow-gray-300 text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 shadow-lg cursor-pointer w-32 justify-center ${
+              className={`border-2 border-gray-400 shadow-gray-300 text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 shadow-lg cursor-pointer w-32 justify-center ${
                 activeFilter === 'Diproses'
                   ? 'border-b-2 bg-orange-100 border-orange-500 text-orange-600'
                   : 'text-black'
@@ -399,7 +399,7 @@ const DetailManage = () => {
             {/* Selesai */}
             <div
               onClick={() => handleFilterClick('Selesai')}
-              className={`border-2 border-gray-400 shadow-md shadow-gray-300 text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 shadow-lg cursor-pointer w-32 justify-center ${
+              className={`border-2 border-gray-400 shadow-gray-300 text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 shadow-lg cursor-pointer w-32 justify-center ${
                 activeFilter === 'Selesai'
                   ? 'border-b-2 border-green-500 text-green-600'
                   : 'text-black'
@@ -431,7 +431,7 @@ const DetailManage = () => {
                 {counts.selesai}
               </span>
             </div>
-            <div className="border-2 border-gray-400 shadow-md shadow-gray-300 text-sm rounded-lg px-3 py-1 rounded-lg  items-center space-x-2 transition-all duration-300 shadow-lg cursor-pointer w-auto justify-center">
+            <div className="border-2 border-gray-400 shadow-gray-300 text-sm rounded-lg px-3 py-1  items-center space-x-2 transition-all duration-300 shadow-lg cursor-pointer w-auto justify-center">
               <div className="flex items-center space-x-2 ">
                 <svg
                   className="w-4 h-4"
@@ -460,7 +460,7 @@ const DetailManage = () => {
             {/* Date Info - Fixed calculation */}
             <div className="ml-auto flex items-center space-x-4 text-sm text-gray-500">
               <div className="flex items-center  my-2">
-                <div className="border-2 border-gray-400  shadow-md shadow-gray-300 text-sm rounded-lg flex items-center transition-all duration-300 shadow-lg cursor-pointer w-auto overflow-hidden">
+                <div className="border-2 border-gray-400 shadow-gray-300 text-sm rounded-lg flex items-center transition-all duration-300 shadow-lg cursor-pointer w-auto overflow-hidden">
                   <div className="px-4 py-2">
                     <span className="font-medium text-gray-700">
                       Tiket Pertama
@@ -489,7 +489,7 @@ const DetailManage = () => {
               </div>
 
               <div className="flex items-center ">
-                <div className="border-2 border-gray-400 shadow-md shadow-gray-300 text-sm rounded-lg flex items-center transition-all duration-300 shadow-lg cursor-pointer w-auto overflow-hidden">
+                <div className="border-2 border-gray-400 shadow-gray-300 text-sm rounded-lg flex items-center transition-all duration-300 shadow-lg cursor-pointer w-auto overflow-hidden">
                   <div className="px-2 py-2"></div>
                   <div className="w-0.5 h-10 bg-gray-400"></div>
                   <div className="px-4 py-2">

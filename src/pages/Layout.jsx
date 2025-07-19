@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
+import NotificationModal from '../components/NotificationModal';
 
 const Layout = ({ children, requiredRole }) => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ const Layout = ({ children, requiredRole }) => {
   const { user, logout } = useAuth();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   // Handle menu clicks from sidebar - BERSIHKAN INI!
   const handleMenuClick = (menuId) => {
@@ -39,6 +41,21 @@ const Layout = ({ children, requiredRole }) => {
 
   const handleLogout = () => {
     setShowLogoutModal(true);
+  };
+
+  const handleNotificationToggle = () => {
+    setShowNotificationModal(true);
+  };
+
+  // TAMBAHAN: Handle close notification modal dengan refresh count
+  const handleCloseNotificationModal = () => {
+    setShowNotificationModal(false);
+    // Refresh count setelah modal ditutup
+    setTimeout(() => {
+      if (window.refreshNotificationCount) {
+        window.refreshNotificationCount();
+      }
+    }, 1000);
   };
 
   const confirmLogout = () => {
@@ -74,6 +91,7 @@ const Layout = ({ children, requiredRole }) => {
           sidebarExpanded={sidebarExpanded}
           user={user}
           onLogout={handleLogout}
+          onNotificationToggle={handleNotificationToggle}
         />
       </div>
 
@@ -154,6 +172,10 @@ const Layout = ({ children, requiredRole }) => {
           </div>
         </div>
       )}
+      <NotificationModal
+        isOpen={showNotificationModal}
+        onClose={handleCloseNotificationModal}
+      />
     </div>
   );
 };

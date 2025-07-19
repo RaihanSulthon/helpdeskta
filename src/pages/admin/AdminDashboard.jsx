@@ -6,11 +6,13 @@ import {
   updateTicketStatusAPI,
   getCategoriesAPI,
   deleteTicketAPI,
+  createNotificationAPI
 } from '../../services/api';
 import TicketColumn from '../../components/TicketColumn';
 import { ToastContainer } from '../../components/Toast';
 import SearchBar from '../../components/SearchBar';
 import Navigation from '../../components/Navigation';
+import { getRecipientId, generateNotificationMessage } from '../../utils/userUtils';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -577,13 +579,39 @@ const AdminDashboard = () => {
     );
   };
 
-  // 2. handleDragOver - COMPLETE VERSION (no changes needed)
+
   const handleDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
   };
 
-  // 3. handleDrop - COMPLETE VERSION
+  const createStatusNotification = async (ticketId, ticketData, newStatus) => {
+    try {
+      const studentId = getRecipientId(ticketData, 'student');
+      
+      if (!studentId) {
+        console.warn('No student ID found for status notification');
+        return;
+      }
+  
+      const message = generateNotificationMessage('status_update', {
+        newStatus: newStatus
+      });
+  
+      await createNotificationAPI({
+        recipient_id: studentId,
+        type: "custom_notification",
+        subject: "Custom Notification",
+        content: "This is a custom notification."
+      });
+      
+      console.log(`Status notification sent to student (${studentId}) for status: ${newStatus}`);
+    } catch (error) {
+      console.error('Failed to create status notification:', error);
+      // Jangan throw error, biarkan proses update status tetap berhasil
+    }
+  };
+
   const handleDrop = async (e, toColumn, insertIndex = null) => {
     e.preventDefault();
 
@@ -697,6 +725,8 @@ const AdminDashboard = () => {
           throw error;
         }
       }
+
+      await createStatusNotification(ticket.id, ticket.rawTicket || ticket, newStatus);
 
       // Update local state with proper positioning
       setTickets((prev) => {

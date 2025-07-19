@@ -19,6 +19,8 @@ const retryFetch = async (url, options, maxRetries = 3) => {
   }
 };
 
+export { retryFetch };
+
 // FAQ API Functions - NEW for AskedUs Management
 // Get Ticket Statistics API - ADMIN ONLY
 export const getTicketStatisticsAPI = async (filters = {}) => {
@@ -1444,6 +1446,176 @@ export const getEmailLogsAPI = async (filters = {}) => {
     console.error('Get Email Logs API Error:', error);
     throw new Error(
       error.message || 'Terjadi kesalahan saat mengambil data log email'
+    );
+  }
+};
+
+// Get All Notifications API
+export const getNotificationsAPI = async (filters = {}) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login ulang.');
+    }
+
+    const queryParams = new URLSearchParams();
+    if (filters.read !== undefined) queryParams.append('read', filters.read);
+    if (filters.per_page) queryParams.append('per_page', filters.per_page);
+    if (filters.page) queryParams.append('page', filters.page);
+
+    // Default values
+    if (!filters.per_page) queryParams.append('per_page', '15');
+    if (!filters.page) queryParams.append('page', '1');
+
+    const queryString = queryParams.toString();
+    const url = `${BASE_URL}/notifications${queryString ? `?${queryString}` : ''}`;
+
+    const response = await retryFetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      mode: 'cors',
+      credentials: 'omit',
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn('Could not parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    return result.data || result;
+  } catch (error) {
+    console.error('Get Notifications API Error:', error);
+    throw new Error(
+      error.message || 'Terjadi kesalahan saat mengambil notifikasi'
+    );
+  }
+};
+
+// Mark Notification as Read API
+export const markNotificationAsReadAPI = async (notificationId) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login ulang.');
+    }
+
+    const response = await retryFetch(`${BASE_URL}/notifications/${notificationId}/read`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      mode: 'cors',
+      credentials: 'omit',
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn('Could not parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Mark Notification as Read API Error:', error);
+    throw new Error(
+      error.message || 'Terjadi kesalahan saat menandai notifikasi sebagai dibaca'
+    );
+  }
+};
+
+// Mark All Notifications as Read API
+export const markAllNotificationsAsReadAPI = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login ulang.');
+    }
+
+    const response = await retryFetch(`${BASE_URL}/notifications/read-all`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      mode: 'cors',
+      credentials: 'omit',
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn('Could not parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Mark All Notifications as Read API Error:', error);
+    throw new Error(
+      error.message || 'Terjadi kesalahan saat menandai semua notifikasi sebagai dibaca'
+    );
+  }
+};
+
+// Create Notification API
+export const createNotificationAPI = async (notificationData) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login ulang.');
+    }
+
+    const response = await retryFetch(`${BASE_URL}/notifications`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      mode: 'cors',
+      credentials: 'omit',
+      body: JSON.stringify(notificationData),
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn('Could not parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Create Notification API Error:', error);
+    throw new Error(
+      error.message || 'Terjadi kesalahan saat membuat notifikasi'
     );
   }
 };

@@ -7,10 +7,12 @@ import {
   getTicketDetailAPI,
   updateTicketStatusAPI,
   deleteTicketAPI,
+  createNotificationAPI
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import { ToastContainer } from '../components/Toast';
+import { getRecipientId, generateNotificationMessage } from '../utils/userUtils';
 
 const TicketFeedback = () => {
   const navigate = useNavigate();
@@ -426,61 +428,72 @@ const TicketFeedback = () => {
     if (fileInput) fileInput.value = '';
   };
 
+  const createChatNotification = async (ticketId, ticketData, senderRole) => {
+    try {
+      const recipientRole = senderRole === 'admin' ? 'student' : 'admin';
+      const recipientId = getRecipientId(ticketData, recipientRole);
+      
+      if (!recipientId) {
+        console.warn('No recipient ID found for chat notification');
+        return;
+      }
+  
+      const message = generateNotificationMessage('chat_message', {
+        senderRole: senderRole
+      });
+  
+      await createNotificationAPI({
+        recipient_id: recipientId,
+        type: "custom_notification",
+        subject: "Custom Notification",
+        content: "This is a custom notification."
+      });
+      
+      console.log(`Chat notification sent to ${recipientRole} (${recipientId})`);
+    } catch (error) {
+      console.error('Failed to create chat notification:', error);
+      // Jangan throw error, biarkan proses kirim chat tetap berhasil
+    }
+  };
+
   // Tambahkan debug di fungsi handleSendFeedback
   const handleSendFeedback = async () => {
-    if (!newFeedback.trim() && !selectedFile) {
-      setError('Pesan atau file harus diisi');
-      return;
-    }
-
+    if (!newFeedback.trim() && !selectedFile) return;
+  
     try {
       setSending(true);
       setError('');
-
-      console.log('Sending feedback message:', {
-        message: newFeedback,
-        file: selectedFile?.name,
-      });
-
-      const messageToSend = newFeedback.trim() || '📎 File attachment';
-
-      // ✅ TAMBAHKAN DEBUG: Capture response dari send message
+  
       const sendResponse = await sendChatMessageAPI(
         ticketId,
-        messageToSend,
+        newFeedback,
         selectedFile
       );
-
-      // ✅ DEBUG: Log response lengkap
-      console.log('=== SEND MESSAGE RESPONSE ===');
-      console.log('Full response:', sendResponse);
-
-      // ✅ DEBUG: Cek apakah ada attachment info di response
-      if (sendResponse.attachments) {
-        console.log('Attachments in response:', sendResponse.attachments);
-        sendResponse.attachments.forEach((attachment, index) => {
-          console.log(`Attachment ${index + 1}:`, attachment);
-          console.log(`File URL: ${attachment.file_url}`);
-
-          // ✅ TEST: Coba akses link gambar langsung
-          fetch(attachment.file_url, { method: 'HEAD' })
-            .then((response) => {
-              console.log(
-                `Link ${attachment.file_url} status:`,
-                response.status
-              );
-              if (response.status === 403) {
-                console.error('❌ 403 FORBIDDEN - Backend access issue!');
-              } else if (response.status === 200) {
-                console.log('✅ Link accessible');
-              }
-            })
-            .catch((error) => {
-              console.error('❌ Error accessing link:', error);
-            });
+  
+      // *** TAMBAHAN: Create notification setelah berhasil kirim chat ***
+      const currentUserRole = localStorage.getItem('userRole');
+      await createChatNotification(ticketId, ticketData, currentUserRole);
+  
+      // Test file accessibility jika ada file yang diupload
+      if (selectedFile && sendResponse?.data?.attachments) {
+        sendResponse.data.attachments.forEach((attachment) => {
+          const fileUrl = attachment.file_url || attachment.url;
+          if (fileUrl) {
+            fetch(fileUrl, { method: 'HEAD' })
+              .then((response) => {
+                if (response.status === 404) {
+                  console.error('❌ File not accessible:', fileUrl);
+                } else if (response.status === 200) {
+                  console.log('✅ Link accessible');
+                }
+              })
+              .catch((error) => {
+                console.error('❌ Error accessing link:', error);
+              });
+          }
         });
       }
-
+  
       // ✅ DEBUG: Cek struktur message yang baru dibuat
       if (sendResponse.message) {
         console.log('New message created:', sendResponse.message);
@@ -488,15 +501,15 @@ const TicketFeedback = () => {
           console.log('Message attachments:', sendResponse.message.attachments);
         }
       }
-
+  
       // Clear input and reload messages
       setNewFeedback('');
       handleRemoveFile();
-
+  
       // ✅ TAMBAHKAN DEBUG: Log reload messages
       console.log('=== RELOADING MESSAGES ===');
       await loadChatMessages();
-
+  
       console.log('Feedback sent successfully!');
     } catch (error) {
       console.error('Error sending feedback:', error);
@@ -505,6 +518,7 @@ const TicketFeedback = () => {
       setSending(false);
     }
   };
+  
 
   const handleBack = () => {
     const userRole = localStorage.getItem('userRole') || 'student';
