@@ -6,13 +6,16 @@ import {
   updateTicketStatusAPI,
   getCategoriesAPI,
   deleteTicketAPI,
-  createNotificationAPI
+  createNotificationAPI,
 } from '../../services/api';
 import TicketColumn from '../../components/TicketColumn';
 import { ToastContainer } from '../../components/Toast';
 import SearchBar from '../../components/SearchBar';
 import Navigation from '../../components/Navigation';
-import { getRecipientId, generateNotificationMessage } from '../../utils/userUtils';
+import {
+  getRecipientId,
+  generateNotificationMessage,
+} from '../../utils/userUtils';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -579,7 +582,6 @@ const AdminDashboard = () => {
     );
   };
 
-
   const handleDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
@@ -587,25 +589,26 @@ const AdminDashboard = () => {
 
   const createStatusNotification = async (ticketId, ticketData, newStatus) => {
     try {
-      const studentId = getRecipientId(ticketData, 'student');
-      
+      const studentId = await getRecipientId(ticketData, 'student');
+
       if (!studentId) {
         console.warn('No student ID found for status notification');
         return;
       }
-  
-      const message = generateNotificationMessage('status_update', {
-        newStatus: newStatus
-      });
-  
-      await createNotificationAPI({
+
+      // PERBAIKI: Format request body sesuai API expectations
+      const notificationData = {
         recipient_id: studentId,
-        type: "custom_notification",
-        subject: "Custom Notification",
-        content: "This is a custom notification."
-      });
-      
-      console.log(`Status notification sent to student (${studentId}) for status: ${newStatus}`);
+        type: 'custom_notification',
+        subject: 'Ticket Status Update',
+        content: `Your ticket status has been updated to ${newStatus}`,
+      };
+
+      await createNotificationAPI(notificationData);
+
+      console.log(
+        `Status notification sent to student (${studentId}) for status: ${newStatus}`
+      );
     } catch (error) {
       console.error('Failed to create status notification:', error);
       // Jangan throw error, biarkan proses update status tetap berhasil
@@ -629,6 +632,13 @@ const AdminDashboard = () => {
     // Use stored state as primary method
     const ticket = draggedTicket;
     const fromColumn = draggedFrom || (dragData ? dragData.fromColumn : null);
+
+    console.log('handleDrop called:', {
+      ticket: ticket?.id,
+      fromColumn,
+      toColumn,
+      insertIndex,
+    });
 
     if (!ticket || !fromColumn) {
       console.log('No ticket or fromColumn found, resetting drag state');
@@ -706,18 +716,29 @@ const AdminDashboard = () => {
       // Call API to update status
       try {
         await updateTicketStatusAPI(ticket.id, newStatus);
+        console.log(`✅ Status API call successful: ${newStatus}`);
       } catch (error) {
+        console.error(`❌ Status API call failed for ${newStatus}:`, error);
+
         // If failed, try alternative status names
         if (toColumn === 'selesai') {
           console.log("Trying alternative status for 'selesai'...");
           try {
             newStatus = 'completed';
             await updateTicketStatusAPI(ticket.id, newStatus);
+            console.log(
+              `✅ Alternative status API call successful: ${newStatus}`
+            );
           } catch (error2) {
+            console.error(`❌ Alternative 'completed' failed:`, error2);
             try {
               newStatus = 'resolved';
               await updateTicketStatusAPI(ticket.id, newStatus);
+              console.log(
+                `✅ Alternative status API call successful: ${newStatus}`
+              );
             } catch (error3) {
+              console.error(`❌ Alternative 'resolved' failed:`, error3);
               throw error; // Throw original error if all fail
             }
           }
@@ -726,7 +747,23 @@ const AdminDashboard = () => {
         }
       }
 
-      await createStatusNotification(ticket.id, ticket.rawTicket || ticket, newStatus);
+      // *** NOTIFICATION HANDLING - DENGAN PROPER ERROR HANDLING ***
+      try {
+        console.log('🔔 Attempting to create status notification...');
+        await createStatusNotification(
+          ticket.id,
+          ticket.rawTicket || ticket,
+          newStatus
+        );
+        console.log('✅ Status notification created successfully');
+      } catch (notificationError) {
+        console.error(
+          '❌ Notification failed but continuing with drag & drop:',
+          notificationError
+        );
+        // Jangan throw error, biarkan drag & drop tetap berhasil
+        // Drag & drop success tidak tergantung pada notification success
+      }
 
       // Update local state with proper positioning
       setTickets((prev) => {
@@ -751,15 +788,20 @@ const AdminDashboard = () => {
           insertIndex <= newTickets[toColumn].length
         ) {
           newTickets[toColumn].splice(insertIndex, 0, updatedTicket);
+          console.log(
+            `Ticket inserted at position ${insertIndex} in ${toColumn}`
+          );
         } else {
           newTickets[toColumn].push(updatedTicket);
+          console.log(`Ticket appended to end of ${toColumn}`);
         }
 
         return newTickets;
       });
 
-      console.log('Ticket status updated successfully to:', newStatus);
-      // Toast
+      console.log('✅ Ticket status updated successfully to:', newStatus);
+
+      // Show success toast
       const statusMessage =
         newStatus === 'in_progress'
           ? 'Sedang Diproses'
@@ -768,21 +810,46 @@ const AdminDashboard = () => {
             : newStatus === 'open'
               ? 'Tiket Baru'
               : newStatus;
+
       addToast(
         `Status tiket berhasil diperbarui menjadi ${statusMessage}`,
         'success',
         4000
       );
     } catch (error) {
-      console.error('Error updating ticket status:', error);
-      setError('Gagal mengupdate status tiket: ' + error.message);
+      console.error('❌ Error updating ticket status:', error);
+
+      // Determine error message
+      let errorMessage = 'Gagal mengupdate status tiket';
+      if (
+        error.message.includes('validation') ||
+        error.message.includes('Validation')
+      ) {
+        errorMessage =
+          'Validasi gagal: Data tidak sesuai format yang diharapkan';
+      } else if (error.message.includes('404')) {
+        errorMessage = 'Tiket tidak ditemukan';
+      } else if (error.message.includes('403')) {
+        errorMessage = 'Tidak memiliki izin untuk mengupdate tiket ini';
+      } else if (error.message.includes('500')) {
+        errorMessage = 'Server error, silakan coba lagi';
+      } else {
+        errorMessage = `Gagal mengupdate status: ${error.message}`;
+      }
+
+      setError(errorMessage);
+
+      // Show error toast
+      addToast(errorMessage, 'error', 5000);
 
       // Show error for 5 seconds
       setTimeout(() => setError(''), 5000);
     } finally {
+      // Always reset states
       setUpdating(null);
       setDraggedTicket(null);
       setDraggedFrom(null);
+      console.log('🏁 Drag & drop operation completed');
     }
   };
 
