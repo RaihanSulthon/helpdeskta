@@ -4,8 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import appLogo from '../assets/applogo.png';
 import NotificationModal from './NotificationModal';
 import { getNotificationsAPI } from '../services/api';
+import { Link } from 'react-router-dom';
 
-const Navbar = ({ onMenuToggle, sidebarExpanded, onLogout, onNotificationToggle }) => {
+const Navbar = ({
+  onMenuToggle,
+  sidebarExpanded,
+  onLogout,
+  onNotificationToggle,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -145,7 +151,13 @@ const Navbar = ({ onMenuToggle, sidebarExpanded, onLogout, onNotificationToggle 
 
           {/* Page Title */}
           <div className="hidden sm:block">
-            <img src={appLogo} alt="App Logo" className="h-8 w-auto ml-4" />
+            <Link to="/">
+              <img
+                src={appLogo}
+                alt="App Logo"
+                className="h-8 w-auto ml-4 cursor-pointer hover:opacity-80 transition-all hover:scale-105 duration-300"
+              />
+            </Link>
           </div>
         </div>
 
