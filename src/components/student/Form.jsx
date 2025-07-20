@@ -41,7 +41,16 @@ function Form() {
     noHp: '',
     anonymous: false,
   });
-
+  useEffect(() => {
+    if (user && !formData.anonymous) {
+      setFormData((prev) => ({
+        ...prev,
+        email: user.email || prev.email,
+        nama: user.name || prev.nama,
+        // Tambahkan field lain jika tersedia di user object
+      }));
+    }
+  }, [user, formData.anonymous]);
   // Load categories on component mount
   useEffect(() => {
     loadCategories();
@@ -142,10 +151,25 @@ function Form() {
     const { name, value, type, checked } = e.target;
 
     if (type === 'checkbox') {
-      setFormData({
+      const newFormData = {
         ...formData,
         [name]: checked,
-      });
+      };
+
+      // Reset identity fields jika switch ke anonim
+      if (name === 'anonymous' && checked) {
+        newFormData.nama = '';
+        newFormData.nim = '';
+        newFormData.prodi = '';
+        newFormData.semester = '';
+        newFormData.noHp = '';
+        // Email tetap dipertahankan jika user sudah login
+        if (!user?.email) {
+          newFormData.email = '';
+        }
+      }
+
+      setFormData(newFormData);
     } else {
       // Mencegah perubahan email jika user sudah login dan tidak anonymous
       if (name === 'email' && user?.email && !formData.anonymous) {
@@ -225,12 +249,14 @@ function Form() {
         errors.push('NIM/NIK harus berupa angka');
       }
 
-      if (!formData.email || formData.email.trim() === '') {
-        errors.push('Email harus diisi');
-      } else {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email.trim())) {
-          errors.push('Format email tidak valid');
+      if (!formData.anonymous && !user?.email) {
+        if (!formData.email || formData.email.trim() === '') {
+          errors.push('Email harus diisi');
+        } else {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(formData.email.trim())) {
+            errors.push('Format email tidak valid');
+          }
         }
       }
     }
@@ -245,17 +271,15 @@ function Form() {
   };
 
   // FIXED SUBMIT FUNCTION
+  // Modified handleSubmit function in Form.jsx
+  // This version always sends email data, regardless of anonymous status
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    console.log("=== FORM SUBMISSION DEBUG ===");
-    console.log("Original Form Data:", formData);
-  
-    setError("");
-  
+
     // Validate form first
     if (!validateForm()) {
-      console.log("Validation failed");
+      console.log('Validation failed');
       return;
     }
   
@@ -269,31 +293,33 @@ function Form() {
         deskripsi: formData.isi.trim(), // API expects 'deskripsi', not 'isi'
         category_id: parseInt(formData.kategori),
         sub_category_id: parseInt(formData.subKategori),
-        anonymous: Boolean(formData.anonymous),
-  
-        // Identity data - send empty strings if anonymous
-        nama: formData.anonymous ? "" : (formData.nama || "").trim(),
-        nim: formData.anonymous ? "" : (formData.nim || "").trim(),
-        prodi: formData.anonymous ? "" : (formData.prodi || "").trim(),
+        anonymous: formData.anonymous, // Will be converted to string in API
+
+        // MODIFIED: Always send actual email data
+        // For anonymous: send empty strings for identity fields except email
+        // For non-anonymous: send all actual data
+        nama: formData.anonymous ? '' : (formData.nama || '').trim(),
+        nim: formData.anonymous ? '' : (formData.nim || '').trim(),
+        prodi: formData.anonymous ? '' : (formData.prodi || '').trim(),
         semester: formData.anonymous
-          ? ""
-          : (formData.semester || "").toString(),
-        email: formData.anonymous ? "" : (formData.email || "").trim(),
-        no_hp: formData.anonymous ? "" : (formData.noHp || "").trim(),
+          ? ''
+          : (formData.semester || '').toString(),
+        email: (formData.email || '').trim(), // Always send actual email
+        no_hp: formData.anonymous ? '' : (formData.noHp || '').trim(),
       };
   
       console.log("Prepared Submit Data:", submitData);
   
       // Final validation before API call
       if (isNaN(submitData.category_id) || submitData.category_id <= 0) {
-        throw new Error("Kategori tidak valid");
+        throw new Error('Kategori tidak valid');
       }
   
       if (
         isNaN(submitData.sub_category_id) ||
         submitData.sub_category_id <= 0
       ) {
-        throw new Error("Sub kategori tidak valid");
+        throw new Error('Sub kategori tidak valid');
       }
   
       console.log("Calling API with data:", submitData);
@@ -327,19 +353,19 @@ function Form() {
   
       // Reset form
       setFormData({
-        jenis: "PENGADUAN",
-        judul: "",
-        isi: "",
-        tanggal: "",
-        lokasi: "",
-        kategori: "",
-        subKategori: "",
-        nama: "",
-        nim: "",
-        prodi: "",
-        semester: "",
-        email: "",
-        noHp: "",
+        jenis: 'PENGADUAN',
+        judul: '',
+        isi: '',
+        tanggal: '',
+        lokasi: '',
+        kategori: '',
+        subKategori: '',
+        nama: '',
+        nim: '',
+        prodi: '',
+        semester: '',
+        email: user?.email || '', // Keep user email if logged in
+        noHp: '',
         anonymous: false,
       });
   
@@ -348,49 +374,49 @@ function Form() {
         if (ticketId) {
           navigate(`/ticket/${ticketId}`);
         } else {
-          navigate("/student/tickets");
+          navigate('/student/tickets');
         }
       }, 3000);
     } catch (error) {
-      console.error("Submit Error Details:", error);
+      console.error('Submit Error Details:', error);
       setIsLoading(false);
   
       // Enhanced error handling
       let errorMessage = "Terjadi kesalahan saat mengirim laporan";
   
       if (
-        error.message.includes("Validation failed") ||
-        error.message.includes("validation")
+        error.message.includes('Validation failed') ||
+        error.message.includes('validation')
       ) {
-        errorMessage = "Data form tidak valid: " + error.message;
+        errorMessage = 'Data form tidak valid: ' + error.message;
       } else if (
-        error.message.includes("kategori") ||
-        error.message.includes("category")
+        error.message.includes('kategori') ||
+        error.message.includes('category')
       ) {
         errorMessage =
-          "Kategori atau sub kategori tidak valid. Silakan pilih ulang.";
+          'Kategori atau sub kategori tidak valid. Silakan pilih ulang.';
       } else if (
-        error.message.includes("server") ||
-        error.message.includes("500")
+        error.message.includes('server') ||
+        error.message.includes('500')
       ) {
         errorMessage =
-          "Server sedang bermasalah. Silakan coba lagi dalam beberapa menit.";
+          'Server sedang bermasalah. Silakan coba lagi dalam beberapa menit.';
       } else if (
-        error.message.includes("network") ||
-        error.message.includes("fetch") ||
-        error.message.includes("koneksi")
+        error.message.includes('network') ||
+        error.message.includes('fetch') ||
+        error.message.includes('koneksi')
       ) {
         errorMessage =
-          "Koneksi internet bermasalah. Periksa koneksi Anda dan coba lagi.";
+          'Koneksi internet bermasalah. Periksa koneksi Anda dan coba lagi.';
       } else if (
-        error.message.includes("token") ||
-        error.message.includes("401")
+        error.message.includes('token') ||
+        error.message.includes('401')
       ) {
-        errorMessage = "Sesi Anda telah berakhir. Silakan login ulang.";
-        setTimeout(() => navigate("/login"), 2000);
-      } else if (error.message.includes("CORS")) {
+        errorMessage = 'Sesi Anda telah berakhir. Silakan login ulang.';
+        setTimeout(() => navigate('/login'), 2000);
+      } else if (error.message.includes('CORS')) {
         errorMessage =
-          "Ada masalah dengan server. Silakan hubungi administrator.";
+          'Ada masalah dengan server. Silakan hubungi administrator.';
       } else {
         errorMessage = error.message || errorMessage;
       }

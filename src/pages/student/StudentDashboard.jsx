@@ -673,25 +673,20 @@ const StudentDashboard = () => {
             ticket.anonymous === true
               ? 'Anonim'
               : ticket.nama || ticket.name || 'Tidak diketahui',
-          email:
-            ticket.anonymous === true
-              ? 'anonim@email.com'
-              : ticket.email || 'tidak diketahui',
+          // UBAH INI: Selalu tampilkan email asli
+          email: ticket.email || 'tidak diketahui', // Remove anonymous email override
           date: formatDate(ticket.created_at),
           originalDate: ticket.updated_at || ticket.created_at,
           subject: ticket.judul || ticket.title || 'Tidak ada judul',
           category: ticketCategory,
           categoryType: ticket.category?.name || 'Umum',
           subCategory: ticket.sub_category?.name || 'Umum',
-
-          // ✅ isRead menggunakan status-specific clicked tracking
           isRead:
             ticket.read_by_student === true ||
             ticket.read_by_student === 1 ||
             ticket.read_by_student === '1',
           isClickedForCurrentStatus:
             clickedTicketsByStatus[ticketCategory]?.has(ticket.id) || false,
-
           status: ticket.status,
           priority: ticket.priority || 'medium',
           description: ticket.deskripsi || ticket.description || '',
@@ -905,25 +900,8 @@ const StudentDashboard = () => {
                 initialValue={searchQuery}
                 debounceMs={150}
               />
-              {/* Search Icon */}
-              <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
             </div>
 
-            {/* 🔧 FILTER GROUP - Di Kanan (Updated dengan styling admin) */}
             <div className="flex items-center space-x-3">
               {/* Search Bar - Updated styling */}
 

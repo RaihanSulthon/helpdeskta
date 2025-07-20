@@ -16,6 +16,8 @@ import {
   getRecipientId,
   generateNotificationMessage,
 } from '../../utils/userUtils';
+import Button from '../../components/Button';
+import Icon from '../../components/Icon';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -57,7 +59,7 @@ const AdminDashboard = () => {
   const [draggedTicket, setDraggedTicket] = useState(null);
   const [statusFilter, setStatusFilter] = useState(initialFilters.statusFilter);
   const [draggedFrom, setDraggedFrom] = useState(null);
-  const [dropPosition, setDropPosition] = useState(null);
+
   const [updating, setUpdating] = useState(null);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(
@@ -73,14 +75,14 @@ const AdminDashboard = () => {
   const [customDateRange, setCustomDateRange] = useState(
     initialFilters.customDateRange
   );
-  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
+
   const [isCategoryDropdownVisible, setIsCategoryDropdownVisible] =
     useState(false);
   const [isDateDropdownVisible, setIsDateDropdownVisible] = useState(false);
   const [isUnreadDropdownVisible, setIsUnreadDropdownVisible] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchLoading, setSearchLoading] = useState(false);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -98,7 +100,6 @@ const AdminDashboard = () => {
   // 2. HELPER FUNCTIONS (defined first)
   const formatDate = (dateString) => {
     if (!dateString) return 'Tanggal tidak tersedia';
-
     try {
       const date = new Date(dateString);
       const now = new Date();
@@ -193,10 +194,8 @@ const AdminDashboard = () => {
         ticket.anonymous === true
           ? 'Anonim'
           : ticket.nama || ticket.name || 'Tidak diketahui',
-      email:
-        ticket.anonymous === true
-          ? 'anonim@email.com'
-          : ticket.email || 'tidak diketahui',
+      // UBAH INI: Selalu tampilkan email asli
+      email: ticket.email || 'tidak diketahui', // Remove anonymous email override
       date: formatDate(ticket.created_at),
       subject: ticket.judul || ticket.title || 'Tidak ada judul',
       category: mapStatusToCategory(ticket.status),
@@ -205,8 +204,7 @@ const AdminDashboard = () => {
       priority: ticket.priority || 'medium',
       isRead: ticket.read_by_admin === true || ticket.read_by_admin === 1,
       status: ticket.status,
-      rawTicket: ticket, // Keep original data for reference
-      // Additional admin fields
+      rawTicket: ticket,
       nim: ticket.nim || '',
       prodi: ticket.prodi || '',
       semester: ticket.semester || '',
@@ -218,8 +216,8 @@ const AdminDashboard = () => {
       readByStudent:
         ticket.read_by_student === true || ticket.read_by_student === 1,
       assignedTo: ticket.assigned_to,
-      feedback: Math.floor(Math.random() * 5) + 1, // Mock feedback for now
-      feedbackType: 'warning', // Mock feedback type
+      feedback: Math.floor(Math.random() * 5) + 1,
+      feedbackType: 'warning',
     };
   };
 
@@ -925,7 +923,7 @@ const AdminDashboard = () => {
             <div className="flex items-center space-x-3 ml-auto">
               {/* Category Filter */}
               <div className="relative" data-dropdown="category">
-                <button
+                <Button
                   onClick={() => {
                     if (showCategoryDropdown) {
                       setShowCategoryDropdown(false);
@@ -972,7 +970,7 @@ const AdminDashboard = () => {
                       fill="black"
                     />
                   </svg>
-                </button>
+                </Button>
 
                 {isCategoryDropdownVisible && (
                   <div
@@ -982,7 +980,7 @@ const AdminDashboard = () => {
                         : 'opacity-0 scale-95 -translate-y-2'
                     }`}
                   >
-                    <button
+                    <Button
                       onClick={() => {
                         setSelectedCategory('');
                         setShowCategoryDropdown(false);
@@ -994,9 +992,9 @@ const AdminDashboard = () => {
                       className="w-full text-left px-3 py-2 text-sm"
                     >
                       Semua Kategori
-                    </button>
+                    </Button>
                     {categories.map((category) => (
-                      <button
+                      <Button
                         key={category.id}
                         onClick={() => {
                           setSelectedCategory(category.name);
@@ -1005,7 +1003,7 @@ const AdminDashboard = () => {
                         className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm"
                       >
                         {category.name}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 )}
@@ -1013,7 +1011,7 @@ const AdminDashboard = () => {
 
               {/* Date Range Filter */}
               <div className="relative" data-dropdown="date">
-                <button
+                <Button
                   onClick={() => {
                     if (showDateDropdown) {
                       setShowDateDropdown(false);
@@ -1059,7 +1057,7 @@ const AdminDashboard = () => {
                       fill="black"
                     />
                   </svg>
-                </button>
+                </Button>
                 {isDateDropdownVisible && (
                   <div
                     className={`absolute top-full left-0 mt-2 w-[500px] bg-white rounded-lg shadow-xl z-50 transform transition-all duration-300 ease-out origin-top-left ${
@@ -1068,7 +1066,7 @@ const AdminDashboard = () => {
                         : 'opacity-0 scale-95 -translate-y-2'
                     }`}
                   >
-                    {/* Header with close button */}
+                    {/* Header with close Button */}
                     <div className="bg-[#101B33] text-white p-4 rounded-t-lg flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <svg
@@ -1089,7 +1087,7 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <button
+                      <Button
                         onClick={() => {
                           setShowDateDropdown(false);
                           setTimeout(
@@ -1112,7 +1110,7 @@ const AdminDashboard = () => {
                             d="M6 18L18 6M6 6l12 12"
                           />
                         </svg>
-                      </button>
+                      </Button>
                     </div>
 
                     {/* Menu Filter Rentang Tanggal */}
@@ -1198,7 +1196,7 @@ const AdminDashboard = () => {
                       >
                         <div className="flex items-center justify-end space-x-3">
                           {/* Clear Button */}
-                          <button
+                          <Button
                             onClick={() => {
                               setCustomDateRange({
                                 startDate: '',
@@ -1222,10 +1220,10 @@ const AdminDashboard = () => {
                               />
                             </svg>
                             <span>Clear</span>
-                          </button>
+                          </Button>
 
                           {/* Apply/Terapkan Button */}
-                          <button
+                          <Button
                             onClick={() => {
                               setSelectedDateRange(
                                 customDateRange.startDate &&
@@ -1242,7 +1240,7 @@ const AdminDashboard = () => {
                             className="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
                           >
                             Terapkan
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -1252,7 +1250,7 @@ const AdminDashboard = () => {
 
               {/* Unread Filter */}
               <div className="relative" data-dropdown="unread">
-                <button
+                <Button
                   onClick={() => {
                     if (showUnreadDropdown) {
                       setShowUnreadDropdown(false);
@@ -1298,7 +1296,7 @@ const AdminDashboard = () => {
                       fill="black"
                     />
                   </svg>
-                </button>
+                </Button>
                 {isUnreadDropdownVisible && (
                   <div
                     className={`absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-20 transform transition-all duration-300 ease-out origin-top ${
@@ -1307,7 +1305,7 @@ const AdminDashboard = () => {
                         : 'opacity-0 scale-95 -translate-y-2'
                     }`}
                   >
-                    <button
+                    <Button
                       onClick={() => {
                         setUnreadFilter('Belum Dibaca');
                         setShowUnreadDropdown(false);
@@ -1319,8 +1317,8 @@ const AdminDashboard = () => {
                       className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm"
                     >
                       Belum Dibaca
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={() => {
                         setUnreadFilter('Sudah Dibaca');
                         setShowUnreadDropdown(false);
@@ -1332,14 +1330,14 @@ const AdminDashboard = () => {
                       className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm"
                     >
                       Sudah Dibaca
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Reset Filter Button */}
-            <button
+            <Button
               className="border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
               onClick={() => {
                 const defaultFilters = {
@@ -1379,7 +1377,7 @@ const AdminDashboard = () => {
                 />
               </svg>
               <span>Reset Filter</span>
-            </button>
+            </Button>
           </div>
         </Navigation>
 
@@ -1464,14 +1462,14 @@ const AdminDashboard = () => {
 
               {/* Action Buttons */}
               <div className="flex justify-end space-x-3">
-                <button
+                <Button
                   onClick={cancelDeleteTicket}
                   disabled={isDeleting}
                   className="px-6 py-2 border-2 border-[#E01A3F] text-[#E01A3F] rounded-lg hover:bg-[#E01A3F] hover:text-white transition-colors disabled:opacity-50 font-medium"
                 >
                   Batal
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={confirmDeleteTicket}
                   disabled={isDeleting}
                   className="px-6 py-2 bg-[#E01A3F] text-white rounded-lg hover:bg-[#C41E3A] transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium"
@@ -1484,7 +1482,7 @@ const AdminDashboard = () => {
                   ) : (
                     <span>Hapus Tiket</span>
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

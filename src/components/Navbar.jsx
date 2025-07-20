@@ -172,6 +172,14 @@ const Navbar = ({
             }`}
           >
             {user?.role === 'admin' ? 'Admin' : 'Student'}
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${
+              user?.role === 'admin'
+                ? 'bg-white text-gray-800'
+                : 'bg-red-600 text-white'
+            }`}
+          >
+            {user?.role === 'admin' ? 'Admin' : 'Student'}
           </span>
 
           {/* Notifications */}

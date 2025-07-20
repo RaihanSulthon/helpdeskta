@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { SPLManager } from '../config/splConfig';
+import Icon from './Icon';
+import Button from './Button';
 import { getTicketsAPI, getAdminTicketsAPI } from '../services/api';
 
 const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
