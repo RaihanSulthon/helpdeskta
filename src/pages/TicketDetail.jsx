@@ -5,6 +5,9 @@ import {
   getTicketDetailAPI,
   updateTicketStatusAPI,
   deleteTicketAPI,
+  getChatMessagesAPI,
+  getNotificationsAPI,
+  markNotificationAsReadAPI
 } from '../services/api';
 import Navigation from '../components/Navigation';
 import { ToastContainer } from '../components/Toast';
@@ -27,6 +30,7 @@ const DetailTicket = () => {
   useEffect(() => {
     if (ticketId) {
       loadTicketDetail();
+      markRelatedNotificationsAsRead(ticketId);
     }
   }, [ticketId, ticketData?.unread, ticketData?.read]);
 
@@ -132,6 +136,30 @@ const DetailTicket = () => {
       setError(error.message || 'Gagal memuat detail tiket');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const markRelatedNotificationsAsRead = async (ticketId) => {
+    try {
+      // Get all unread notifications
+      const result = await getNotificationsAPI({ read: false, per_page: 100 });
+      const notifications = result.notifications?.data || result.data || [];
+      
+      // Filter notifications yang related dengan ticket ini
+      const relatedNotifications = notifications.filter(
+        notif => notif.ticket_id === ticketId && notif.type === 'new_ticket'
+      );
+      
+      // Mark each related notification as read
+      for (const notification of relatedNotifications) {
+        try {
+          await markNotificationAsReadAPI(notification.id);
+        } catch (err) {
+          console.error('Error marking notification as read:', err);
+        }
+      }
+    } catch (error) {
+      console.error('Error marking related notifications as read:', error);
     }
   };
 

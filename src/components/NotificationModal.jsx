@@ -111,7 +111,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
     setTicketTitles((prev) => ({ ...prev, ...titles }));
   };
 
-  // Mark notification as read and redirect to ticket
+  // Mark notification as read and redirect based on notification type
   const handleNotificationClick = async (notification) => {
     try {
       await markNotificationAsReadAPI(notification.id);
@@ -121,7 +121,24 @@ const NotificationModal = ({ isOpen, onClose }) => {
 
       if (notification.ticket_id) {
         onClose();
-        navigate(`/ticket/${notification.ticket_id}`);
+
+        // Redirect berdasarkan type notifikasi
+        if (
+          notification.type === 'chat_message' ||
+          notification.message.includes('chat message')
+        ) {
+          // Redirect ke halaman feedback
+          navigate(`/ticket/${notification.ticket_id}/feedback`);
+        } else if (
+          notification.type === 'new_ticket' ||
+          notification.message.includes('Tiket baru telah dibuat')
+        ) {
+          // Redirect ke halaman ticket detail
+          navigate(`/ticket/${notification.ticket_id}`);
+        } else {
+          // Default redirect ke ticket detail
+          navigate(`/ticket/${notification.ticket_id}`);
+        }
       }
     } catch (err) {
       console.error('Error marking notification as read:', err);
