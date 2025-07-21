@@ -91,6 +91,18 @@ const AdminDashboard = () => {
     diproses: [],
     selesai: [],
   });
+
+  const [viewedColumns, setViewedColumns] = useState(() => {
+    const saved = localStorage.getItem('admin_viewed_columns');
+    return saved
+      ? JSON.parse(saved)
+      : {
+          'tiket-baru': new Date().toISOString(),
+          diproses: new Date().toISOString(),
+          selesai: new Date().toISOString(),
+        };
+  });
+
   const [originalTickets, setOriginalTickets] = useState({
     'tiket-baru': [],
     diproses: [],
@@ -306,7 +318,85 @@ const AdminDashboard = () => {
 
   // 4. COMPUTED VALUES (after all functions are defined)
   const filteredTickets = applyFiltersToTickets();
-  // const ticketCounts = getTicketCounts();
+
+  const checkNewItemsInColumn = (columnKey, tickets) => {
+    console.log(`🔍 Checking column ${columnKey}:`, { totalTickets: tickets.length });
+  
+    // 1. Cek feedback baru (chat yang belum dibaca oleh admin)
+    const hasNewFeedback = tickets.some((ticket) => {
+      const unreadChatCount = ticket.rawTicket?.unread_chat_count || 0;
+      const hasUnreadChat = unreadChatCount > 0;
+      
+      if (hasUnreadChat) {
+        console.log(`📨 Ticket ${ticket.id} has ${unreadChatCount} unread chats`);
+      }
+      
+      return hasUnreadChat;
+    });
+  
+    // 2. Cek tiket yang benar-benar baru (buat hari ini dan belum dibaca admin)
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    const hasNewTicketsToday = tickets.some((ticket) => {
+      const ticketDate = new Date(ticket.rawTicket?.created_at);
+      const isToday = ticketDate >= todayStart;
+      const isUnreadByAdmin = !ticket.readByAdmin && !ticket.isRead;
+      const isNewTicket = isToday && isUnreadByAdmin;
+      
+      if (isNewTicket) {
+        console.log(`🆕 New ticket today: ${ticket.id}, created: ${ticketDate}, unread: ${isUnreadByAdmin}`);
+      }
+      
+      return isNewTicket;
+    });
+  
+    // 3. Kondisi khusus per kolom
+    let shouldShowBadge = false;
+  
+    switch (columnKey) {
+      case 'tiket-baru':
+        // Badge muncul jika ada tiket baru hari ini yang belum dibaca admin
+        shouldShowBadge = hasNewTicketsToday || hasNewFeedback;
+        break;
+        
+      case 'diproses':
+        // Badge muncul jika ada feedback/chat baru dari user
+        shouldShowBadge = hasNewFeedback;
+        break;
+        
+      case 'selesai':
+        // Badge muncul jika ada feedback/chat baru dari user (rating, komplain, dll)
+        shouldShowBadge = hasNewFeedback;
+        break;
+        
+      default:
+        shouldShowBadge = false;
+    }
+  
+    console.log(`🎯 Column ${columnKey} result:`, {
+      hasNewFeedback,
+      hasNewTicketsToday,
+      shouldShowBadge,
+      reason: shouldShowBadge 
+        ? (hasNewTicketsToday ? 'new tickets today' : 'new feedback')
+        : 'no new items'
+    });
+  
+    return shouldShowBadge;
+  };
+
+  const markColumnAsViewed = (columnKey) => {
+    const newViewedColumns = {
+      ...viewedColumns,
+      [columnKey]: new Date().toISOString(),
+    };
+    setViewedColumns(newViewedColumns);
+    localStorage.setItem(
+      'admin_viewed_columns',
+      JSON.stringify(newViewedColumns)
+    );
+  };
 
   const columnConfig = {
     'tiket-baru': {
@@ -314,21 +404,35 @@ const AdminDashboard = () => {
       count: filteredTickets['tiket-baru'].length,
       bgColor: 'bg-red-700',
       textColor: 'text-white',
+      hasNewItems: checkNewItemsInColumn(
+        'tiket-baru',
+        filteredTickets['tiket-baru']
+      ),
+      badgeColor: 'bg-blue-500',
+      markAsViewed: markColumnAsViewed, // Tambahkan function ini
     },
     diproses: {
       title: 'DIPROSES',
       count: filteredTickets['diproses'].length,
       bgColor: 'bg-red-700',
       textColor: 'text-white',
+      hasNewItems: checkNewItemsInColumn(
+        'diproses',
+        filteredTickets['diproses']
+      ),
+      badgeColor: 'bg-orange-500',
+      markAsViewed: markColumnAsViewed, // Tambahkan function ini
     },
     selesai: {
       title: 'SELESAI',
       count: filteredTickets['selesai'].length,
       bgColor: 'bg-red-700',
       textColor: 'text-white',
+      hasNewItems: checkNewItemsInColumn('selesai', filteredTickets['selesai']),
+      badgeColor: 'bg-green-500',
+      markAsViewed: markColumnAsViewed, // Tambahkan function ini
     },
   };
-
   // Add this new function after other utility functions
   const handleSearch = async (query) => {
     try {
@@ -1465,14 +1569,14 @@ const AdminDashboard = () => {
                 <Button
                   onClick={cancelDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 border-2 border-[#E01A3F] text-[#E01A3F] rounded-lg hover:bg-[#E01A3F] hover:text-white transition-colors disabled:opacity-50 font-medium"
+                  className="px-6 py-2 border-2 rounded-lg hover:bg-gray-500 hover:text-white transition-all duration-300 hover:scale-105 font-medium"
                 >
                   Batal
                 </Button>
                 <Button
                   onClick={confirmDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 bg-[#E01A3F] text-white rounded-lg hover:bg-[#C41E3A] transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium"
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
                 >
                   {isDeleting ? (
                     <>

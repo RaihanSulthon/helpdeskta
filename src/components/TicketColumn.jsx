@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import TicketCard from "./TicketCard";
+import React, { useState, useEffect } from 'react';
+import TicketCard from './TicketCard';
 
-const TicketColumn = ({ 
-  columnKey, 
-  config, 
-  tickets: columnTickets, 
+const TicketColumn = ({
+  columnKey,
+  config,
+  tickets: columnTickets,
   handleDrop,
   loadAdminTickets,
   updating,
@@ -12,32 +12,36 @@ const TicketColumn = ({
   handleTicketClick,
   getPriorityColor,
   getPriorityLabel,
-  onDeleteTicket
+  onDeleteTicket,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [dropPosition, setDropPosition] = useState(null);
 
+  
+
   const handleColumnDragOver = (e) => {
     e.preventDefault();
     setIsDragOver(true);
-    
+
     // Calculate drop position
     const columnElement = e.currentTarget;
-    const ticketCards = Array.from(columnElement.querySelectorAll('[data-ticket-card]'));
+    const ticketCards = Array.from(
+      columnElement.querySelectorAll('[data-ticket-card]')
+    );
     const mouseY = e.clientY;
-    
+
     let insertIndex = ticketCards.length;
-    
+
     for (let i = 0; i < ticketCards.length; i++) {
       const cardRect = ticketCards[i].getBoundingClientRect();
       const cardMiddle = cardRect.top + cardRect.height / 2;
-      
+
       if (mouseY < cardMiddle) {
         insertIndex = i;
         break;
       }
     }
-    
+
     setDropPosition(insertIndex);
   };
 
@@ -71,6 +75,22 @@ const TicketColumn = ({
           <span className="font-bold text-sm bg-white bg-opacity-20 px-2 py-1 rounded">
             {config.count}
           </span>
+          {/* Badge "baru" dengan warna sesuai status ticket */}
+          {config.hasNewItems && (
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white animate-pulse ${config.badgeColor} cursor-pointer`}
+              onClick={(e) => {
+                e.stopPropagation();
+                // Mark column as viewed when badge is clicked
+                if (config.markAsViewed) {
+                  config.markAsViewed(columnKey);
+                }
+              }}
+              title="Klik untuk menandai sebagai sudah dilihat"
+            >
+              baru
+            </span>
+          )}
         </div>
         <button
           className="text-white hover:bg-white hover:bg-opacity-20 p-1 rounded"
@@ -122,7 +142,7 @@ const TicketColumn = ({
                 {isDragOver && dropPosition === index && (
                   <div className="h-0.5 bg-blue-500 rounded-full mx-2 transition-all duration-200" />
                 )}
-                
+
                 <TicketCard
                   ticket={ticket}
                   columnKey={columnKey}
@@ -135,7 +155,7 @@ const TicketColumn = ({
                 />
               </React.Fragment>
             ))}
-            
+
             {/* Drop indicator at the end */}
             {isDragOver && dropPosition === columnTickets.length && (
               <div className="h-0.5 bg-blue-500 rounded-full mx-2 transition-all duration-200" />
