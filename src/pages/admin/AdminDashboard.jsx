@@ -320,69 +320,53 @@ const AdminDashboard = () => {
   const filteredTickets = applyFiltersToTickets();
 
   const checkNewItemsInColumn = (columnKey, tickets) => {
-    console.log(`🔍 Checking column ${columnKey}:`, { totalTickets: tickets.length });
-  
     // 1. Cek feedback baru (chat yang belum dibaca oleh admin)
     const hasNewFeedback = tickets.some((ticket) => {
       const unreadChatCount = ticket.rawTicket?.unread_chat_count || 0;
       const hasUnreadChat = unreadChatCount > 0;
-      
-      if (hasUnreadChat) {
-        console.log(`📨 Ticket ${ticket.id} has ${unreadChatCount} unread chats`);
-      }
-      
+
       return hasUnreadChat;
     });
-  
+
     // 2. Cek tiket yang benar-benar baru (buat hari ini dan belum dibaca admin)
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+
     const hasNewTicketsToday = tickets.some((ticket) => {
       const ticketDate = new Date(ticket.rawTicket?.created_at);
       const isToday = ticketDate >= todayStart;
       const isUnreadByAdmin = !ticket.readByAdmin && !ticket.isRead;
       const isNewTicket = isToday && isUnreadByAdmin;
-      
-      if (isNewTicket) {
-        console.log(`🆕 New ticket today: ${ticket.id}, created: ${ticketDate}, unread: ${isUnreadByAdmin}`);
-      }
-      
       return isNewTicket;
     });
-  
+
     // 3. Kondisi khusus per kolom
     let shouldShowBadge = false;
-  
+
     switch (columnKey) {
       case 'tiket-baru':
         // Badge muncul jika ada tiket baru hari ini yang belum dibaca admin
         shouldShowBadge = hasNewTicketsToday || hasNewFeedback;
         break;
-        
+
       case 'diproses':
         // Badge muncul jika ada feedback/chat baru dari user
         shouldShowBadge = hasNewFeedback;
         break;
-        
+
       case 'selesai':
         // Badge muncul jika ada feedback/chat baru dari user (rating, komplain, dll)
         shouldShowBadge = hasNewFeedback;
         break;
-        
+
       default:
         shouldShowBadge = false;
     }
-  
-    console.log(`🎯 Column ${columnKey} result:`, {
-      hasNewFeedback,
-      hasNewTicketsToday,
-      shouldShowBadge,
-      reason: shouldShowBadge 
-        ? (hasNewTicketsToday ? 'new tickets today' : 'new feedback')
-        : 'no new items'
-    });
-  
+
     return shouldShowBadge;
   };
 
@@ -526,14 +510,8 @@ const AdminDashboard = () => {
 
     try {
       setIsDeleting(true);
-
-      console.log('Deleting ticket:', ticketToDelete.id);
-
       // Call the delete API
       const result = await deleteTicketAPI(ticketToDelete.id);
-
-      console.log('Delete result:', result);
-
       if (result.success) {
         // Show success toast
         addToast('Tiket berhasil dihapus', 'success', 3000);
@@ -707,10 +685,6 @@ const AdminDashboard = () => {
       };
 
       await createNotificationAPI(notificationData);
-
-      console.log(
-        `Status notification sent to student (${studentId}) for status: ${newStatus}`
-      );
     } catch (error) {
       console.error('Failed to create status notification:', error);
       // Jangan throw error, biarkan proses update status tetap berhasil
@@ -735,15 +709,7 @@ const AdminDashboard = () => {
     const ticket = draggedTicket;
     const fromColumn = draggedFrom || (dragData ? dragData.fromColumn : null);
 
-    console.log('handleDrop called:', {
-      ticket: ticket?.id,
-      fromColumn,
-      toColumn,
-      insertIndex,
-    });
-
     if (!ticket || !fromColumn) {
-      console.log('No ticket or fromColumn found, resetting drag state');
       setDraggedTicket(null);
       setDraggedFrom(null);
       return;
@@ -751,7 +717,6 @@ const AdminDashboard = () => {
 
     // Handle same-column reordering (NEW LOGIC)
     if (fromColumn === toColumn) {
-      console.log('Same column reordering');
 
       // Only proceed if we have a valid insertIndex and it's different from current position
       if (insertIndex !== null) {
@@ -765,7 +730,6 @@ const AdminDashboard = () => {
           );
 
           if (currentIndex === -1) {
-            console.log('Ticket not found in current column');
             return prev;
           }
 
@@ -774,7 +738,6 @@ const AdminDashboard = () => {
             currentIndex === insertIndex ||
             currentIndex === insertIndex - 1
           ) {
-            console.log('Dropping at same position, no change needed');
             return prev;
           }
 
@@ -795,8 +758,6 @@ const AdminDashboard = () => {
 
           return newTickets;
         });
-
-        console.log(`Ticket ${ticket.id} reordered within ${fromColumn}`);
       }
 
       // Reset drag state
@@ -808,9 +769,7 @@ const AdminDashboard = () => {
     // Handle cross-column movement (EXISTING LOGIC)
     try {
       setUpdating(ticket.id);
-      console.log(
-        `Updating ticket ${ticket.id} from ${fromColumn} to ${toColumn}`
-      );
+      
 
       // Get new status for API - try multiple options
       let newStatus = mapColumnToStatus(toColumn);
@@ -818,27 +777,19 @@ const AdminDashboard = () => {
       // Call API to update status
       try {
         await updateTicketStatusAPI(ticket.id, newStatus);
-        console.log(`✅ Status API call successful: ${newStatus}`);
       } catch (error) {
         console.error(`❌ Status API call failed for ${newStatus}:`, error);
 
         // If failed, try alternative status names
         if (toColumn === 'selesai') {
-          console.log("Trying alternative status for 'selesai'...");
           try {
             newStatus = 'completed';
             await updateTicketStatusAPI(ticket.id, newStatus);
-            console.log(
-              `✅ Alternative status API call successful: ${newStatus}`
-            );
           } catch (error2) {
             console.error(`❌ Alternative 'completed' failed:`, error2);
             try {
               newStatus = 'resolved';
               await updateTicketStatusAPI(ticket.id, newStatus);
-              console.log(
-                `✅ Alternative status API call successful: ${newStatus}`
-              );
             } catch (error3) {
               console.error(`❌ Alternative 'resolved' failed:`, error3);
               throw error; // Throw original error if all fail
@@ -851,13 +802,11 @@ const AdminDashboard = () => {
 
       // *** NOTIFICATION HANDLING - DENGAN PROPER ERROR HANDLING ***
       try {
-        console.log('🔔 Attempting to create status notification...');
         await createStatusNotification(
           ticket.id,
           ticket.rawTicket || ticket,
           newStatus
         );
-        console.log('✅ Status notification created successfully');
       } catch (notificationError) {
         console.error(
           '❌ Notification failed but continuing with drag & drop:',
@@ -890,12 +839,8 @@ const AdminDashboard = () => {
           insertIndex <= newTickets[toColumn].length
         ) {
           newTickets[toColumn].splice(insertIndex, 0, updatedTicket);
-          console.log(
-            `Ticket inserted at position ${insertIndex} in ${toColumn}`
-          );
         } else {
           newTickets[toColumn].push(updatedTicket);
-          console.log(`Ticket appended to end of ${toColumn}`);
         }
 
         return newTickets;
@@ -951,7 +896,6 @@ const AdminDashboard = () => {
       setUpdating(null);
       setDraggedTicket(null);
       setDraggedFrom(null);
-      console.log('🏁 Drag & drop operation completed');
     }
   };
 
