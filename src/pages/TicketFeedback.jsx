@@ -869,14 +869,30 @@ const TicketFeedback = () => {
                                       {attachment.file_type}
                                     </div>
                                   </div>
-                                  <a
-                                    href={attachment.file_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 text-sm"
-                                  >
-                                    Download
-                                  </a>
+                                  <div className="flex items-center space-x-2">
+                                    <button
+                                      onClick={() =>
+                                        window.open(
+                                          attachment.file_url,
+                                          '_blank'
+                                        )
+                                      }
+                                      className="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded hover:bg-blue-50"
+                                      title="Preview file"
+                                    >
+                                      Preview
+                                    </button>
+                                    <a
+                                      href={attachment.file_url}
+                                      download={attachment.file_name}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-green-600 hover:text-green-800 text-sm px-2 py-1 rounded hover:bg-green-50 inline-block"
+                                      title="Download file"
+                                    >
+                                      Download
+                                    </a>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -1060,11 +1076,6 @@ const TicketFeedback = () => {
                 }
                 className="px-8 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 font-medium"
               >
-                {isTicketClosed()
-                  ? 'Ticket Sudah Ditutup'
-                  : sending
-                    ? 'Mengirim...'
-                    : 'Kirim Laporan'}
                 {sending ? (
                   <>
                     <svg
@@ -1088,8 +1099,10 @@ const TicketFeedback = () => {
                     </svg>
                     <span>Mengirim...</span>
                   </>
+                ) : isTicketClosed() ? (
+                  'Ticket Sudah Ditutup'
                 ) : (
-                  <span>Kirim Laporan</span>
+                  'Kirim Laporan'
                 )}
               </button>
             </div>

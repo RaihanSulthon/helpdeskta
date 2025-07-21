@@ -9,6 +9,27 @@ import {
 import SearchBar from '../../components/SearchBar';
 import Navigation from '../../components/Navigation';
 
+const Modal = React.memo(({ show, onClose, title, children }) => {
+  if (!show) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg max-w-md w-full mx-4 max-h-90vh overflow-y-auto">
+        <div className="flex justify-between items-center p-6 border-b">
+          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            ×
+          </button>
+        </div>
+        <div className="p-6">{children}</div>
+      </div>
+    </div>
+  );
+});
+
 const AdminAskedUs = () => {
   const [faqData, setFaqData] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -140,22 +161,24 @@ const AdminAskedUs = () => {
     setSearchQuery('');
   };
 
-  // Reset form inputs
+  // Reset form inputs - Tambahkan delay untuk mencegah race condition
   const resetForm = useCallback(() => {
-    setQuestionInput('');
-    setAnswerInput('');
-    setCategoryInput(categories.length > 0 ? categories[0].id : 1);
-    setIsPublicInput(true);
-    setError('');
+    setTimeout(() => {
+      setQuestionInput('');
+      setAnswerInput('');
+      setCategoryInput(categories.length > 0 ? categories[0].id : 1);
+      setIsPublicInput(true);
+      setError('');
+    }, 0);
   }, [categories]);
 
-  // Handle add new FAQ
   const handleAddFAQ = useCallback(() => {
-    resetForm();
     setEditingFAQ(null);
     setShowAddModal(true);
+    setTimeout(() => {
+      resetForm();
+    }, 10);
   }, [resetForm]);
-
   // Handle edit FAQ
   const handleEdit = useCallback((faq) => {
     setEditingFAQ(faq);
@@ -321,51 +344,17 @@ const AdminAskedUs = () => {
     return true;
   });
 
-  // Handle close modals
-  const handleCloseAddModal = () => {
+  // Handle close modals - Add useCallback to prevent re-creation
+  const handleCloseAddModal = useCallback(() => {
     setShowAddModal(false);
     resetForm();
-  };
+  }, [resetForm]);
 
-  const handleCloseEditModal = () => {
+  const handleCloseEditModal = useCallback(() => {
     setShowEditModal(false);
     setEditingFAQ(null);
     resetForm();
-  };
-
-  // Modal Component
-  const Modal = ({ show, onClose, title, children }) => {
-    if (!show) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">{title}</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-          {children}
-        </div>
-      </div>
-    );
-  };
+  }, [resetForm]);
 
   // Loading state
   if (loading) {
@@ -932,7 +921,7 @@ const AdminAskedUs = () => {
           )}
         </div>
       </div>
-      s{/* Add FAQ Modal */}
+      {/* Add FAQ Modal */}
       <Modal
         show={showAddModal}
         onClose={handleCloseAddModal}
@@ -944,6 +933,7 @@ const AdminAskedUs = () => {
               Pertanyaan <span className="text-red-500">*</span>
             </label>
             <input
+              key="question-input"
               type="text"
               value={questionInput}
               onChange={(e) => setQuestionInput(e.target.value)}
@@ -958,6 +948,7 @@ const AdminAskedUs = () => {
               Jawaban <span className="text-red-500">*</span>
             </label>
             <textarea
+              key="answer-input"
               value={answerInput}
               onChange={(e) => setAnswerInput(e.target.value)}
               required

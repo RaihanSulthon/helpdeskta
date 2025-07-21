@@ -911,7 +911,7 @@ const AdminDashboard = () => {
           <div className="flex items-center gap-4 pt-6">
             <div className="w-80 shadow-md shadow-gray-300">
               <SearchBar
-                placeholder="Cari id / judul / nama mahasiswa"
+                placeholder="Cari judul tiket"
                 onSearch={handleSearch}
                 onClear={handleClearSearch}
                 disabled={loading}
@@ -1338,7 +1338,7 @@ const AdminDashboard = () => {
 
             {/* Reset Filter Button */}
             <Button
-              className="border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
+              className="border-2 border-gray-400 text-sm px-3 py-2 bg-white shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
               onClick={() => {
                 const defaultFilters = {
                   selectedCategory: '',
