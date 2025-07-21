@@ -1338,7 +1338,7 @@ const AdminDashboard = () => {
 
             {/* Reset Filter Button */}
             <Button
-              className="border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
+              className="border-2 bg-white border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
               onClick={() => {
                 const defaultFilters = {
                   selectedCategory: '',

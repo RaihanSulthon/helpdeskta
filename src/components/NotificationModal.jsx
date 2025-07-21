@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getNotificationsAPI, markNotificationAsReadAPI, markAllNotificationsAsReadAPI, getTicketDetailAPI } from '../services/api';
-import { getUserDisplayNameSync } from '../utils/userUtils'; // UBAH KE SYNC VERSION
+import {
+  getNotificationsAPI,
+  markNotificationAsReadAPI,
+  markAllNotificationsAsReadAPI,
+  getTicketDetailAPI,
+} from '../services/api';
+import { getUserDisplayName } from '../utils/userUtils';
 
 const NotificationModal = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -18,21 +23,23 @@ const NotificationModal = ({ isOpen, onClose }) => {
       setLoading(true);
       setError('');
       const result = await getNotificationsAPI({ read: false, per_page: 50 });
-      
+
       let notificationList = [];
       if (result.notifications?.data) {
         notificationList = result.notifications.data;
       } else if (result.data) {
         notificationList = result.data;
       }
-      
+
       setNotifications(notificationList);
-      
-      // Fetch ticket titles secara parallel tapi dengan delay
+
+      // Fetch ticket titles dan user names secara parallel
       if (notificationList.length > 0) {
-        fetchTicketTitles(notificationList);
+        await Promise.all([
+          fetchTicketTitles(notificationList),
+          fetchUserNames(notificationList),
+        ]);
       }
-      
     } catch (err) {
       console.error('Error fetching notifications:', err);
       setError('Gagal memuat notifikasi');
@@ -41,46 +48,77 @@ const NotificationModal = ({ isOpen, onClose }) => {
     }
   };
 
+  // Fetch user names secara async
+  const fetchUserNames = async (notifications) => {
+    const names = {};
+
+    // Get unique sender IDs
+    const senderIds = [
+      ...new Set(notifications.map((notif) => notif.sender_id).filter(Boolean)),
+    ];
+
+    // Fetch names in parallel
+    const namePromises = senderIds.map(async (senderId) => {
+      try {
+        const userName = await getUserDisplayName(senderId);
+        return { senderId, userName };
+      } catch (error) {
+        console.error(`Error fetching name for user ${senderId}:`, error);
+        return { senderId, userName: `User-${senderId.slice(-6)}` };
+      }
+    });
+
+    const results = await Promise.all(namePromises);
+
+    results.forEach(({ senderId, userName }) => {
+      names[senderId] = userName;
+    });
+
+    setUserNames((prev) => ({ ...prev, ...names }));
+  };
+
   // Fetch ticket titles secara terpisah dan parallel
   const fetchTicketTitles = async (notifications) => {
     const titles = {};
-    
+
     // Batch process ticket titles
     const ticketPromises = notifications
-      .filter(notif => notif.ticket_id && !ticketTitles[notif.ticket_id])
+      .filter((notif) => notif.ticket_id && !ticketTitles[notif.ticket_id])
       .slice(0, 10) // Limit hanya 10 first untuk avoid too many requests
       .map(async (notification) => {
         try {
           const ticketDetail = await getTicketDetailAPI(notification.ticket_id);
           return {
             ticketId: notification.ticket_id,
-            title: ticketDetail.judul || ticketDetail.title || 'Untitled'
+            title: ticketDetail.judul || ticketDetail.title || 'Untitled',
           };
         } catch (error) {
           return {
             ticketId: notification.ticket_id,
-            title: 'Untitled'
+            title: 'Untitled',
           };
         }
       });
 
     // Wait for all promises
     const results = await Promise.all(ticketPromises);
-    
+
     // Update titles state
-    results.forEach(result => {
+    results.forEach((result) => {
       titles[result.ticketId] = result.title;
     });
-    
-    setTicketTitles(prev => ({ ...prev, ...titles }));
+
+    setTicketTitles((prev) => ({ ...prev, ...titles }));
   };
 
   // Mark notification as read and redirect to ticket
   const handleNotificationClick = async (notification) => {
     try {
       await markNotificationAsReadAPI(notification.id);
-      setNotifications(prev => prev.filter(notif => notif.id !== notification.id));
-      
+      setNotifications((prev) =>
+        prev.filter((notif) => notif.id !== notification.id)
+      );
+
       if (notification.ticket_id) {
         onClose();
         navigate(`/ticket/${notification.ticket_id}`);
@@ -106,7 +144,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('id-ID', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -114,7 +152,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
   const getNotificationContent = (notification) => {
     const { type, message, ticket_id } = notification;
     const ticketTitle = ticketTitles[ticket_id] || 'Loading...';
-    
+
     if (type === 'new_ticket' || message.includes('Tiket baru telah dibuat')) {
       return (
         <>
@@ -123,7 +161,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
         </>
       );
     }
-    
+
     if (type === 'chat_message' || message.includes('chat message')) {
       return (
         <>
@@ -132,22 +170,28 @@ const NotificationModal = ({ isOpen, onClose }) => {
         </>
       );
     }
-    
+
     // Fallback dengan ticket title jika ada
     if (ticket_id && ticketTitle !== 'Loading...') {
       return (
         <>
-          <span className="text-gray-700">{message} untuk tiket: {ticketTitle}</span>
+          <span className="text-gray-700">
+            {message} untuk tiket: {ticketTitle}
+          </span>
         </>
       );
     }
-    
+
     return <span className="text-gray-700">{message}</span>;
   };
 
-  // Get sender name using userUtils (sync version for now)
+  // Get sender name from state or fallback
   const getSenderName = (notification) => {
-    return getUserDisplayNameSync(notification.sender_id);
+    const senderId = notification.sender_id;
+    if (!senderId) return 'Unknown User';
+
+    // Return from state if available, otherwise fallback
+    return userNames[senderId] || `User-${senderId.slice(-6)}`;
   };
 
   // Close modal when clicking outside and setup auto-refresh
@@ -163,10 +207,9 @@ const NotificationModal = ({ isOpen, onClose }) => {
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       fetchNotifications();
-      
-      refreshInterval = setInterval(() => {
-        fetchNotifications();
-      }, 30000);
+
+      // Auto refresh setiap 30 detik
+      refreshInterval = setInterval(fetchNotifications, 30000);
     }
 
     return () => {
@@ -181,15 +224,9 @@ const NotificationModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50">
-      {/* Invisible backdrop untuk close saat click outside */}
-      <div 
-        className="fixed inset-0"
-        onClick={onClose}
-      />
-      
-      {/* Modal positioned seperti dropdown */}
+      <div className="fixed inset-0" onClick={onClose} />
       <div className="absolute top-16 right-4 z-50">
-        <div 
+        <div
           ref={modalRef}
           className="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all w-80"
           style={{ maxHeight: '70vh' }}
@@ -201,15 +238,27 @@ const NotificationModal = ({ isOpen, onClose }) => {
               onClick={onClose}
               className="text-white hover:text-gray-300 transition-colors"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
 
           {/* Content */}
-          <div className="flex flex-col" style={{ maxHeight: 'calc(70vh - 140px)' }}>
-            {/* Notifications List */}
+          <div
+            className="flex flex-col"
+            style={{ maxHeight: 'calc(70vh - 140px)' }}
+          >
             <div className="flex-1 overflow-y-auto px-4 py-2">
               {loading ? (
                 <div className="flex justify-center items-center py-8">
@@ -245,24 +294,24 @@ const NotificationModal = ({ isOpen, onClose }) => {
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Footer Buttons */}
-            <div className="border-t border-gray-200 px-4 py-3">
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleMarkAllAsRead}
-                  disabled={notifications.length === 0}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-black bg-white shadow-xl border-2 border-black rounded-md hover:bg-gray-200 hover:scale-105 duration-300 transition-all"
-                >
-                  Baca Semua
-                </button>
-                <button
-                  disabled
-                  className="flex-1 px-4 py-2 text-sm font-medium text-black bg-white shadow-xl border-2 border-black rounded-md hover:bg-gray-200 hover:scale-105 duration-300 transition-all"
-                >
-                  Hapus Semua
-                </button>
-              </div>
+          {/* Footer Buttons */}
+          <div className="border-t border-gray-200 px-4 py-3">
+            <div className="flex space-x-3">
+              <button
+                onClick={handleMarkAllAsRead}
+                disabled={notifications.length === 0}
+                className="flex-1 px-4 py-2 text-sm font-medium text-black bg-white shadow-xl border-2 border-black rounded-md hover:bg-gray-200 hover:scale-105 duration-300 transition-all"
+              >
+                Baca Semua
+              </button>
+              <button
+                disabled
+                className="flex-1 px-4 py-2 text-sm font-medium text-black bg-white shadow-xl border-2 border-black rounded-md hover:bg-gray-200 hover:scale-105 duration-300 transition-all"
+              >
+                Hapus Semua
+              </button>
             </div>
           </div>
         </div>

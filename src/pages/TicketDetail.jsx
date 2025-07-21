@@ -86,11 +86,11 @@ const DetailTicket = () => {
   };
 
   const loadTicketDetail = async () => {
+    if (!ticketId) return;
     try {
       setLoading(true);
       setError('');
       const data = await getTicketDetailAPI(ticketId);
-      console.log('Received ticket data:', data);
 
       const transformedData = {
         id: data.id || 'Tidak tersedia',
@@ -125,6 +125,8 @@ const DetailTicket = () => {
       };
 
       setTicketData(transformedData);
+      setTotalFeedbackCount(data.chat_count || 0);
+      setNewFeedbackCount(data.unread_chat_count || 0);
     } catch (error) {
       console.error('Error loading ticket detail:', error);
       setError(error.message || 'Gagal memuat detail tiket');
