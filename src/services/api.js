@@ -459,6 +459,45 @@ export const getAdminTicketsAPI = async (filters = {}) => {
   }
 };
 
+// Signup API
+export const signUpAPI = async (userData) => {
+  try {
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      mode: 'cors',
+      credentials: 'omit',
+      body: JSON.stringify(userData),
+    };
+
+    // Endpoint untuk registrasi biasanya /auth/register atau /register
+    const response = await retryFetch(`${BASE_URL}/auth/register`, options);
+    const result = await response.json();
+
+    if (!response.ok) {
+      // Menangani error validasi dari server
+      if (response.status === 422 && result.errors) {
+        const errorMessages = Object.values(result.errors).flat().join(', ');
+        throw new Error(`Registrasi gagal: ${errorMessages}`);
+      }
+      throw new Error(result.message || 'Registrasi gagal. Terjadi kesalahan pada server.');
+    }
+
+    // Jika berhasil, backend biasanya mengembalikan data user yang baru dibuat
+    return {
+      success: true,
+      message: result.message || 'Registrasi berhasil!',
+      data: result.data,
+    };
+  } catch (error) {
+    console.error('Sign Up API Error:', error);
+    throw new Error(error.message || 'Tidak dapat terhubung ke server. Silakan coba lagi.');
+  }
+};
+
 // Login API
 export const loginAPI = async (email, password) => {
   try {
