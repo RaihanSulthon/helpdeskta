@@ -194,8 +194,7 @@ const AdminDashboard = () => {
         ticket.anonymous === true
           ? 'Anonim'
           : ticket.nama || ticket.name || 'Tidak diketahui',
-      // UBAH INI: Selalu tampilkan email asli
-      email: ticket.email || 'tidak diketahui', // Remove anonymous email override
+      email: ticket.email || 'tidak diketahui',
       date: formatDate(ticket.created_at),
       subject: ticket.judul || ticket.title || 'Tidak ada judul',
       category: mapStatusToCategory(ticket.status),
@@ -1465,14 +1464,14 @@ const AdminDashboard = () => {
                 <Button
                   onClick={cancelDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 border-2 border-[#E01A3F] text-[#E01A3F] rounded-lg hover:bg-[#E01A3F] hover:text-white transition-colors disabled:opacity-50 font-medium"
+                  className="px-6 py-2 border-2 border-[#E01A3F] text-red-600 bg-white rounded-lg hover:bg-gray-200 hover:text-white transition-colors disabled:opacity-50 font-medium"
                 >
                   Batal
                 </Button>
                 <Button
                   onClick={confirmDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 bg-[#E01A3F] text-white rounded-lg hover:bg-[#C41E3A] transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium"
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-800 transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium"
                 >
                   {isDeleting ? (
                     <>

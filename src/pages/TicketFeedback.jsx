@@ -7,12 +7,15 @@ import {
   getTicketDetailAPI,
   updateTicketStatusAPI,
   deleteTicketAPI,
-  createNotificationAPI
+  createNotificationAPI,
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import { ToastContainer } from '../components/Toast';
-import { getRecipientId, generateNotificationMessage } from '../utils/userUtils';
+import {
+  getRecipientId,
+  generateNotificationMessage,
+} from '../utils/userUtils';
 
 const TicketFeedback = () => {
   const navigate = useNavigate();
@@ -76,6 +79,15 @@ const TicketFeedback = () => {
       default:
         return 'Baru';
     }
+  };
+
+  // Tambahkan fungsi untuk mengecek apakah ticket sudah closed
+  const isTicketClosed = () => {
+    return (
+      ticketData?.rawStatus?.toLowerCase() === 'closed' ||
+      ticketData?.rawStatus?.toLowerCase() === 'completed' ||
+      ticketData?.rawStatus?.toLowerCase() === 'resolved'
+    );
   };
 
   const addToast = (message, type = 'info', duration = 3000) => {
@@ -432,24 +444,26 @@ const TicketFeedback = () => {
     try {
       const recipientRole = senderRole === 'admin' ? 'student' : 'admin';
       const recipientId = getRecipientId(ticketData, recipientRole);
-      
+
       if (!recipientId) {
         console.warn('No recipient ID found for chat notification');
         return;
       }
-  
+
       const message = generateNotificationMessage('chat_message', {
-        senderRole: senderRole
+        senderRole: senderRole,
       });
-  
+
       await createNotificationAPI({
         recipient_id: recipientId,
-        type: "custom_notification",
-        subject: "Custom Notification",
-        content: "This is a custom notification."
+        type: 'custom_notification',
+        subject: 'Custom Notification',
+        content: 'This is a custom notification.',
       });
-      
-      console.log(`Chat notification sent to ${recipientRole} (${recipientId})`);
+
+      console.log(
+        `Chat notification sent to ${recipientRole} (${recipientId})`
+      );
     } catch (error) {
       console.error('Failed to create chat notification:', error);
       // Jangan throw error, biarkan proses kirim chat tetap berhasil
@@ -459,21 +473,21 @@ const TicketFeedback = () => {
   // Tambahkan debug di fungsi handleSendFeedback
   const handleSendFeedback = async () => {
     if (!newFeedback.trim() && !selectedFile) return;
-  
+
     try {
       setSending(true);
       setError('');
-  
+
       const sendResponse = await sendChatMessageAPI(
         ticketId,
         newFeedback,
         selectedFile
       );
-  
+
       // *** TAMBAHAN: Create notification setelah berhasil kirim chat ***
       const currentUserRole = localStorage.getItem('userRole');
       await createChatNotification(ticketId, ticketData, currentUserRole);
-  
+
       // Test file accessibility jika ada file yang diupload
       if (selectedFile && sendResponse?.data?.attachments) {
         sendResponse.data.attachments.forEach((attachment) => {
@@ -493,7 +507,7 @@ const TicketFeedback = () => {
           }
         });
       }
-  
+
       // ✅ DEBUG: Cek struktur message yang baru dibuat
       if (sendResponse.message) {
         console.log('New message created:', sendResponse.message);
@@ -501,15 +515,15 @@ const TicketFeedback = () => {
           console.log('Message attachments:', sendResponse.message.attachments);
         }
       }
-  
+
       // Clear input and reload messages
       setNewFeedback('');
       handleRemoveFile();
-  
+
       // ✅ TAMBAHKAN DEBUG: Log reload messages
       console.log('=== RELOADING MESSAGES ===');
       await loadChatMessages();
-  
+
       console.log('Feedback sent successfully!');
     } catch (error) {
       console.error('Error sending feedback:', error);
@@ -518,7 +532,6 @@ const TicketFeedback = () => {
       setSending(false);
     }
   };
-  
 
   const handleBack = () => {
     const userRole = localStorage.getItem('userRole') || 'student';
@@ -858,6 +871,34 @@ const TicketFeedback = () => {
                 </div>
               )}
             </div>
+            
+            {/* Notifikasi untuk ticket closed */}
+            {isTicketClosed() && (
+              <div className="mb-4 p-4 bg-gray-100 border-l-4 border-gray-500 rounded-r-lg">
+                <div className="flex items-center">
+                  <svg
+                    className="w-5 h-5 text-gray-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 14.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                  <span className="text-sm text-gray-600 font-medium">
+                    Ticket ini sudah ditutup. Anda tidak dapat mengirim feedback
+                    atau lampiran lagi.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Isi Feedback Section */}
+            <div className="mb-6"></div>
 
             {/* Isi Feedback Section */}
             <div className="mb-6">
@@ -872,10 +913,14 @@ const TicketFeedback = () => {
                       value={newFeedback}
                       onChange={(e) => setNewFeedback(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Berikan feedback untuk mahasiswa..."
-                      className="w-full p-3 border-none outline-none resize-none"
+                      placeholder={
+                        isTicketClosed()
+                          ? 'Ticket sudah ditutup, tidak dapat mengirim feedback lagi'
+                          : 'Berikan feedback untuk mahasiswa...'
+                      }
+                      className={`w-full p-3 border-none outline-none resize-none ${isTicketClosed() ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
                       rows={4}
-                      disabled={sending}
+                      disabled={sending || isTicketClosed()}
                     />
                   </div>
                 </div>
@@ -947,7 +992,11 @@ const TicketFeedback = () => {
                 ) : (
                   <label
                     htmlFor="file-input"
-                    className="block p-8 text-center cursor-pointer hover:bg-gray-200 transition-colors rounded-lg"
+                    className={`block p-8 text-center transition-colors rounded-lg ${
+                      isTicketClosed()
+                        ? 'cursor-not-allowed bg-gray-100 text-gray-400'
+                        : 'cursor-pointer hover:bg-gray-200'
+                    }`}
                   >
                     <div className="space-y-2">
                       <svg
@@ -979,7 +1028,7 @@ const TicketFeedback = () => {
                   accept=".png,.jpg,.jpeg,.pdf"
                   onChange={handleFileSelect}
                   className="hidden"
-                  disabled={sending}
+                  disabled={sending || isTicketClosed()}
                 />
               </div>
             </div>
@@ -988,9 +1037,18 @@ const TicketFeedback = () => {
             <div className="flex justify-end">
               <button
                 onClick={handleSendFeedback}
-                disabled={(!newFeedback.trim() && !selectedFile) || sending}
+                disabled={
+                  (!newFeedback.trim() && !selectedFile) ||
+                  sending ||
+                  isTicketClosed()
+                }
                 className="px-8 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 font-medium"
               >
+                {isTicketClosed()
+                  ? 'Ticket Sudah Ditutup'
+                  : sending
+                    ? 'Mengirim...'
+                    : 'Kirim Laporan'}
                 {sending ? (
                   <>
                     <svg
