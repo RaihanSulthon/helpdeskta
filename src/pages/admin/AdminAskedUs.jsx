@@ -614,7 +614,7 @@ const AdminAskedUs = () => {
 
                 {isCategoryDropdownVisible && (
                   <div
-                    className={`absolute top-full mt-1 w-full bg-white border border-gray-300 shadow-md rounded-lg shadow-lg z-20 transform transition-all duration-300 ease-out origin-top ${
+                    className={`absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-20 transform transition-all duration-300 ease-out origin-top ${
                       showCategoryDropdown
                         ? 'opacity-100 scale-100 translate-y-0'
                         : 'opacity-0 scale-95 -translate-y-2'
