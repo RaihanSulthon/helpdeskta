@@ -1623,3 +1623,90 @@ export const createNotificationAPI = async (notificationData) => {
     );
   }
 };
+
+// Upload Attachment API - Untuk upload attachment terpisah
+export const uploadAttachmentAPI = async (ticketId, message, file) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login ulang.');
+    }
+
+    if (!ticketId) {
+      throw new Error('ID tiket tidak valid');
+    }
+
+    if (!message || message.trim() === '') {
+      throw new Error('Pesan tidak boleh kosong');
+    }
+
+    if (!file) {
+      throw new Error('File attachment harus dipilih');
+    }
+
+    // Validasi file
+    const allowedTypes = [
+      'image/png',
+      'image/jpeg', 
+      'image/jpg',
+      'application/pdf',
+    ];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(
+        'Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.'
+      );
+    }
+
+    if (file.size > maxSize) {
+      throw new Error('Ukuran file terlalu besar. Maksimal 5MB.');
+    }
+
+    const formData = new FormData();
+    formData.append('message', message.trim());
+    formData.append('file', file);
+
+    console.log('Uploading attachment:', {
+      ticketId,
+      message,
+      fileName: file.name,
+      fileSize: file.size,
+    });
+
+    const response = await retryFetch(`${BASE_URL}/tickets/${ticketId}/chat/attachment`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      mode: 'cors',
+      credentials: 'omit',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn('Could not parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('Upload Attachment API response:', result);
+
+    return {
+      success: true,
+      message: result.message || result,
+      attachment: result.attachment || null,
+      chatMessage: result.message || null,
+    };
+  } catch (error) {
+    console.error('Upload Attachment API Error:', error);
+    throw new Error(error.message || 'Gagal mengupload attachment');
+  }
+};

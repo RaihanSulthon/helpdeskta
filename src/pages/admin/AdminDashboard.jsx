@@ -194,7 +194,8 @@ const AdminDashboard = () => {
         ticket.anonymous === true
           ? 'Anonim'
           : ticket.nama || ticket.name || 'Tidak diketahui',
-      email: ticket.email || 'tidak diketahui',
+      // UBAH INI: Selalu tampilkan email asli
+      email: ticket.email || 'tidak diketahui', // Remove anonymous email override
       date: formatDate(ticket.created_at),
       subject: ticket.judul || ticket.title || 'Tidak ada judul',
       category: mapStatusToCategory(ticket.status),
@@ -1337,7 +1338,7 @@ const AdminDashboard = () => {
 
             {/* Reset Filter Button */}
             <Button
-              className="border-2 bg-white border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
+              className="border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
               onClick={() => {
                 const defaultFilters = {
                   selectedCategory: '',
@@ -1464,14 +1465,14 @@ const AdminDashboard = () => {
                 <Button
                   onClick={cancelDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 border-2 border-[#E01A3F] text-red-600 bg-white rounded-lg hover:bg-gray-200 hover:text-white transition-colors disabled:opacity-50 font-medium"
+                  className="px-6 py-2 border-2 border-[#E01A3F] text-[#E01A3F] rounded-lg hover:bg-[#E01A3F] hover:text-white transition-colors disabled:opacity-50 font-medium"
                 >
                   Batal
                 </Button>
                 <Button
                   onClick={confirmDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-800 transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium"
+                  className="px-6 py-2 bg-[#E01A3F] text-white rounded-lg hover:bg-[#C41E3A] transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium"
                 >
                   {isDeleting ? (
                     <>

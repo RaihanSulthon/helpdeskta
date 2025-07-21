@@ -8,6 +8,7 @@ import {
   updateTicketStatusAPI,
   deleteTicketAPI,
   createNotificationAPI,
+  uploadAttachmentAPI,
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
@@ -478,41 +479,50 @@ const TicketFeedback = () => {
       setSending(true);
       setError('');
 
-      const sendResponse = await sendChatMessageAPI(
-        ticketId,
-        newFeedback,
-        selectedFile
-      );
+      let sendResponse;
+
+      // Jika ada file, gunakan uploadAttachmentAPI
+      if (selectedFile) {
+        sendResponse = await uploadAttachmentAPI(
+          ticketId,
+          newFeedback,
+          selectedFile
+        );
+      } else {
+        // Jika tidak ada file, gunakan sendChatMessageAPI biasa
+        sendResponse = await sendChatMessageAPI(ticketId, newFeedback);
+      }
 
       // *** TAMBAHAN: Create notification setelah berhasil kirim chat ***
       const currentUserRole = localStorage.getItem('userRole');
       await createChatNotification(ticketId, ticketData, currentUserRole);
 
       // Test file accessibility jika ada file yang diupload
-      if (selectedFile && sendResponse?.data?.attachments) {
-        sendResponse.data.attachments.forEach((attachment) => {
-          const fileUrl = attachment.file_url || attachment.url;
-          if (fileUrl) {
-            fetch(fileUrl, { method: 'HEAD' })
-              .then((response) => {
-                if (response.status === 404) {
-                  console.error('❌ File not accessible:', fileUrl);
-                } else if (response.status === 200) {
-                  console.log('✅ Link accessible');
-                }
-              })
-              .catch((error) => {
-                console.error('❌ Error accessing link:', error);
-              });
-          }
-        });
+      if (selectedFile && sendResponse?.attachment) {
+        const fileUrl = sendResponse.attachment.file_url;
+        if (fileUrl) {
+          fetch(fileUrl, { method: 'HEAD' })
+            .then((response) => {
+              if (response.status === 404) {
+                console.error('❌ File not accessible:', fileUrl);
+              } else if (response.status === 200) {
+                console.log('✅ Link accessible');
+              }
+            })
+            .catch((error) => {
+              console.error('❌ Error accessing link:', error);
+            });
+        }
       }
 
       // ✅ DEBUG: Cek struktur message yang baru dibuat
-      if (sendResponse.message) {
-        console.log('New message created:', sendResponse.message);
-        if (sendResponse.message.attachments) {
-          console.log('Message attachments:', sendResponse.message.attachments);
+      if (sendResponse.chatMessage || sendResponse.message) {
+        console.log(
+          'New message created:',
+          sendResponse.chatMessage || sendResponse.message
+        );
+        if (sendResponse.attachment) {
+          console.log('Message attachment:', sendResponse.attachment);
         }
       }
 
@@ -527,7 +537,13 @@ const TicketFeedback = () => {
       console.log('Feedback sent successfully!');
     } catch (error) {
       console.error('Error sending feedback:', error);
-      setError('Gagal mengirim feedback: ' + error.message);
+      setError(error.message || 'Gagal mengirim feedback. Silakan coba lagi.');
+
+      addToast({
+        id: Date.now(),
+        type: 'error',
+        message: error.message || 'Gagal mengirim feedback',
+      });
     } finally {
       setSending(false);
     }
@@ -871,7 +887,7 @@ const TicketFeedback = () => {
                 </div>
               )}
             </div>
-            
+
             {/* Notifikasi untuk ticket closed */}
             {isTicketClosed() && (
               <div className="mb-4 p-4 bg-gray-100 border-l-4 border-gray-500 rounded-r-lg">
