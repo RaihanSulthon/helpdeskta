@@ -1804,10 +1804,6 @@ export const uploadAttachmentAPI = async (ticketId, message, file) => {
       throw new Error('ID tiket tidak valid');
     }
 
-    if (!message || message.trim() === '') {
-      throw new Error('Pesan tidak boleh kosong');
-    }
-
     if (!file) {
       throw new Error('File attachment harus dipilih');
     }
@@ -1815,44 +1811,46 @@ export const uploadAttachmentAPI = async (ticketId, message, file) => {
     // Validasi file
     const allowedTypes = [
       'image/png',
-      'image/jpeg',
+      'image/jpeg', 
       'image/jpg',
       'application/pdf',
     ];
     const maxSize = 5 * 1024 * 1024; // 5MB
 
     if (!allowedTypes.includes(file.type)) {
-      throw new Error('Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.');
+      throw new Error(
+        'Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.'
+      );
     }
 
     if (file.size > maxSize) {
       throw new Error('Ukuran file terlalu besar. Maksimal 5MB.');
     }
 
+    // FIXED: Berikan default message jika kosong, seperti yang dilakukan backend
+    const finalMessage = message && message.trim() !== '' ? message.trim() : 'Sent an attachment';
+
     const formData = new FormData();
-    formData.append('message', message.trim());
+    formData.append('message', finalMessage);
     formData.append('file', file);
 
     console.log('Uploading attachment:', {
       ticketId,
-      message,
+      message: finalMessage,
       fileName: file.name,
       fileSize: file.size,
     });
 
-    const response = await retryFetch(
-      `${BASE_URL}/tickets/${ticketId}/chat/attachment`,
-      {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        mode: 'cors',
-        credentials: 'omit',
-        body: formData,
-      }
-    );
+    const response = await retryFetch(`${BASE_URL}/tickets/${ticketId}/chat/attachment`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      mode: 'cors',
+      credentials: 'omit',
+      body: formData,
+    });
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
