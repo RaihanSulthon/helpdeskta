@@ -20,6 +20,7 @@ import DetailUser from './pages/admin/DetailUser';
 import StudentAskedUs from './pages/student/StudentAskedUs';
 import AdminAskedUs from './pages/admin/AdminAskedUs';
 import ManageUsers from './pages/admin/ManageUsers';
+import LAAKInfoPortal from './pages/LAAKInfoPortal';
 
 // SPL-aware Role-based redirect component
 const RoleBasedRedirect = () => {
@@ -50,6 +51,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/login" element={<Login />} />
         {/* SPL-aware role-based redirect */}
         <Route path="/dashboard" element={<RoleBasedRedirect />} />
+        <Route path="/laak-info" element={<LAAKInfoPortal />} />
         {/* Student routes dengan SPL validation */}
         <Route
           path="/student"

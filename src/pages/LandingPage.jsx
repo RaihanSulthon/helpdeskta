@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getFAQsAPI } from '../services/api'; // Sesuaikan path jika berbeda
+import appLogo from '../assets/applogo.png';
 
 // Komponen Button sederhana
 function Button({ children, className = '', onClick }) {
@@ -19,7 +21,59 @@ function LandingPage() {
   const { user, logout, isAuthenticated, getUserRole } = useAuth();
   const [userRole, setUserRole] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [faqData, setFaqData] = useState([]);
+  const [faqLoading, setFaqLoading] = useState(true);
+  const [expandedFAQs, setExpandedFAQs] = useState(new Set());
+  const loadFAQs = useCallback(async () => {
+    try {
+      setFaqLoading(true);
 
+      const apiFilters = {
+        per_page: 6, // Hanya ambil 6 FAQ untuk landing page
+        page: 1,
+      };
+
+      const result = await getFAQsAPI(apiFilters);
+
+      let faqsArray = [];
+
+      // Handle different response structures (sama seperti di StudentAskedUs)
+      if (result?.faqs && Array.isArray(result.faqs)) {
+        faqsArray = result.faqs;
+      } else if (result?.data?.data && Array.isArray(result.data.data)) {
+        faqsArray = result.data.data;
+      } else if (result?.data && Array.isArray(result.data)) {
+        faqsArray = result.data;
+      } else if (Array.isArray(result)) {
+        faqsArray = result;
+      }
+
+      // Filter only published FAQs
+      const publishedFAQs = faqsArray
+        .filter((faq) => faq.is_public === true || faq.is_public === 1)
+        .slice(0, 6); // Limit to 6 items
+
+      setFaqData(publishedFAQs);
+    } catch (error) {
+      console.error('Error loading FAQs for landing page:', error);
+      setFaqData([]); // Set empty array on error
+    } finally {
+      setFaqLoading(false);
+    }
+  }, []);
+
+  // Function untuk toggle FAQ accordion
+  const toggleFAQ = (id) => {
+    setExpandedFAQs((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
   // Check login status using AuthContext
   useEffect(() => {
     if (isAuthenticated() && user) {
@@ -30,7 +84,10 @@ function LandingPage() {
       setUserRole(null);
       console.log('Landing page - User not authenticated');
     }
-  }, [user, isAuthenticated, getUserRole]);
+
+    // Load FAQs
+    loadFAQs();
+  }, [user, isAuthenticated, getUserRole, loadFAQs]);
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -84,10 +141,12 @@ function LandingPage() {
       <header className="bg-red-600 shadow-md fixed top-0 left-0 right-0 z-50">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           {/* Left section - Logo/Brand */}
-          <div className="flex items-center">
-            <div className="bg-white rounded-lg px-4 py-2">
-              <div className="text-red-600 font-bold text-lg">HELPDESK</div>
-            </div>
+          <div className="hidden sm:block">
+            <img
+              src={appLogo}
+              alt="App Logo"
+              className="h-8 w-auto ml-4 cursor-pointer  transition-all  duration-300"
+            />
           </div>
 
           {/* Center section - Navigation Menu */}
@@ -193,6 +252,12 @@ function LandingPage() {
                     onClick={handleDashboardClick}
                   >
                     Go to Dashboard
+                  </Button>
+                  <Button
+                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
+                    onClick={() => navigate('/laak-info')}
+                  >
+                    LAAK Info Portal
                   </Button>
                   <Button
                     className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
@@ -327,75 +392,148 @@ function LandingPage() {
           </div>
 
           {/* FAQ Items */}
-          <div className="bg-white rounded-lg p-6 max-w-4xl mx-auto">
-            <div className="space-y-4">
-              {/* FAQ Item 1 */}
-              <div className="border-b border-gray-200 pb-4">
-                <div className="flex justify-between items-center cursor-pointer hover:bg-gray-50 p-3 rounded">
-                  <h3 className="text-lg font-medium text-gray-800">
-                    Bagaimana cara mengajukan SK TA/Thesis/Disertasi?
-                  </h3>
-                  <svg
-                    className="w-5 h-5 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
+          <div className="bg-white rounded-lg max-w-4xl mx-auto">
+            {faqLoading ? (
+              // Loading state
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Memuat FAQ...</p>
               </div>
+            ) : faqData.length === 0 ? (
+              // Empty state
+              <div className="p-8 text-center text-gray-500">
+                <svg
+                  className="w-12 h-12 mx-auto mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <p className="text-lg font-medium mb-2">Belum ada FAQ</p>
+                <p className="text-sm">FAQ akan segera tersedia</p>
+              </div>
+            ) : (
+              // FAQ List
+              faqData.map((item, index) => (
+                <div key={item.id}>
+                  {/* Separator line between items */}
+                  {index > 0 && (
+                    <div className="border-t border-gray-200"></div>
+                  )}
 
-              {/* FAQ Item 2 */}
-              <div className="border-b border-gray-200 pb-4">
-                <div className="flex justify-between items-center cursor-pointer hover:bg-gray-50 p-3 rounded">
-                  <h3 className="text-lg font-medium text-gray-800">
-                    Bisakah saya mengganti dosen pembimbing setelah SK terbit?
-                  </h3>
-                  <svg
-                    className="w-5 h-5 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  {/* Question Header - Clickable */}
+                  <button
+                    onClick={() => toggleFAQ(item.id)}
+                    className="w-full px-6 py-6 text-left hover:bg-gray-50 transition-colors duration-150 focus:outline-none"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-              </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex-1 pr-6">
+                        <h3 className="text-base font-semibold text-gray-900 leading-relaxed">
+                          {item.question}
+                        </h3>
+                      </div>
 
-              {/* FAQ Item 3 */}
-              <div className="border-b border-gray-200 pb-4">
-                <div className="flex justify-between items-center cursor-pointer hover:bg-gray-50 p-3 rounded">
-                  <h3 className="text-lg font-medium text-gray-800">
-                    Apakah saya bisa mulai bimbingan sebelum SK terbit?
-                  </h3>
-                  <svg
-                    className="w-5 h-5 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                      {/* Chevron Icon */}
+                      <div className="flex-shrink-0">
+                        <svg
+                          className={`w-5 h-5 text-gray-500 transform transition-transform duration-300 ease-in-out ${
+                            expandedFAQs.has(item.id) ? 'rotate-180' : ''
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Answer Content - Collapsible */}
+                  <div
+                    className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                      expandedFAQs.has(item.id)
+                        ? 'max-h-96 opacity-100'
+                        : 'max-h-0 opacity-0'
+                    }`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
+                    <div className="px-6 pb-6 bg-gray-50">
+                      <div className="pt-4">
+                        <div className="prose prose-sm max-w-none">
+                          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                            {item.answer}
+                          </p>
+                        </div>
+
+                        {/* Metadata */}
+                        <div className="mt-4 pt-3 border-t border-gray-200">
+                          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                            <span className="flex items-center">
+                              <svg
+                                className="w-4 h-4 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                />
+                              </svg>
+                              {item.category?.name || item.category || 'Umum'}
+                            </span>
+
+                            <span>
+                              Dipublikasikan:{' '}
+                              {new Date(item.created_at).toLocaleDateString(
+                                'id-ID',
+                                {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                }
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              ))
+            )}
           </div>
+
+          {/* View All FAQ Button */}
+          {faqData.length > 0 && (
+            <div className="text-center mt-8">
+              <Button
+                className="bg-white text-red-600 hover:bg-gray-100 px-6 py-3 font-medium"
+                onClick={() => {
+                  if (isLoggedIn) {
+                    navigate('/student/askedus');
+                  } else {
+                    navigate('/login');
+                  }
+                }}
+              >
+                Lihat Semua FAQ
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -707,6 +845,68 @@ function LandingPage() {
           </div>
         </div>
       </footer>
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-[9999] overflow-y-auto">
+          <div
+            className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm transition-opacity"
+            onClick={cancelLogout}
+          />
+
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div
+              className="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header dengan icon dan background navy */}
+              <div className="bg-gray-800 px-6 py-4 flex items-center">
+                <div className="flex items-center justify-center w-8 h-8 bg-white rounded mr-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-5 h-5 text-gray-800"
+                    viewBox="0 0 24 24"
+                  >
+                    <g
+                      fill="currentColor"
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                    >
+                      <path d="M19.353 6.5H16.49V9H6.404v6H16.49v2.5h2.864A9.99 9.99 0 0 1 11 22C5.477 22 1 17.523 1 12S5.477 2 11 2a9.99 9.99 0 0 1 8.353 4.5M17.989 16v-1zm0-8v1z" />
+                      <path d="m18.99 8l4 4l-4 4h-1v-2.5h-10v-3h10V8z" />
+                    </g>
+                  </svg>
+                </div>
+                <h3 className="text-white text-lg font-semibold">
+                  Konfirmasi Logout
+                </h3>
+              </div>
+
+              {/* Content */}
+              <div className="px-6 py-6">
+                <p className="text-gray-700 font-semibold text-base mb-6">
+                  Apakah Anda yakin ingin Logout?
+                </p>
+
+                {/* Custom Buttons sesuai design */}
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={cancelLogout}
+                    className="px-6 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-300 hover:scale-105 duration-300 transition-all hover:shadow-lg font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmLogout}
+                    className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 hover:scale-105 duration-300 transition-all hover:shadow-lg font-medium"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
