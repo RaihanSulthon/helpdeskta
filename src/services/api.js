@@ -100,8 +100,8 @@ export const getFAQsAPI = async (filters = {}) => {
     if (filters.category_id)
       queryParams.append('category_id', filters.category_id);
     if (filters.search) queryParams.append('search', filters.search);
-    queryParams.append('per_page', '100');
-    queryParams.append('page', '1');
+    queryParams.append('per_page', filters.per_page || '10');
+    queryParams.append('page', filters.page || '1');
 
     const queryString = queryParams.toString();
     const url = `${BASE_URL}/faqs${queryString ? `?${queryString}` : ''}`;
@@ -150,6 +150,170 @@ export const getFAQsAPI = async (filters = {}) => {
     throw new Error(
       error.message || 'Terjadi kesalahan saat mengambil data FAQ'
     );
+  }
+};
+
+export const getFAQsAdminAPI = async (filters = {}) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login ulang.');
+    }
+
+    const queryParams = new URLSearchParams();
+    if (filters.category_id)
+      queryParams.append('category_id', filters.category_id);
+    if (filters.search) queryParams.append('search', filters.search);
+    queryParams.append('per_page', '100');
+    queryParams.append('page', '1');
+
+    const queryString = queryParams.toString();
+    const url = `${BASE_URL}/admin/faqs${queryString ? `?${queryString}` : ''}`;
+
+    console.log('Fetching Admin FAQs from:', url);
+
+    const response = await retryFetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      mode: 'cors',
+      credentials: 'omit',
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn('Could not parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('Get Admin FAQs API response:', result);
+
+    // Extract FAQs from response
+    if (result?.data?.data) {
+      return result.data.data;
+    }
+    if (result?.data && Array.isArray(result.data)) {
+      return result.data;
+    }
+    if (Array.isArray(result)) {
+      return result;
+    }
+
+    return [];
+  } catch (error) {
+    console.error('Get Admin FAQs API Error:', error);
+    throw new Error(
+      error.message || 'Terjadi kesalahan saat mengambil data FAQ admin'
+    );
+  }
+};
+
+export const getFAQByIdAPI = async (faqId) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login ulang.');
+    }
+
+    if (!faqId) {
+      throw new Error('ID FAQ tidak valid');
+    }
+
+    console.log('Fetching FAQ by ID:', faqId);
+
+    const response = await retryFetch(`${BASE_URL}/faqs/${faqId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      mode: 'cors',
+      credentials: 'omit',
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn('Could not parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('Get FAQ By ID API response:', result);
+
+    // Extract FAQ from response
+    if (result?.data) {
+      return result.data;
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Get FAQ By ID API Error:', error);
+    throw new Error(error.message || 'Gagal mengambil detail FAQ');
+  }
+};
+
+export const getFAQByIdAdminAPI = async (faqId) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login ulang.');
+    }
+
+    if (!faqId) {
+      throw new Error('ID FAQ tidak valid');
+    }
+
+    console.log('Fetching FAQ by ID (Admin):', faqId);
+
+    const response = await retryFetch(`${BASE_URL}/admin/faqs/${faqId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      mode: 'cors',
+      credentials: 'omit',
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn('Could not parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('Get FAQ By ID Admin API response:', result);
+
+    // Extract FAQ from response
+    if (result?.data) {
+      return result.data;
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Get FAQ By ID Admin API Error:', error);
+    throw new Error(error.message || 'Gagal mengambil detail FAQ admin');
   }
 };
 
@@ -1086,7 +1250,6 @@ export const getChatMessagesAPI = async (ticketId) => {
 };
 
 // Send Chat Message API
-// Send Chat Message API - Updated untuk mendukung file upload
 export const sendChatMessageAPI = async (ticketId, message, file = null) => {
   try {
     const token = localStorage.getItem('token');
@@ -1514,16 +1677,19 @@ export const markNotificationAsReadAPI = async (notificationId) => {
       throw new Error('Token tidak ditemukan. Silakan login ulang.');
     }
 
-    const response = await retryFetch(`${BASE_URL}/notifications/${notificationId}/read`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      mode: 'cors',
-      credentials: 'omit',
-    });
+    const response = await retryFetch(
+      `${BASE_URL}/notifications/${notificationId}/read`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        mode: 'cors',
+        credentials: 'omit',
+      }
+    );
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -1540,7 +1706,8 @@ export const markNotificationAsReadAPI = async (notificationId) => {
   } catch (error) {
     console.error('Mark Notification as Read API Error:', error);
     throw new Error(
-      error.message || 'Terjadi kesalahan saat menandai notifikasi sebagai dibaca'
+      error.message ||
+        'Terjadi kesalahan saat menandai notifikasi sebagai dibaca'
     );
   }
 };
@@ -1579,7 +1746,8 @@ export const markAllNotificationsAsReadAPI = async () => {
   } catch (error) {
     console.error('Mark All Notifications as Read API Error:', error);
     throw new Error(
-      error.message || 'Terjadi kesalahan saat menandai semua notifikasi sebagai dibaca'
+      error.message ||
+        'Terjadi kesalahan saat menandai semua notifikasi sebagai dibaca'
     );
   }
 };
@@ -1647,16 +1815,14 @@ export const uploadAttachmentAPI = async (ticketId, message, file) => {
     // Validasi file
     const allowedTypes = [
       'image/png',
-      'image/jpeg', 
+      'image/jpeg',
       'image/jpg',
       'application/pdf',
     ];
     const maxSize = 5 * 1024 * 1024; // 5MB
 
     if (!allowedTypes.includes(file.type)) {
-      throw new Error(
-        'Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.'
-      );
+      throw new Error('Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.');
     }
 
     if (file.size > maxSize) {
@@ -1674,16 +1840,19 @@ export const uploadAttachmentAPI = async (ticketId, message, file) => {
       fileSize: file.size,
     });
 
-    const response = await retryFetch(`${BASE_URL}/tickets/${ticketId}/chat/attachment`, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      mode: 'cors',
-      credentials: 'omit',
-      body: formData,
-    });
+    const response = await retryFetch(
+      `${BASE_URL}/tickets/${ticketId}/chat/attachment`,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        mode: 'cors',
+        credentials: 'omit',
+        body: formData,
+      }
+    );
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;

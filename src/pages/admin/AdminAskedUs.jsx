@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  getFAQsAPI,
+  getFAQsAdminAPI,
+  getFAQCategoriesAPI,
   createFAQAPI,
   updateFAQAPI,
   deleteFAQAPI,
-  getFAQCategoriesAPI,
 } from '../../services/api';
 import SearchBar from '../../components/SearchBar';
 import Navigation from '../../components/Navigation';
@@ -38,12 +38,17 @@ const AdminAskedUs = () => {
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('Semua Status');
-  const [categoryFilter, setCategoryFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectAll, setSelectAll] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total: 0,
+    per_page: 10,
+    total_pages: 1,
+  });
 
   // New filter states for dropdowns
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedDateRange, setSelectedDateRange] = useState('');
   const [unreadFilter, setUnreadFilter] = useState('');
   const [customDateRange, setCustomDateRange] = useState({
@@ -96,20 +101,29 @@ const AdminAskedUs = () => {
         setError('');
 
         const apiFilters = {
-          per_page: 100,
-          page: 1,
+          per_page: pagination.per_page,
+          page: pagination.current_page,
           ...filters,
         };
 
-        if (categoryFilter && categoryFilter !== '') {
-          apiFilters.category_id = categoryFilter;
+        if (
+          selectedCategory &&
+          selectedCategory !== '' &&
+          selectedCategory !== 'Semua Kategori'
+        ) {
+          const category = categories.find(
+            (cat) => cat.name === selectedCategory
+          );
+          if (category) {
+            apiFilters.category_id = category.id;
+          }
         }
 
         if (searchQuery && searchQuery.trim()) {
           apiFilters.search = searchQuery.trim();
         }
 
-        const result = await getFAQsAPI(apiFilters);
+        const result = await getFAQsAdminAPI(apiFilters);
 
         let faqsArray = [];
         if (result?.data && Array.isArray(result.data)) {
@@ -135,6 +149,15 @@ const AdminAskedUs = () => {
         }));
 
         setFaqData(transformedFAQs);
+        if (result?.data) {
+          setPagination((prev) => ({
+            ...prev,
+            total: result.total || transformedFAQs.length,
+            total_pages:
+              result.last_page ||
+              Math.ceil(transformedFAQs.length / prev.per_page),
+          }));
+        }
       } catch (error) {
         console.error('Error loading FAQs:', error);
         setError('Gagal memuat data FAQ: ' + error.message);
@@ -142,7 +165,12 @@ const AdminAskedUs = () => {
         setLoading(false);
       }
     },
-    [categoryFilter, searchQuery]
+    [
+      selectedCategory,
+      searchQuery,
+      pagination.current_page,
+      pagination.per_page,
+    ]
   );
 
   // Load data on mount
@@ -440,48 +468,36 @@ const AdminAskedUs = () => {
                   {/* SVG Icon berdasarkan status */}
                   {statusFilter === 'Published' ? (
                     <svg
-                      width="22"
-                      height="16"
-                      viewBox="0 0 20 14"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <g clipPath="url(#clip0_published)">
-                        <path
-                          d="M10 4.4C9.27668 4.4 8.58299 4.67393 8.07153 5.16152C7.56006 5.64912 7.27273 6.31044 7.27273 7C7.27273 7.68956 7.56006 8.35088 8.07153 8.83848C8.58299 9.32607 9.27668 9.6 10 9.6C10.7233 9.6 11.417 9.32607 11.9285 8.83848C12.4399 8.35088 12.7273 7.68956 12.7273 7C12.7273 6.31044 12.4399 5.64912 11.9285 5.16152C11.417 4.67393 10.7233 4.4 10 4.4ZM10 11.3333C8.79447 11.3333 7.63832 10.8768 6.78588 10.0641C5.93344 9.25147 5.45455 8.14927 5.45455 7C5.45455 5.85073 5.93344 4.74853 6.78588 3.93587C7.63832 3.12321 8.79447 2.66667 10 2.66667C11.2055 2.66667 12.3617 3.12321 13.2141 3.93587C14.0666 4.74853 14.5455 5.85073 14.5455 7C14.5455 8.14927 14.0666 9.25147 13.2141 10.0641C12.3617 10.8768 11.2055 11.3333 10 11.3333ZM10 0.5C5.45455 0.5 1.57273 3.19533 0 7C1.57273 10.8047 5.45455 13.5 10 13.5C14.5455 13.5 18.4273 10.8047 20 7C18.4273 3.19533 14.5455 0.5 10 0.5Z"
-                          fill="#28A745"
-                        />
-                      </g>
-                    </svg>
+                    width="22"
+                    height="16"
+                    viewBox="0 0 20 14"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g clipPath="url(#clip0_published)">
+                      <path
+                        d="M10 4.4C9.27668 4.4 8.58299 4.67393 8.07153 5.16152C7.56006 5.64912 7.27273 6.31044 7.27273 7C7.27273 7.68956 7.56006 8.35088 8.07153 8.83848C8.58299 9.32607 9.27668 9.6 10 9.6C10.7233 9.6 11.417 9.32607 11.9285 8.83848C12.4399 8.35088 12.7273 7.68956 12.7273 7C12.7273 6.31044 12.4399 5.64912 11.9285 5.16152C11.417 4.67393 10.7233 4.4 10 4.4ZM10 11.3333C8.79447 11.3333 7.63832 10.8768 6.78588 10.0641C5.93344 9.25147 5.45455 8.14927 5.45455 7C5.45455 5.85073 5.93344 4.74853 6.78588 3.93587C7.63832 3.12321 8.79447 2.66667 10 2.66667C11.2055 2.66667 12.3617 3.12321 13.2141 3.93587C14.0666 4.74853 14.5455 5.85073 14.5455 7C14.5455 8.14927 14.0666 9.25147 13.2141 10.0641C12.3617 10.8768 11.2055 11.3333 10 11.3333ZM10 0.5C5.45455 0.5 1.57273 3.19533 0 7C1.57273 10.8047 5.45455 13.5 10 13.5C14.5455 13.5 18.4273 10.8047 20 7C18.4273 3.19533 14.5455 0.5 10 0.5Z"
+                        fill="#28A745"
+                      />
+                    </g>
+                  </svg>
                   ) : statusFilter === 'Draft' ? (
                     <svg
-                      width="20"
-                      height="14"
-                      viewBox="0 0 20 14"
-                      fill="none"
                       xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 32 32"
                     >
                       <path
-                        d="M26.8455 87.8684L29.7273 90.6958V90.5526C29.7273 89.8407 29.4399 89.158 28.9285 88.6546C28.417 88.1512 27.7233 87.8684 27 87.8684H26.8455ZM22.9364 88.5842L24.3455 89.9711C24.3 90.1589 24.2727 90.3468 24.2727 90.5526C24.2727 91.2645 24.5601 91.9473 25.0715 92.4507C25.583 92.954 26.2767 93.2368 27 93.2368C27.2 93.2368 27.4 93.21 27.5909 93.1653L29 94.5521C28.3909 94.8474 27.7182 95.0263 27 95.0263C25.7945 95.0263 24.6383 94.555 23.7859 93.716C22.9334 92.877 22.4545 91.7391 22.4545 90.5526C22.4545 89.8458 22.6364 89.1837 22.9364 88.5842ZM17.9091 83.6363L19.9818 85.6763L20.3909 86.0789C18.8909 87.2421 17.7091 88.7632 17 90.5526C18.5727 94.4805 22.4545 97.2632 27 97.2632C28.4091 97.2632 29.7545 96.9947 30.9818 96.5116L31.3727 96.8874L34.0273 99.5L35.1818 98.3637L19.0636 82.5M27 86.0789C28.2055 86.0789 29.3617 86.5503 30.2141 87.3893C31.0666 88.2282 31.5455 89.3661 31.5455 90.5526C31.5455 91.1253 31.4273 91.68 31.2182 92.1811L33.8818 94.8026C35.2455 93.6842 36.3364 92.2168 37 90.5526C35.4273 86.6247 31.5455 83.8421 27 83.8421C25.7273 83.8421 24.5091 84.0658 23.3636 84.4684L25.3364 86.3921C25.8545 86.1953 26.4091 86.0789 27 86.0789Z"
-                        fill="#D1D5DB"
+                        fill="currentColor"
+                        d="m29.707 19.293l-3-3a1 1 0 0 0-1.414 0L16 25.586V30h4.414l9.293-9.293a1 1 0 0 0 0-1.414M19.586 28H18v-1.586l5-5L24.586 23zM26 21.586L24.414 20L26 18.414L27.586 20zM8 16h10v2H8zm0-6h12v2H8z"
+                      />
+                      <path
+                        fill="currentColor"
+                        d="M26 4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v13a10.98 10.98 0 0 0 5.824 9.707L13 29.467V27.2l-4.234-2.258A8.99 8.99 0 0 1 4 17V4h20v9h2Z"
                       />
                     </svg>
-                  ) : (
-                    <svg
-                      width="22"
-                      height="16"
-                      viewBox="0 0 20 14"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <g clipPath="url(#clip0_all)">
-                        <path
-                          d="M10 4.4C9.27668 4.4 8.58299 4.67393 8.07153 5.16152C7.56006 5.64912 7.27273 6.31044 7.27273 7C7.27273 7.68956 7.56006 8.35088 8.07153 8.83848C8.58299 9.32607 9.27668 9.6 10 9.6C10.7233 9.6 11.417 9.32607 11.9285 8.83848C12.4399 8.35088 12.7273 7.68956 12.7273 7C12.7273 6.31044 12.4399 5.64912 11.9285 5.16152C11.417 4.67393 10.7233 4.4 10 4.4ZM10 11.3333C8.79447 11.3333 7.63832 10.8768 6.78588 10.0641C5.93344 9.25147 5.45455 8.14927 5.45455 7C5.45455 5.85073 5.93344 4.74853 6.78588 3.93587C7.63832 3.12321 8.79447 2.66667 10 2.66667C11.2055 2.66667 12.3617 3.12321 13.2141 3.93587C14.0666 4.74853 14.5455 5.85073 14.5455 7C14.5455 8.14927 14.0666 9.25147 13.2141 10.0641C12.3617 10.8768 11.2055 11.3333 10 11.3333ZM10 0.5C5.45455 0.5 1.57273 3.19533 0 7C1.57273 10.8047 5.45455 13.5 10 13.5C14.5455 13.5 18.4273 10.8047 20 7C18.4273 3.19533 14.5455 0.5 10 0.5Z"
-                          fill="#1D1B20"
-                        />
-                      </g>
-                    </svg>
-                  )}
+                  ) : null}
                   <span>{statusFilter}</span>
                   <svg
                     width="11"
@@ -499,7 +515,7 @@ const AdminAskedUs = () => {
 
                 {isStatusDropdownVisible && (
                   <div
-                    className={`absolute top-full mt-1 w-full bg-white border border-gray-300 shadow-md rounded-lg shadow-lg z-20 transform transition-all duration-300 ease-out origin-top ${
+                    className={`absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-20 transform transition-all duration-300 ease-out origin-top ${
                       showStatusDropdown
                         ? 'opacity-100 scale-100 translate-y-0'
                         : 'opacity-0 scale-95 -translate-y-2'
@@ -920,6 +936,142 @@ const AdminAskedUs = () => {
             </div>
           )}
         </div>
+        {/* Pagination Component */}
+        {faqData.length > 0 && pagination.total_pages > 1 && (
+          <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+            <div className="flex flex-1 justify-between sm:hidden">
+              <button
+                onClick={() =>
+                  setPagination((prev) => ({
+                    ...prev,
+                    current_page: prev.current_page - 1,
+                  }))
+                }
+                disabled={pagination.current_page === 1}
+                className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() =>
+                  setPagination((prev) => ({
+                    ...prev,
+                    current_page: prev.current_page + 1,
+                  }))
+                }
+                disabled={pagination.current_page === pagination.total_pages}
+                className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing{' '}
+                  <span className="font-medium">
+                    {(pagination.current_page - 1) * pagination.per_page + 1}
+                  </span>{' '}
+                  to{' '}
+                  <span className="font-medium">
+                    {Math.min(
+                      pagination.current_page * pagination.per_page,
+                      pagination.total
+                    )}
+                  </span>{' '}
+                  of <span className="font-medium">{pagination.total}</span>{' '}
+                  results
+                </p>
+              </div>
+              <div>
+                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                  <button
+                    onClick={() =>
+                      setPagination((prev) => ({
+                        ...prev,
+                        current_page: prev.current_page - 1,
+                      }))
+                    }
+                    disabled={pagination.current_page === 1}
+                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+
+                  {Array.from(
+                    { length: Math.min(5, pagination.total_pages) },
+                    (_, i) => {
+                      let startPage = Math.max(1, pagination.current_page - 2);
+                      let endPage = Math.min(
+                        pagination.total_pages,
+                        startPage + 4
+                      );
+                      if (endPage - startPage < 4) {
+                        startPage = Math.max(1, endPage - 4);
+                      }
+                      const page = startPage + i;
+                      if (page > endPage) return null;
+
+                      return (
+                        <button
+                          key={page}
+                          onClick={() =>
+                            setPagination((prev) => ({
+                              ...prev,
+                              current_page: page,
+                            }))
+                          }
+                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                            page === pagination.current_page
+                              ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    }
+                  )}
+
+                  <button
+                    onClick={() =>
+                      setPagination((prev) => ({
+                        ...prev,
+                        current_page: prev.current_page + 1,
+                      }))
+                    }
+                    disabled={
+                      pagination.current_page === pagination.total_pages
+                    }
+                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       {/* Add FAQ Modal */}
       <Modal

@@ -882,16 +882,6 @@ const TicketFeedback = () => {
                                     >
                                       Preview
                                     </button>
-                                    <a
-                                      href={attachment.file_url}
-                                      download={attachment.file_name}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-green-600 hover:text-green-800 text-sm px-2 py-1 rounded hover:bg-green-50 inline-block"
-                                      title="Download file"
-                                    >
-                                      Download
-                                    </a>
                                   </div>
                                 </div>
                               ))}
