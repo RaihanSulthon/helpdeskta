@@ -7,6 +7,7 @@ import TextArea from '../TextArea';
 import Label from '../Label';
 import Select from '../Select';
 import Icon from '../Icon';
+import Toast from '../Toast';
 import {
   submitTicketAPI,
   getCategoriesAPI,
@@ -27,7 +28,54 @@ function Form() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const { user } = useAuth();
+  const [toast, setToast] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const clearFieldError = (fieldName) => {
+    setFieldErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[fieldName];
+      return newErrors;
+    });
+  };
 
+  const validateFieldRealTime = (fieldName, value) => {
+    switch (fieldName) {
+      case 'judul':
+        if (value && value.trim().length >= 5) {
+          clearFieldError('judul');
+        }
+        break;
+      case 'isi':
+        if (value && value.trim().length >= 10) {
+          clearFieldError('isi');
+        }
+        break;
+      case 'nim':
+        if (value && /^[0-9]+$/.test(value.trim())) {
+          clearFieldError('nim');
+        }
+        break;
+      case 'email':
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (value && emailRegex.test(value.trim())) {
+          clearFieldError('email');
+        }
+        break;
+      default:
+        // Untuk field lain, clear error jika ada nilai
+        if (value && value.trim() !== '') {
+          clearFieldError(fieldName);
+        }
+    }
+  };
+
+  const showToast = (message, type = 'info', duration = 3000) => {
+    setToast({ message, type, duration });
+  };
+
+  const hideToast = () => {
+    setToast(null);
+  };
   const [formData, setFormData] = useState({
     jenis: 'PENGADUAN',
     judul: '',
@@ -164,7 +212,10 @@ function Form() {
         'application/pdf',
       ];
       if (!allowedTypes.includes(file.type)) {
-        setError('Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.');
+        const errorMsg =
+          'Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.';
+        setError(errorMsg);
+        showToast(errorMsg, 'error', 4000); // UBAH INI
         e.target.value = '';
         return;
       }
@@ -172,13 +223,16 @@ function Form() {
       // Validate file size (5MB)
       const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
-        setError('Ukuran file terlalu besar. Maksimal 5MB.');
+        const errorMsg = 'Ukuran file terlalu besar. Maksimal 5MB.';
+        setError(errorMsg);
+        showToast(errorMsg, 'error', 4000); // UBAH INI
         e.target.value = '';
         return;
       }
 
       setSelectedFile(file);
       setError('');
+      showToast('File berhasil dipilih', 'success', 2000); // UBAH INI
 
       // Create preview for images
       if (file.type.startsWith('image/')) {
@@ -190,7 +244,6 @@ function Form() {
       }
     }
   };
-
   // Remove selected file
   const removeFile = () => {
     setSelectedFile(null);
@@ -216,34 +269,57 @@ function Form() {
         newFormData.prodi = '';
         newFormData.semester = '';
         newFormData.noHp = '';
-        // Email tetap dipertahankan jika user sudah login
         if (!user?.email) {
           newFormData.email = '';
         }
+        // Clear semua field errors untuk identity fields
+        setFieldErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.nama;
+          delete newErrors.nim;
+          delete newErrors.prodi;
+          delete newErrors.semester;
+          delete newErrors.noHp;
+          if (!user?.email) {
+            delete newErrors.email;
+          }
+          return newErrors;
+        });
       }
 
       setFormData(newFormData);
     } else {
       // Mencegah perubahan email jika user sudah login dan tidak anonymous
       if (name === 'email' && user?.email && !formData.anonymous) {
-        return; // Tidak mengizinkan perubahan email
+        return;
+      }
+
+      // Clear error untuk field yang sedang diisi jika ada valuenya
+      if (value && value.trim() !== '') {
+        clearFieldError(name);
       }
 
       setFormData({
         ...formData,
         [name]: value,
       });
-
+      validateFieldRealTime(name, value);
       // Reset sub-kategori jika kategori berubah
       if (name === 'kategori') {
         setFormData((prev) => ({
           ...prev,
           subKategori: '',
         }));
+        // Clear error untuk subKategori juga
+        clearFieldError('subKategori');
+      }
+
+      // Clear error untuk subKategori ketika dipilih
+      if (name === 'subKategori' && value) {
+        clearFieldError('subKategori');
       }
     }
   };
-
   const createTicketNotification = async (ticketData, userInfo) => {
     try {
       const adminId = getAdminId();
@@ -271,58 +347,71 @@ function Form() {
   // UPDATED VALIDATION FUNCTION
   const validateForm = () => {
     const errors = [];
+    const fieldErrors = {};
 
     // Basic validation
     if (!formData.judul || formData.judul.trim() === '') {
       errors.push('Judul laporan harus diisi');
+      fieldErrors.judul = true;
     } else if (formData.judul.trim().length < 5) {
       errors.push('Judul laporan minimal 5 karakter');
+      fieldErrors.judul = true;
     }
 
     if (!formData.isi || formData.isi.trim() === '') {
       errors.push('Deskripsi harus diisi');
+      fieldErrors.isi = true;
     } else if (formData.isi.trim().length < 10) {
       errors.push('Deskripsi minimal 10 karakter');
+      fieldErrors.isi = true;
     }
 
     if (!formData.kategori || formData.kategori === '') {
       errors.push('Kategori harus dipilih');
+      fieldErrors.kategori = true;
     }
 
     if (!formData.subKategori || formData.subKategori === '') {
       errors.push('Sub kategori harus dipilih');
+      fieldErrors.subKategori = true;
     }
 
     // Validate identity fields only if not anonymous
     if (!formData.anonymous) {
       if (!formData.nama || formData.nama.trim() === '') {
         errors.push('Nama lengkap harus diisi');
+        fieldErrors.nama = true;
       }
 
       if (!formData.nim || formData.nim.trim() === '') {
         errors.push('NIM/NIK harus diisi');
+        fieldErrors.nim = true;
       } else if (!/^[0-9]+$/.test(formData.nim.trim())) {
         errors.push('NIM/NIK harus berupa angka');
+        fieldErrors.nim = true;
       }
 
       if (!formData.anonymous && !user?.email) {
         if (!formData.email || formData.email.trim() === '') {
           errors.push('Email harus diisi');
+          fieldErrors.email = true;
         } else {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(formData.email.trim())) {
             errors.push('Format email tidak valid');
+            fieldErrors.email = true;
           }
         }
       }
     }
 
     if (errors.length > 0) {
-      setError(errors.join('. '));
+      setFieldErrors(fieldErrors);
+      showToast(errors[0], 'error', 4000); // Tampilkan error pertama sebagai toast
       return false;
     }
 
-    setError('');
+    setFieldErrors({});
     return true;
   };
 
@@ -403,8 +492,11 @@ function Form() {
       setIsSubmitted(true);
       setIsLoading(false);
       setRetryCount(0);
-
-      // Reset form
+      showToast(
+        'Laporan berhasil dikirim! Anda akan dialihkan...',
+        'success',
+        4000
+      );
       setFormData({
         jenis: 'PENGADUAN',
         judul: '',
@@ -482,6 +574,9 @@ function Form() {
 
       setError(errorMessage);
       setRetryCount((prev) => prev + 1);
+
+      // TAMBAHKAN ini:
+      showToast(errorMessage, 'error', 5000);
     }
   };
 
@@ -600,7 +695,11 @@ function Form() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <Label htmlFor="nama" required={!formData.anonymous}>
+              <Label
+                htmlFor="nama"
+                required={!formData.anonymous}
+                className={fieldErrors.nama ? 'text-red-600' : ''}
+              >
                 Nama Lengkap
               </Label>
               <TextField
@@ -610,13 +709,17 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan nama lengkap Anda"
                 disabled={formData.anonymous}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.nama ? 'border-red-500 bg-red-50' : ''}`}
                 required={!formData.anonymous}
               />
             </div>
 
             <div>
-              <Label htmlFor="nim" required={!formData.anonymous}>
+              <Label
+                htmlFor="nim"
+                required={!formData.anonymous}
+                className={fieldErrors.nim ? 'text-red-600' : ''}
+              >
                 NIM/NIK
               </Label>
               <TextField
@@ -626,13 +729,18 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan NIM atau NIK Anda"
                 disabled={formData.anonymous}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.nim ? 'border-red-500 bg-red-50' : ''}`}
                 required={!formData.anonymous}
               />
             </div>
 
             <div>
-              <Label htmlFor="prodi">Program Studi</Label>
+              <Label
+                htmlFor="prodi"
+                className={fieldErrors.prodi ? 'text-red-600' : ''}
+              >
+                Program Studi
+              </Label>
               <TextField
                 id="prodi"
                 name="prodi"
@@ -640,12 +748,17 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan program studi Anda"
                 disabled={formData.anonymous}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.prodi ? 'border-red-500 bg-red-50' : ''}`}
               />
             </div>
 
             <div>
-              <Label htmlFor="semester">Semester</Label>
+              <Label
+                htmlFor="semester"
+                className={fieldErrors.semester ? 'text-red-600' : ''}
+              >
+                Semester
+              </Label>
               <Select
                 id="semester"
                 name="semester"
@@ -656,12 +769,16 @@ function Form() {
                 )}
                 placeholder="Pilih Semester"
                 disabled={formData.anonymous}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.semester ? 'border-red-500 bg-red-50' : ''}`}
               />
             </div>
 
             <div>
-              <Label htmlFor="email" required={!formData.anonymous}>
+              <Label
+                htmlFor="email"
+                required={!formData.anonymous}
+                className={fieldErrors.email ? 'text-red-600' : ''}
+              >
                 Email
               </Label>
               <TextField
@@ -674,13 +791,18 @@ function Form() {
                 disabled={formData.anonymous || !!user?.email}
                 className={`mt-1 ${
                   formData.anonymous || !!user?.email ? 'bg-gray-100' : ''
-                }`}
+                } ${fieldErrors.email ? 'border-red-500 bg-red-50' : ''}`}
                 required={!formData.anonymous}
               />
             </div>
 
             <div>
-              <Label htmlFor="noHp">Nomor HP</Label>
+              <Label
+                htmlFor="noHp"
+                className={fieldErrors.noHp ? 'text-red-600' : ''}
+              >
+                Nomor HP
+              </Label>
               <TextField
                 id="noHp"
                 name="noHp"
@@ -688,7 +810,7 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan nomor HP Anda"
                 disabled={formData.anonymous}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.noHp ? 'border-red-500 bg-red-50' : ''}`}
               />
             </div>
           </div>
@@ -717,7 +839,11 @@ function Form() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <Label htmlFor="kategori" required>
+              <Label
+                htmlFor="kategori"
+                required
+                className={fieldErrors.kategori ? 'text-red-600' : ''}
+              >
                 Kategori
               </Label>
               <Select
@@ -727,13 +853,17 @@ function Form() {
                 onChange={handleChange}
                 options={kategoriOptions}
                 placeholder="Pilih Kategori"
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.kategori ? 'border-red-500 bg-red-50' : ''}`}
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="subKategori" required>
+              <Label
+                htmlFor="subKategori"
+                required
+                className={fieldErrors.subKategori ? 'text-red-600' : ''}
+              >
                 Sub Kategori
               </Label>
               <Select
@@ -744,14 +874,18 @@ function Form() {
                 options={getSubCategoriesForCategory(formData.kategori)}
                 placeholder="Pilih Sub Kategori"
                 disabled={!formData.kategori}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.subKategori ? 'border-red-500 bg-red-50' : ''}`}
                 required
               />
             </div>
           </div>
 
           <div className="mb-6">
-            <Label htmlFor="judul" required>
+            <Label
+              htmlFor="judul"
+              required
+              className={fieldErrors.judul ? 'text-red-600' : ''}
+            >
               Judul Laporan
             </Label>
             <TextField
@@ -760,13 +894,17 @@ function Form() {
               value={formData.judul}
               onChange={handleChange}
               placeholder="Berikan judul yang singkat dan jelas (minimal 5 karakter)"
-              className="mt-1"
+              className={`mt-1 ${fieldErrors.judul ? 'border-red-500 bg-red-50' : ''}`}
               required
             />
           </div>
 
           <div className="mb-6">
-            <Label htmlFor="isi" required>
+            <Label
+              htmlFor="isi"
+              required
+              className={fieldErrors.isi ? 'text-red-600' : ''}
+            >
               Deskripsi
             </Label>
             <TextArea
@@ -776,7 +914,7 @@ function Form() {
               onChange={handleChange}
               placeholder="Sampaikan secara detail keluhan atau laporan Anda... (minimal 10 karakter)"
               rows={6}
-              className="mt-1"
+              className={`mt-1 ${fieldErrors.isi ? 'border-red-500 bg-red-50' : ''}`}
               required
             />
           </div>
@@ -790,7 +928,6 @@ function Form() {
               </span>
             </Label>
 
-            {/* File Upload Area */}
             <div className="mt-2">
               <div className="flex items-center justify-center w-full">
                 <label
@@ -995,6 +1132,17 @@ function Form() {
           </div>
         </div>
       </form>
+      {toast && (
+        <div className="fixed top-4 right-4 z-50">
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            duration={toast.duration}
+            isVisible={true}
+            onClose={hideToast}
+          />
+        </div>
+      )}
     </div>
   );
 }
