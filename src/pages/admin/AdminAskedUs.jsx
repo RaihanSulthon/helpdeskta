@@ -364,12 +364,11 @@ const AdminAskedUs = () => {
 
   // Filter FAQs based on status
   const filteredFAQs = faqData.filter((faq) => {
-    // Di admin, tampilkan semua FAQ terlepas dari status publikasi
-    // Filter hanya berdasarkan pilihan dropdown untuk memudahkan sorting
+    // Di admin, tampilkan semua FAQ (baik published maupun draft)
     if (statusFilter === 'Semua Status') return true;
     if (statusFilter === 'Published') return faq.is_public === true;
     if (statusFilter === 'Draft') return faq.is_public === false;
-    return true;
+    return true; // Default: tampilkan semua
   });
 
   // Handle close modals - Add useCallback to prevent re-creation

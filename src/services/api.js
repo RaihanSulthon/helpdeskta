@@ -325,6 +325,7 @@ export const createFAQAPI = async (faqData) => {
       throw new Error('Token tidak ditemukan. Silakan login ulang.');
     }
 
+    // Validasi input
     if (!faqData.question || faqData.question.trim() === '') {
       throw new Error('Pertanyaan harus diisi');
     }
@@ -333,28 +334,30 @@ export const createFAQAPI = async (faqData) => {
       throw new Error('Jawaban harus diisi');
     }
 
+    // Prepare request body
     const requestBody = {
       question: faqData.question.trim(),
       answer: faqData.answer.trim(),
       category_id: parseInt(faqData.category_id) || 1,
-      is_public: Boolean(faqData.is_public !== false), // default true
+      is_public: Boolean(faqData.is_public !== false),
     };
 
-    console.log('Creating FAQ:', requestBody);
+    console.log('Creating FAQ with data:', requestBody);
 
+    // Configure request options
     const options = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       mode: 'cors',
       credentials: 'omit',
       body: JSON.stringify(requestBody),
     };
 
-    const response = await retryFetch(`${BASE_URL}/faqs`, options);
+    const response = await retryFetch(`${BASE_URL}/faqs/`, options);
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -375,6 +378,7 @@ export const createFAQAPI = async (faqData) => {
       message: result.message || 'FAQ berhasil dibuat',
       data: result.data || result,
     };
+
   } catch (error) {
     console.error('Create FAQ API Error:', error);
     throw new Error(error.message || 'Gagal membuat FAQ');
