@@ -36,9 +36,8 @@ export const getTicketStatisticsAPI = async (filters = {}) => {
     if (filters.period) queryParams.append('period', filters.period);
 
     const queryString = queryParams.toString();
-    const url = `${BASE_URL}/tickets/statistics${
-      queryString ? `?${queryString}` : ''
-    }`;
+    const url = `${BASE_URL}/tickets/statistics${queryString ? `?${queryString}` : ''
+      }`;
 
     console.log('Fetching ticket statistics from:', url);
 
@@ -620,6 +619,45 @@ export const getAdminTicketsAPI = async (filters = {}) => {
     throw new Error(
       error.message || 'Terjadi kesalahan saat mengambil data tiket admin'
     );
+  }
+};
+
+// Signup API
+export const signUpAPI = async (userData) => {
+  try {
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      mode: 'cors',
+      credentials: 'omit',
+      body: JSON.stringify(userData),
+    };
+
+    // Endpoint untuk registrasi biasanya /auth/register atau /register
+    const response = await retryFetch(`${BASE_URL}/auth/register`, options);
+    const result = await response.json();
+
+    if (!response.ok) {
+      // Menangani error validasi dari server
+      if (response.status === 422 && result.errors) {
+        const errorMessages = Object.values(result.errors).flat().join(', ');
+        throw new Error(`Registrasi gagal: ${errorMessages}`);
+      }
+      throw new Error(result.message || 'Registrasi gagal. Terjadi kesalahan pada server.');
+    }
+
+    // Jika berhasil, backend biasanya mengembalikan data user yang baru dibuat
+    return {
+      success: true,
+      message: result.message || 'Registrasi berhasil!',
+      data: result.data,
+    };
+  } catch (error) {
+    console.error('Sign Up API Error:', error);
+    throw new Error(error.message || 'Tidak dapat terhubung ke server. Silakan coba lagi.');
   }
 };
 
@@ -1569,9 +1607,8 @@ export const getEmailLogsAPI = async (filters = {}) => {
     if (!filters.page) queryParams.append('page', '1');
 
     const queryString = queryParams.toString();
-    const url = `${BASE_URL}/emails/logs${
-      queryString ? `?${queryString}` : ''
-    }`;
+    const url = `${BASE_URL}/emails/logs${queryString ? `?${queryString}` : ''
+      }`;
 
     const response = await retryFetch(url, {
       method: 'GET',
@@ -1707,7 +1744,7 @@ export const markNotificationAsReadAPI = async (notificationId) => {
     console.error('Mark Notification as Read API Error:', error);
     throw new Error(
       error.message ||
-        'Terjadi kesalahan saat menandai notifikasi sebagai dibaca'
+      'Terjadi kesalahan saat menandai notifikasi sebagai dibaca'
     );
   }
 };
@@ -1747,7 +1784,7 @@ export const markAllNotificationsAsReadAPI = async () => {
     console.error('Mark All Notifications as Read API Error:', error);
     throw new Error(
       error.message ||
-        'Terjadi kesalahan saat menandai semua notifikasi sebagai dibaca'
+      'Terjadi kesalahan saat menandai semua notifikasi sebagai dibaca'
     );
   }
 };
@@ -1811,7 +1848,7 @@ export const uploadAttachmentAPI = async (ticketId, message, file) => {
     // Validasi file
     const allowedTypes = [
       'image/png',
-      'image/jpeg', 
+      'image/jpeg',
       'image/jpg',
       'application/pdf',
     ];
