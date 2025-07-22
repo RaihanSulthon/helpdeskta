@@ -1,4 +1,4 @@
-// pages/student/TicketDetail.jsx - Updated to match Figma design
+// pages/student/TicketDetail.jsx - UPDATED to properly display attachments
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -7,7 +7,7 @@ import {
   deleteTicketAPI,
   getChatMessagesAPI,
   getNotificationsAPI,
-  markNotificationAsReadAPI
+  markNotificationAsReadAPI,
 } from '../services/api';
 import Navigation from '../components/Navigation';
 import { ToastContainer } from '../components/Toast';
@@ -49,17 +49,14 @@ const DetailTicket = () => {
     try {
       setIsDeleting(true);
       console.log('Deleting ticket:', ticketData.id);
-      // Call the delete API
       const result = await deleteTicketAPI(ticketData.id);
       console.log('Delete result:', result);
       if (result.success || result.status === 'success' || result) {
-        // Show success toast
         addToast(
           `Tiket #${ticketData.id} - "${ticketData.title}" berhasil dihapus`,
           'success',
           4000
         );
-        // Navigate back to dashboard after successful deletion
         setTimeout(() => {
           handleBack();
         }, 1500);
@@ -96,6 +93,8 @@ const DetailTicket = () => {
       setError('');
       const data = await getTicketDetailAPI(ticketId);
 
+      console.log('Raw ticket data:', data); // Debug log
+
       const transformedData = {
         id: data.id || 'Tidak tersedia',
         title: data.judul || data.title || 'Judul tidak tersedia',
@@ -103,14 +102,14 @@ const DetailTicket = () => {
           data.anonymous === true
             ? 'Anonim'
             : data.nama || data.name || 'Tidak diketahui',
-        // UBAH INI: Selalu tampilkan email asli
-        email: data.email || 'tidak diketahui', // Remove anonymous email override
+        email: data.email || 'tidak diketahui',
         date: formatDate(data.created_at),
         status: mapStatus(data.status),
         lastUpdate: formatDate(data.updated_at || data.created_at),
         description:
           data.deskripsi || data.description || 'Deskripsi tidak tersedia',
-        attachments: data.attachments || [],
+        // UPDATED: Process attachments properly
+        attachments: processAttachments(data.attachments || []),
         category: data.category?.name || 'Umum',
         subCategory: data.sub_category?.name || 'Umum',
         rawStatus: data.status,
@@ -128,6 +127,8 @@ const DetailTicket = () => {
         anonymous: data.anonymous === true || data.anonymous === 1,
       };
 
+      console.log('Transformed attachments:', transformedData.attachments); // Debug log
+
       setTicketData(transformedData);
       setTotalFeedbackCount(data.chat_count || 0);
       setNewFeedbackCount(data.unread_chat_count || 0);
@@ -139,18 +140,43 @@ const DetailTicket = () => {
     }
   };
 
+  // UPDATED: Process attachments function
+  const processAttachments = (attachments) => {
+    if (!Array.isArray(attachments)) {
+      console.log('Attachments is not an array:', attachments);
+      return [];
+    }
+
+    return attachments.map((attachment) => {
+      // Handle different possible response structures
+      const processedAttachment = {
+        id: attachment.id,
+        file_name:
+          attachment.file_name || attachment.filename || 'Unknown file',
+        file_type:
+          attachment.file_type ||
+          attachment.mime_type ||
+          attachment.type ||
+          'unknown',
+        file_url:
+          attachment.file_url || attachment.url || attachment.path || '',
+        file_size: attachment.file_size || attachment.size || null,
+      };
+
+      console.log('Processed attachment:', processedAttachment);
+      return processedAttachment;
+    });
+  };
+
   const markRelatedNotificationsAsRead = async (ticketId) => {
     try {
-      // Get all unread notifications
       const result = await getNotificationsAPI({ read: false, per_page: 100 });
       const notifications = result.notifications?.data || result.data || [];
-      
-      // Filter notifications yang related dengan ticket ini
+
       const relatedNotifications = notifications.filter(
-        notif => notif.ticket_id === ticketId && notif.type === 'new_ticket'
+        (notif) => notif.ticket_id === ticketId && notif.type === 'new_ticket'
       );
-      
-      // Mark each related notification as read
+
       for (const notification of relatedNotifications) {
         try {
           await markNotificationAsReadAPI(notification.id);
@@ -169,7 +195,6 @@ const DetailTicket = () => {
     try {
       const date = new Date(dateString);
       const now = new Date();
-      // Reset time to 00:00:00 for accurate day comparison
       const dateOnly = new Date(
         date.getFullYear(),
         date.getMonth(),
@@ -182,17 +207,18 @@ const DetailTicket = () => {
       );
       const diffTime = nowOnly.getTime() - dateOnly.getTime();
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      // Format full date
+
       const fullDate = date.toLocaleDateString('id-ID', {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
       });
-      // Format time
+
       const timeString = date.toLocaleTimeString('id-ID', {
         hour: '2-digit',
         minute: '2-digit',
       });
+
       if (diffDays === 0) {
         return `${fullDate}, ${timeString} (Hari ini)`;
       } else if (diffDays === 1) {
@@ -241,15 +267,12 @@ const DetailTicket = () => {
     try {
       setIsUpdatingStatus(true);
       console.log(`Updating ticket ${ticketData.id} status to:`, newStatus);
-      // Call API to update status
       await updateTicketStatusAPI(ticketData.id, newStatus);
-      // Update local state
       setTicketData((prev) => ({
         ...prev,
         status: newStatus,
         rawStatus: newStatus,
       }));
-      // Show success toast
       const statusMessage =
         newStatus === 'in_progress' ? 'Diproses' : 'Selesai';
       addToast(
@@ -257,7 +280,6 @@ const DetailTicket = () => {
         'success',
         4000
       );
-      // Reload ticket detail to get fresh data
       setTimeout(() => {
         loadTicketDetail();
       }, 1000);
@@ -272,7 +294,7 @@ const DetailTicket = () => {
   const renderStatusButton = () => {
     if (!ticketData) return null;
     const currentStatus = ticketData.rawStatus || ticketData.status;
-    // Jika status saat ini adalah 'in_progress' atau 'diproses', tampilkan button "Tandai Selesai"
+
     if (
       currentStatus === 'in_progress' ||
       currentStatus === 'processing' ||
@@ -315,7 +337,7 @@ const DetailTicket = () => {
         </button>
       );
     }
-    // Jika status saat ini adalah 'closed', 'completed', atau 'resolved', tampilkan button "Tandai Diproses"
+
     if (
       currentStatus === 'closed' ||
       currentStatus === 'completed' ||
@@ -358,7 +380,7 @@ const DetailTicket = () => {
         </button>
       );
     }
-    // Jika status adalah 'new', 'open', atau 'pending', tampilkan button "Tandai Diproses"
+
     if (
       currentStatus === 'new' ||
       currentStatus === 'open' ||
@@ -401,7 +423,7 @@ const DetailTicket = () => {
         </button>
       );
     }
-    // Default case - tidak menampilkan button jika status tidak dikenali
+
     return null;
   };
 
@@ -421,10 +443,100 @@ const DetailTicket = () => {
     });
   };
 
+  // UPDATED: Handle attachment download/view
   const handleDownloadAttachment = (attachment) => {
-    if (attachment.file_url) {
-      window.open(attachment.file_url, '_blank');
+    console.log('Attempting to download attachment:', attachment);
+
+    if (!attachment.file_url) {
+      addToast('URL file tidak tersedia', 'error', 3000);
+      return;
     }
+
+    try {
+      // For images, open in new tab for preview
+      if (attachment.file_type && attachment.file_type.startsWith('image/')) {
+        window.open(attachment.file_url, '_blank');
+      } else {
+        // For other files, trigger download
+        const link = document.createElement('a');
+        link.href = attachment.file_url;
+        link.download = attachment.file_name || 'download';
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error('Error downloading attachment:', error);
+      addToast('Gagal membuka file', 'error', 3000);
+    }
+  };
+
+  // UPDATED: Get file icon based on type
+  const getFileIcon = (fileType) => {
+    if (!fileType) {
+      return (
+        <svg
+          className="w-6 h-6 text-gray-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+      );
+    }
+
+    if (fileType.startsWith('image/')) {
+      return (
+        <svg
+          className="w-6 h-6 text-blue-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+      );
+    }
+
+    if (fileType === 'application/pdf') {
+      return (
+        <svg
+          className="w-6 h-6 text-red-600"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path d="M13 9h5.5L13 3.5zM6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m4.93 10.44c.41.9.93 1.64 1.53 2.15l.41.32c-.87.16-2.07.44-3.34.93l-.11.04l.5-1.04c.45-.87.78-1.66 1.01-2.4m6.48 3.81c.18-.18.27-.41.28-.66c.03-.2-.02-.39-.12-.55c-.29-.47-1.04-.69-2.28-.69l-1.29.07l-.87-.58c-.63-.52-1.2-1.43-1.6-2.56l.04-.14c.33-1.33.64-2.94-.02-3.6a.85.85 0 0 0-.61-.24h-.24c-.37 0-.7.39-.79.77c-.37 1.33-.15 2.06.22 3.27v.01c-.25.88-.57 1.9-1.08 2.93l-.96 1.8l-.89.49c-1.2.75-1.77 1.59-1.88 2.12c-.04.19-.02.36.05.54l.03.05l.48.31l.44.11c.81 0 1.73-.95 2.97-3.07l.18-.07c1.03-.33 2.31-.56 4.03-.75c1.03.51 2.24.74 3 .74c.44 0 .74-.11.91-.3m-.41-.71l.09.11c-.01.1-.04.11-.09.13h-.04l-.19.02c-.46 0-1.17-.19-1.9-.51c.09-.1.13-.1.23-.1c1.4 0 1.8.25 1.9.35M7.83 17c-.65 1.19-1.24 1.85-1.69 2c.05-.38.5-1.04 1.21-1.69zm3.02-6.91c-.23-.9-.24-1.63-.07-2.05l.07-.12l.15.05c.17.24.19.56.09 1.1l-.03.16l-.16.82z" />
+        </svg>
+      );
+    }
+
+    return (
+      <svg
+        className="w-6 h-6 text-gray-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+        />
+      </svg>
+    );
   };
 
   // Loading state
@@ -557,14 +669,12 @@ const DetailTicket = () => {
                   </svg>
                   <span>Disposisi (Email)</span>
                 </button>
-                {/* Tandai Diproses Button */}
                 {renderStatusButton()}
               </>
             )}
 
             {isAdmin && (
               <>
-                {/* Delete icon on the right */}
                 <div className="flex-1 flex justify-end">
                   <button
                     onClick={handleDeleteTicket}
@@ -605,7 +715,8 @@ const DetailTicket = () => {
                   : 'bg-[#607D8B]'
           }`}
         ></div>
-        {/* Main Container (All Description Section) */}
+
+        {/* Main Container */}
         <div className="px-8 pt-4 pb-6 space-y-6 pl-[50px]">
           {/* 1. Ticket Title */}
           <div>
@@ -643,7 +754,7 @@ const DetailTicket = () => {
               </div>
             </div>
 
-            {/* 3. Ticket Information Row (Left: ID, Date, Category | Right: Last Update) */}
+            {/* 3. Ticket Information Row */}
             <div className="flex justify-between items-start">
               {/* Left Side */}
               <div className="space-y-3 pt-2">
@@ -655,7 +766,6 @@ const DetailTicket = () => {
 
                   {/* Created Date */}
                   <div className="text-sm text-black relative group flex items-center space-x-2">
-                    {/* Tooltip SVG with hover label */}
                     <div className="relative flex items-center group">
                       <svg
                         viewBox="0 0 14 14"
@@ -665,19 +775,15 @@ const DetailTicket = () => {
                       >
                         <path d="M0 12.6875C0 13.4121 0.671875 14 1.5 14H12.5C13.3281 14 14 13.4121 14 12.6875V5.25H0V12.6875ZM10 7.32813C10 7.14766 10.1687 7 10.375 7H11.625C11.8313 7 12 7.14766 12 7.32813V8.42188C12 8.60234 11.8313 8.75 11.625 8.75H10.375C10.1687 8.75 10 8.60234 10 8.42188V7.32813ZM10 10.8281C10 10.6477 10.1687 10.5 10.375 10.5H11.625C11.8313 10.5 12 10.6477 12 10.8281V11.9219C12 12.1023 11.8313 12.25 11.625 12.25H10.375C10.1687 12.25 10 12.1023 10 11.9219V10.8281ZM6 7.32813C6 7.14766 6.16875 7 6.375 7H7.625C7.83125 7 8 7.14766 8 7.32813V8.42188C8 8.60234 7.83125 8.75 7.625 8.75H6.375C6.16875 8.75 6 8.60234 6 8.42188V7.32813ZM6 10.8281C6 10.6477 6.16875 10.5 6.375 10.5H7.625C7.83125 10.5 8 10.6477 8 10.8281V11.9219C8 12.1023 7.83125 12.25 7.625 12.25H6.375C6.16875 12.25 6 12.1023 6 11.9219V10.8281ZM2 7.32813C2 7.14766 2.16875 7 2.375 7H3.625C3.83125 7 4 7.14766 4 7.32813V8.42188C8 8.60234 3.83125 8.75 3.625 8.75H2.375C2.16875 8.75 2 8.60234 2 8.42188V7.32813ZM2 10.8281C2 10.6477 2.16875 10.5 2.375 10.5H3.625C3.83125 10.5 4 10.6477 4 10.8281V11.9219C4 12.1023 3.83125 12.25 3.625 12.25H2.375C2.16875 12.25 2 12.1023 2 11.9219V10.8281ZM12.5 1.75H11V0.4375C11 0.196875 10.775 0 10.5 0H9.5C9.225 0 9 0.196875 9 0.4375V1.75H5V0.4375C5 0.196875 4.775 0 4.5 0H3.5C3.225 0 3 0.196875 3 0.4375V1.75H1.5C0.671875 1.75 0 2.33789 0 3.0625V4.375H14V3.0625C14 2.33789 13.3281 1.75 12.5 1.75Z" />
                       </svg>
-                      {/* Tooltip below the icon */}
                       <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
                         Tanggal Dibuat
                       </div>
                     </div>
-
-                    {/* Date */}
                     <span>{ticketData.date}</span>
                   </div>
 
-                  {/* Category with Bookmark Icon */}
+                  {/* Category */}
                   <div className="flex items-center space-x-1 relative group">
-                    {/* SVG icon with tooltip */}
                     <div className="relative flex items-center group ml-2">
                       <svg
                         className="w-5 h-5 text-black cursor-pointer"
@@ -686,14 +792,10 @@ const DetailTicket = () => {
                       >
                         <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
                       </svg>
-
-                      {/* Tooltip */}
                       <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
                         Kategori
                       </div>
                     </div>
-
-                    {/* Category Name */}
                     <span className="text-sm text-black">
                       {ticketData.category}
                     </span>
@@ -713,118 +815,102 @@ const DetailTicket = () => {
             </div>
           </div>
 
-          {/* Deskripsi Laporan */}
+          {/* 4. Description */}
           <div>
             <p className="text-black leading-relaxed whitespace-pre-wrap text-justify">
               {ticketData.description}
             </p>
           </div>
 
-          {/* 5. Attachments Section */}
+          {/* 5. UPDATED Attachments Section */}
           {ticketData.attachments && ticketData.attachments.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Lampiran
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Lampiran ({ticketData.attachments.length})
               </h3>
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {ticketData.attachments.map((attachment, index) => (
                   <div
-                    key={index}
-                    className="inline-flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 max-w-md"
+                    key={attachment.id || index}
+                    className="group border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 cursor-pointer"
+                    onClick={() => handleDownloadAttachment(attachment)}
                   >
-                    {/* Left Side - Icon and File Info */}
-                    <div className="flex items-center space-x-3 flex-1 min-w-0">
-                      {/* File Icon based on type */}
-                      <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
-                        {attachment.file_type?.startsWith('image/') ? (
-                          // Image Icon
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                          >
-                            <g
-                              fill="none"
-                              stroke="currentColor"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                            >
-                              <rect
-                                width="18"
-                                height="18"
-                                x="3"
-                                y="3"
-                                rx="2"
-                                ry="2"
-                              />
-                              <circle cx="9" cy="9" r="2" />
-                              <path d="m21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                            </g>
-                          </svg>
-                        ) : attachment.file_type === 'application/pdf' ? (
-                          // PDF Icon
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              fill="#ef5350"
-                              d="M13 9h5.5L13 3.5zM6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m4.93 10.44c.41.9.93 1.64 1.53 2.15l.41.32c-.87.16-2.07.44-3.34.93l-.11.04l.5-1.04c.45-.87.78-1.66 1.01-2.4m6.48 3.81c.18-.18.27-.41.28-.66c.03-.2-.02-.39-.12-.55c-.29-.47-1.04-.69-2.28-.69l-1.29.07l-.87-.58c-.63-.52-1.2-1.43-1.6-2.56l.04-.14c.33-1.33.64-2.94-.02-3.6a.85.85 0 0 0-.61-.24h-.24c-.37 0-.7.39-.79.77c-.37 1.33-.15 2.06.22 3.27v.01c-.25.88-.57 1.9-1.08 2.93l-.96 1.8l-.89.49c-1.2.75-1.77 1.59-1.88 2.12c-.04.19-.02.36.05.54l.03.05l.48.31l.44.11c.81 0 1.73-.95 2.97-3.07l.18-.07c1.03-.33 2.31-.56 4.03-.75c1.03.51 2.24.74 3 .74c.44 0 .74-.11.91-.3m-.41-.71l.09.11c-.01.1-.04.11-.09.13h-.04l-.19.02c-.46 0-1.17-.19-1.9-.51c.09-.1.13-.1.23-.1c1.4 0 1.8.25 1.9.35M7.83 17c-.65 1.19-1.24 1.85-1.69 2c.05-.38.5-1.04 1.21-1.69zm3.02-6.91c-.23-.9-.24-1.63-.07-2.05l.07-.12l.15.05c.17.24.19.56.09 1.1l-.03.16l-.16.82z"
-                            />
-                          </svg>
-                        ) : (
-                          // Generic File Icon
-                          <svg
-                            className="w-6 h-6 text-gray-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                          </svg>
-                        )}
+                    {/* File Header */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        {/* File Icon */}
+                        <div className="flex-shrink-0">
+                          {getFileIcon(attachment.file_type)}
+                        </div>
+
+                        {/* File Info */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-700">
+                            {attachment.file_name || 'File Attachment'}
+                          </h4>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {attachment.file_type
+                              ?.split('/')[1]
+                              ?.toUpperCase() || 'Unknown'}
+                            {attachment.file_size && (
+                              <span>
+                                {' '}
+                                • {formatFileSize(attachment.file_size)}
+                              </span>
+                            )}
+                          </p>
+                        </div>
                       </div>
 
-                      {/* File Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 truncate">
-                          {attachment.file_name || 'File Attachment'}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {attachment.file_type?.toUpperCase() ||
-                            'Unknown Type'}
-                          {attachment.file_size && ` - ${attachment.file_size}`}
-                        </div>
+                      {/* Download Icon */}
+                      <div className="flex-shrink-0 ml-2">
+                        <svg
+                          className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
                       </div>
                     </div>
 
-                    {/* Right Side - Download Button */}
-                    <button
-                      onClick={() => handleDownloadAttachment(attachment)}
-                      className="p-2 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0 ml-2"
-                      title="Download file"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          fill="currentColor"
-                          d="M16.59 9H15V4c0-.55-.45-1-1-1h-4c-.55 0-1 .45-1 1v5H7.41c-.89 0-1.34 1.08-.71 1.71l4.59 4.59c.39.39 1.02.39 1.41 0l4.59-4.59c.63-.63.19-1.71-.7-1.71M5 19c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1"
-                        />
-                      </svg>
-                    </button>
+                    {/* Image Preview for image files */}
+                    {attachment.file_type &&
+                      attachment.file_type.startsWith('image/') &&
+                      attachment.file_url && (
+                        <div className="mt-3">
+                          <div className="relative overflow-hidden rounded-lg bg-gray-100">
+                            <img
+                              src={attachment.file_url}
+                              alt={attachment.file_name}
+                              className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                            <div className="hidden w-full h-32 items-center justify-center bg-gray-100 text-gray-500 text-sm">
+                              Preview tidak tersedia
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                    {/* Action Text */}
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-xs text-gray-600 group-hover:text-blue-600 font-medium">
+                        {attachment.file_type &&
+                        attachment.file_type.startsWith('image/')
+                          ? 'Klik untuk melihat gambar'
+                          : 'Klik untuk mengunduh file'}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -833,7 +919,7 @@ const DetailTicket = () => {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal - tambahkan setelah ToastContainer */}
+      {/* Delete Confirmation Modal */}
       {showDeleteModal && ticketData && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -911,9 +997,19 @@ const DetailTicket = () => {
           </div>
         </div>
       )}
+
       <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
+
+  // Helper function to format file size
+  function formatFileSize(bytes) {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
 };
 
 export default DetailTicket;
