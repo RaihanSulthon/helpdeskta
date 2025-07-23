@@ -1,5 +1,5 @@
 // src/pages/admin/AdminDashboard.jsx - Real API Integration with Drag & Drop
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   getAdminTicketsAPI,
@@ -317,7 +317,9 @@ const AdminDashboard = () => {
   };
 
   // 4. COMPUTED VALUES (after all functions are defined)
-  const filteredTickets = applyFiltersToTickets();
+  const filteredTickets = useMemo(() => {
+    return applyFiltersToTickets();
+  }, [tickets, selectedCategory, selectedDateRange, unreadFilter]);
 
   const checkNewItemsInColumn = (columnKey, tickets) => {
     // 1. Cek feedback baru (chat yang belum dibaca oleh admin)
@@ -557,13 +559,16 @@ const AdminDashboard = () => {
     if (!searchQuery) {
       loadAdminTickets();
     }
-  }, [
-    selectedCategory,
-    selectedDateRange,
-    unreadFilter,
-    statusFilter,
-    customDateRange,
-  ]);
+  }, [selectedCategory, selectedDateRange, unreadFilter, statusFilter]);
+
+  useEffect(() => {
+    const currentFilters = loadFiltersFromStorage();
+    const updatedFilters = {
+      ...currentFilters,
+      customDateRange,
+    };
+    saveFiltersToStorage(updatedFilters);
+  }, [customDateRange]);
 
   // Load categories
   useEffect(() => {
@@ -1140,7 +1145,7 @@ const AdminDashboard = () => {
                             300
                           );
                         }}
-                        className="text-white hover:bg-white/20 rounded p-1 transition-colors"
+                        className="text-white bg-red-600 hover:bg-red-800 hover:scale-105 transition-all duration-300"
                       >
                         <svg
                           className="w-6 h-6"
@@ -1240,33 +1245,6 @@ const AdminDashboard = () => {
                         }`}
                       >
                         <div className="flex items-center justify-end space-x-3">
-                          {/* Clear Button */}
-                          <Button
-                            onClick={() => {
-                              setCustomDateRange({
-                                startDate: '',
-                                endDate: '',
-                              });
-                              setSelectedDateRange('');
-                            }}
-                            className="border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm flex items-center space-x-2"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                            <span>Clear</span>
-                          </Button>
-
                           {/* Apply/Terapkan Button */}
                           <Button
                             onClick={() => {
@@ -1282,7 +1260,7 @@ const AdminDashboard = () => {
                                 300
                               );
                             }}
-                            className="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+                            className="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition-all hover:scale-105 duration-300 font-medium text-sm"
                           >
                             Terapkan
                           </Button>
