@@ -49,6 +49,18 @@ const Navbar = ({
     window.refreshNotificationCount = fetchUnreadCount;
   }, []);
 
+  useEffect(() => {
+    const handleNotificationUpdate = () => {
+      fetchUnreadCount();
+    };
+  
+    window.addEventListener('feedbackNotificationsRead', handleNotificationUpdate);
+    
+    return () => {
+      window.removeEventListener('feedbackNotificationsRead', handleNotificationUpdate);
+    };
+  }, []);
+
   const handleCloseNotificationModal = () => {
     setShowNotificationModal(false);
     // Refresh count setelah modal ditutup

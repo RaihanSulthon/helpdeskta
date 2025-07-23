@@ -572,21 +572,17 @@ const TicketFeedback = () => {
 
   const markAllFeedbackNotificationsAsRead = async () => {
     try {
-      // Import API yang diperlukan
       const { getNotificationsAPI, markNotificationAsReadAPI } = await import('../services/api');
       
-      // Get all unread notifications
       const result = await getNotificationsAPI({ read: false, per_page: 100 });
       const notifications = result.notifications?.data || result.data || [];
       
-      // Filter notifications yang related dengan feedback pada ticket ini
       const feedbackNotifications = notifications.filter(
         notif => 
           notif.ticket_id === parseInt(ticketId) && 
           (notif.type === 'chat_message' || notif.message.includes('Feedback baru'))
       );
       
-      // Mark each related feedback notification as read
       for (const notification of feedbackNotifications) {
         try {
           await markNotificationAsReadAPI(notification.id);
@@ -598,11 +594,31 @@ const TicketFeedback = () => {
       
       if (feedbackNotifications.length > 0) {
         console.log(`✅ Marked ${feedbackNotifications.length} feedback notifications as read for ticket ${ticketId}`);
+        
+        // Emit event untuk memberitahu komponen lain
+        window.dispatchEvent(new CustomEvent('feedbackNotificationsRead', {
+          detail: { ticketId: parseInt(ticketId) }
+        }));
+        
+        // Set localStorage sebagai backup
+        localStorage.setItem('notificationUpdate', Date.now().toString());
       }
     } catch (error) {
       console.error('Error marking feedback notifications as read:', error);
     }
   };
+  
+  // Panggil ketika component mount DAN ketika ada perubahan chat messages
+  useEffect(() => {
+    markAllFeedbackNotificationsAsRead();
+  }, [ticketId]);
+  
+  // Juga panggil ketika component akan unmount (user navigasi keluar)
+  useEffect(() => {
+    return () => {
+      markAllFeedbackNotificationsAsRead();
+    };
+  }, []);
 
   return (
     <div className={`bg-white rounded-lg shadow h-auto`}>

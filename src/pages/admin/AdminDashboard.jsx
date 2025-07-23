@@ -76,6 +76,7 @@ const AdminDashboard = () => {
   const [customDateRange, setCustomDateRange] = useState(
     initialFilters.customDateRange
   );
+  const [notificationRefreshTrigger, setNotificationRefreshTrigger] = useState(0);
 
   const [isCategoryDropdownVisible, setIsCategoryDropdownVisible] =
     useState(false);
@@ -635,6 +636,43 @@ const AdminDashboard = () => {
     };
   }, [showCategoryDropdown, showDateDropdown, showUnreadDropdown]);
 
+
+  useEffect(() => {
+    const handleFeedbackNotificationsRead = () => {
+      // Trigger refresh untuk memperbarui notifikasi count di navbar
+      if (window.refreshNotificationCount) {
+        window.refreshNotificationCount();
+      }
+      
+      // Trigger refresh ticket data untuk update feedback count di ticket cards
+      setNotificationRefreshTrigger(prev => prev + 1);
+    };
+  
+    const handleStorageChange = (e) => {
+      if (e.key === 'notificationUpdate') {
+        handleFeedbackNotificationsRead();
+      }
+    };
+  
+    // Listen untuk custom event
+    window.addEventListener('feedbackNotificationsRead', handleFeedbackNotificationsRead);
+    
+    // Listen untuk storage change sebagai backup
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('feedbackNotificationsRead', handleFeedbackNotificationsRead);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+  
+  // Tambahkan useEffect untuk refresh ketika notificationRefreshTrigger berubah
+  useEffect(() => {
+    if (notificationRefreshTrigger > 0) {
+      loadAdminTickets(); // Refresh ticket data
+    }
+  }, [notificationRefreshTrigger]);
+
   // 6. ASYNC FUNCTIONS
   const loadAdminTickets = async () => {
     try {
@@ -838,6 +876,7 @@ const AdminDashboard = () => {
           '❌ Notification failed but continuing with drag & drop:',
           notificationError
         );
+
       }
 
       // Update local state with proper positioning

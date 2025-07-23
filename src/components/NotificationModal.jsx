@@ -123,6 +123,12 @@ const NotificationModal = ({ isOpen, onClose }) => {
         notification.message.includes('Feedback baru')
       ) {
         await markAllFeedbackNotificationsForTicket(notification.ticket_id);
+        window.dispatchEvent(
+          new CustomEvent('feedbackNotificationsRead', {
+            detail: { ticketId: notification.ticket_id },
+          })
+        );
+        localStorage.setItem('notificationUpdate', Date.now().toString());
       }
 
       // Update local state - remove all related notifications
