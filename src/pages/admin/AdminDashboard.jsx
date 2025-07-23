@@ -717,7 +717,6 @@ const AdminDashboard = () => {
 
     // Handle same-column reordering (NEW LOGIC)
     if (fromColumn === toColumn) {
-
       // Only proceed if we have a valid insertIndex and it's different from current position
       if (insertIndex !== null) {
         setTickets((prev) => {
@@ -769,7 +768,6 @@ const AdminDashboard = () => {
     // Handle cross-column movement (EXISTING LOGIC)
     try {
       setUpdating(ticket.id);
-      
 
       // Get new status for API - try multiple options
       let newStatus = mapColumnToStatus(toColumn);
@@ -1037,18 +1035,17 @@ const AdminDashboard = () => {
                           300
                         );
                       }}
-                      className="w-full text-left px-3 py-2 text-sm"
+                      className="w-full text-left px-3 py-2 text-sm bg-white"
                     >
                       Semua Kategori
                     </Button>
                     {categories.map((category) => (
                       <Button
-                        key={category.id}
                         onClick={() => {
                           setSelectedCategory(category.name);
                           setShowCategoryDropdown(false);
                         }}
-                        className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm"
+                        className="w-full text-left px-3 py-2 bg-white hover:bg-gray-100 text-sm"
                       >
                         {category.name}
                       </Button>
@@ -1362,7 +1359,7 @@ const AdminDashboard = () => {
                           300
                         );
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm"
+                      className="w-full text-left px-3 py-2 bg-white hover:bg-gray-100 text-sm"
                     >
                       Belum Dibaca
                     </Button>
@@ -1375,7 +1372,7 @@ const AdminDashboard = () => {
                           300
                         );
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm"
+                      className="w-full text-left px-3 py-2 bg-white hover:bg-gray-100 text-sm"
                     >
                       Sudah Dibaca
                     </Button>
