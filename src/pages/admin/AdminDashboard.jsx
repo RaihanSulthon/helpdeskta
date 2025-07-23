@@ -59,6 +59,7 @@ const AdminDashboard = () => {
   const [draggedTicket, setDraggedTicket] = useState(null);
   const [statusFilter, setStatusFilter] = useState(initialFilters.statusFilter);
   const [draggedFrom, setDraggedFrom] = useState(null);
+  const [dateValidationError, setDateValidationError] = useState('');
 
   const [updating, setUpdating] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -285,6 +286,28 @@ const AdminDashboard = () => {
       }
     }
     return filtered;
+  };
+
+  const validateDateRange = () => {
+    if (customDateRange.startDate && customDateRange.endDate) {
+      const startDate = new Date(customDateRange.startDate);
+      const endDate = new Date(customDateRange.endDate);
+
+      if (endDate < startDate) {
+        setDateValidationError(
+          'Akhir tanggal tidak boleh lebih kecil dari tanggal mulai'
+        );
+        return false;
+      }
+    }
+
+    if (!customDateRange.startDate || !customDateRange.endDate) {
+      setDateValidationError('Kedua tanggal harus diisi');
+      return false;
+    }
+
+    setDateValidationError('');
+    return true;
   };
 
   // Apply filtering to all tickets and regroup by status
@@ -1182,12 +1205,13 @@ const AdminDashboard = () => {
                               <input
                                 type="date"
                                 value={customDateRange.startDate}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                   setCustomDateRange((prev) => ({
                                     ...prev,
                                     startDate: e.target.value,
-                                  }))
-                                }
+                                  }));
+                                  setDateValidationError('');
+                                }}
                                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:w-6 [&::-webkit-calendar-picker-indicator]:h-6 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                               />
                               <svg
@@ -1213,12 +1237,13 @@ const AdminDashboard = () => {
                               <input
                                 type="date"
                                 value={customDateRange.endDate}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                   setCustomDateRange((prev) => ({
                                     ...prev,
                                     endDate: e.target.value,
-                                  }))
-                                }
+                                  }));
+                                  setDateValidationError('');
+                                }}
                                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:w-6 [&::-webkit-calendar-picker-indicator]:h-6 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                               />
                               <svg
@@ -1236,6 +1261,24 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       </div>
+                      {dateValidationError && (
+                        <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3 flex items-center space-x-2">
+                          <svg
+                            className="w-5 h-5 text-red-500 flex-shrink-0"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <span className="text-red-700 text-sm font-medium">
+                            {dateValidationError}
+                          </span>
+                        </div>
+                      )}
                       {/* Action Button - Bottom Right Positioned */}
                       <div
                         className={`pt-4 border-t border-gray-200 transition-all duration-500 delay-200 ${
@@ -1245,20 +1288,36 @@ const AdminDashboard = () => {
                         }`}
                       >
                         <div className="flex items-center justify-end space-x-3">
+                          {/* Clear Button */}
+                          <Button
+                            onClick={() => {
+                              setCustomDateRange({
+                                startDate: '',
+                                endDate: '',
+                              });
+                              setSelectedDateRange('');
+                              setDateValidationError('');
+                            }}
+                            className="border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm flex items-center space-x-2"
+                          >
+                            <span>Clear</span>
+                          </Button>
                           {/* Apply/Terapkan Button */}
                           <Button
                             onClick={() => {
-                              setSelectedDateRange(
-                                customDateRange.startDate &&
-                                  customDateRange.endDate
-                                  ? `${customDateRange.startDate} - ${customDateRange.endDate}`
-                                  : ''
-                              );
-                              setShowDateDropdown(false);
-                              setTimeout(
-                                () => setIsDateDropdownVisible(false),
-                                300
-                              );
+                              if (validateDateRange()) {
+                                setSelectedDateRange(
+                                  customDateRange.startDate &&
+                                    customDateRange.endDate
+                                    ? `${customDateRange.startDate} - ${customDateRange.endDate}`
+                                    : ''
+                                );
+                                setShowDateDropdown(false);
+                                setTimeout(
+                                  () => setIsDateDropdownVisible(false),
+                                  300
+                                );
+                              }
                             }}
                             className="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition-all hover:scale-105 duration-300 font-medium text-sm"
                           >
