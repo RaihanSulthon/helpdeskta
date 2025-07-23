@@ -21,7 +21,6 @@ const retryFetch = async (url, options, maxRetries = 3) => {
 
 export { retryFetch };
 
-// FAQ API Functions - NEW for AskedUs Management
 // Get Ticket Statistics API - ADMIN ONLY
 export const getTicketStatisticsAPI = async (filters = {}) => {
   try {
@@ -88,6 +87,8 @@ export const getTicketStatisticsAPI = async (filters = {}) => {
     );
   }
 };
+
+// FAQ API Functions
 // Get All FAQs API
 export const getFAQsAPI = async (filters = {}) => {
   try {
@@ -349,15 +350,15 @@ export const createFAQAPI = async (faqData) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
       },
       mode: 'cors',
       credentials: 'omit',
       body: JSON.stringify(requestBody),
     };
 
-    const response = await retryFetch(`${BASE_URL}/faqs/`, options);
+    const response = await retryFetch(`${BASE_URL}/faqs`, options);
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
