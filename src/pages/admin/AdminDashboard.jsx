@@ -838,8 +838,6 @@ const AdminDashboard = () => {
           '❌ Notification failed but continuing with drag & drop:',
           notificationError
         );
-        // Jangan throw error, biarkan drag & drop tetap berhasil
-        // Drag & drop success tidak tergantung pada notification success
       }
 
       // Update local state with proper positioning

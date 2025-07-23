@@ -114,14 +114,39 @@ const NotificationModal = ({ isOpen, onClose }) => {
   // Mark notification as read and redirect based on notification type
   const handleNotificationClick = async (notification) => {
     try {
+      // Mark clicked notification as read
       await markNotificationAsReadAPI(notification.id);
+      
+      // Jika ini adalah feedback notification, mark semua feedback notifications untuk tiket ini
+      if (
+        notification.type === 'chat_message' ||
+        notification.message.includes('Feedback baru')
+      ) {
+        await markAllFeedbackNotificationsForTicket(notification.ticket_id);
+      }
+      
+      // Update local state - remove all related notifications
       setNotifications((prev) =>
-        prev.filter((notif) => notif.id !== notification.id)
+        prev.filter((notif) => {
+          // Remove clicked notification
+          if (notif.id === notification.id) return false;
+          
+          // If clicked notification is feedback, remove all feedback notifications for same ticket
+          if (
+            (notification.type === 'chat_message' || notification.message.includes('Feedback baru')) &&
+            notif.ticket_id === notification.ticket_id &&
+            (notif.type === 'chat_message' || notif.message.includes('Feedback baru'))
+          ) {
+            return false;
+          }
+          
+          return true;
+        })
       );
-
+  
       if (notification.ticket_id) {
         onClose();
-
+  
         // Redirect berdasarkan type notifikasi
         if (
           notification.type === 'chat_message' ||
@@ -238,6 +263,34 @@ const NotificationModal = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const markAllFeedbackNotificationsForTicket = async (ticketId) => {
+    try {
+      // Get all unread notifications
+      const result = await getNotificationsAPI({ read: false, per_page: 100 });
+      const allNotifications = result.notifications?.data || result.data || [];
+      
+      // Filter feedback notifications untuk tiket ini
+      const feedbackNotifications = allNotifications.filter(
+        notif => 
+          notif.ticket_id === ticketId && 
+          (notif.type === 'chat_message' || notif.message.includes('Feedback baru'))
+      );
+      
+      // Mark semua feedback notifications sebagai read
+      for (const notif of feedbackNotifications) {
+        try {
+          await markNotificationAsReadAPI(notif.id);
+        } catch (err) {
+          console.error('Error marking feedback notification as read:', err);
+        }
+      }
+      
+      console.log(`✅ Marked ${feedbackNotifications.length} feedback notifications as read for ticket ${ticketId}`);
+    } catch (error) {
+      console.error('Error marking all feedback notifications as read:', error);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50">

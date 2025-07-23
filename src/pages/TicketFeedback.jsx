@@ -44,6 +44,7 @@ const TicketFeedback = () => {
     if (ticketId) {
       loadTicketData();
       loadChatMessages();
+      markAllFeedbackNotificationsAsRead();
     }
   }, [ticketId, ticketData?.unread, ticketData?.read]);
 
@@ -566,6 +567,40 @@ const TicketFeedback = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendFeedback();
+    }
+  };
+
+  const markAllFeedbackNotificationsAsRead = async () => {
+    try {
+      // Import API yang diperlukan
+      const { getNotificationsAPI, markNotificationAsReadAPI } = await import('../services/api');
+      
+      // Get all unread notifications
+      const result = await getNotificationsAPI({ read: false, per_page: 100 });
+      const notifications = result.notifications?.data || result.data || [];
+      
+      // Filter notifications yang related dengan feedback pada ticket ini
+      const feedbackNotifications = notifications.filter(
+        notif => 
+          notif.ticket_id === parseInt(ticketId) && 
+          (notif.type === 'chat_message' || notif.message.includes('Feedback baru'))
+      );
+      
+      // Mark each related feedback notification as read
+      for (const notification of feedbackNotifications) {
+        try {
+          await markNotificationAsReadAPI(notification.id);
+          console.log(`✅ Marked feedback notification ${notification.id} as read`);
+        } catch (err) {
+          console.error('Error marking feedback notification as read:', err);
+        }
+      }
+      
+      if (feedbackNotifications.length > 0) {
+        console.log(`✅ Marked ${feedbackNotifications.length} feedback notifications as read for ticket ${ticketId}`);
+      }
+    } catch (error) {
+      console.error('Error marking feedback notifications as read:', error);
     }
   };
 
