@@ -117,6 +117,31 @@ const fetchUserData = async (userId) => {
 export const getUserDisplayName = async (userId) => {
   if (!userId) return 'Unknown User';
 
+  const currentUserRole = localStorage.getItem('userRole');
+  const userData = localStorage.getItem('userData');
+  let currentUserId = null;
+
+  if (userData) {
+    try {
+      const parsed = JSON.parse(userData);
+      currentUserId = parsed.id || parsed.user_id;
+    } catch (error) {
+      console.error('Error parsing userData:', error);
+    }
+  }
+
+  // If student viewing notification from different user (likely admin)
+  if (
+    currentUserRole === 'student' &&
+    userId.toString() !== currentUserId?.toString()
+  ) {
+    // Fetch user data to check role
+    const fetchedUserData = await fetchUserData(userId);
+    if (fetchedUserData?.role === 'admin') {
+      return 'Admin';
+    }
+  }
+
   // Check cache first
   const now = Date.now();
   if (userCache[userId] && now - userCache[userId].timestamp < CACHE_DURATION) {
@@ -265,7 +290,25 @@ export const fetchAndCacheUserName = async (userId) => {
   return null;
 };
 
-// Generate notification message berdasarkan type dan context
+// Helper function to map status to user-friendly text
+const mapStatusToDisplayText = (status) => {
+  if (!status) return status;
+
+  const statusMap = {
+    open: 'Tiket Baru',
+    pending: 'Tiket Baru',
+    new: 'Tiket Baru',
+    in_progress: 'Diproses',
+    processing: 'Diproses',
+    assigned: 'Diproses',
+    closed: 'Selesai',
+    completed: 'Selesai',
+    resolved: 'Selesai',
+  };
+
+  return statusMap[status.toLowerCase()] || status;
+};
+
 export const generateNotificationMessage = (type, context = {}) => {
   switch (type) {
     case 'new_ticket':
@@ -278,7 +321,10 @@ export const generateNotificationMessage = (type, context = {}) => {
       }
       return 'New chat message';
     case 'status_update':
-      return `Ticket status updated to ${context.newStatus || 'Updated'}`;
+      const userFriendlyStatus = mapStatusToDisplayText(
+        context.newStatus || 'Updated'
+      );
+      return `Status tiket telah diperbarui menjadi ${userFriendlyStatus}`;
     default:
       return 'New notification';
   }

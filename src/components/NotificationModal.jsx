@@ -116,7 +116,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
     try {
       // Mark clicked notification as read
       await markNotificationAsReadAPI(notification.id);
-      
+
       // Jika ini adalah feedback notification, mark semua feedback notifications untuk tiket ini
       if (
         notification.type === 'chat_message' ||
@@ -124,29 +124,31 @@ const NotificationModal = ({ isOpen, onClose }) => {
       ) {
         await markAllFeedbackNotificationsForTicket(notification.ticket_id);
       }
-      
+
       // Update local state - remove all related notifications
       setNotifications((prev) =>
         prev.filter((notif) => {
           // Remove clicked notification
           if (notif.id === notification.id) return false;
-          
+
           // If clicked notification is feedback, remove all feedback notifications for same ticket
           if (
-            (notification.type === 'chat_message' || notification.message.includes('Feedback baru')) &&
+            (notification.type === 'chat_message' ||
+              notification.message.includes('Feedback baru')) &&
             notif.ticket_id === notification.ticket_id &&
-            (notif.type === 'chat_message' || notif.message.includes('Feedback baru'))
+            (notif.type === 'chat_message' ||
+              notif.message.includes('Feedback baru'))
           ) {
             return false;
           }
-          
+
           return true;
         })
       );
-  
+
       if (notification.ticket_id) {
         onClose();
-  
+
         // Redirect berdasarkan type notifikasi
         if (
           notification.type === 'chat_message' ||
@@ -190,6 +192,25 @@ const NotificationModal = ({ isOpen, onClose }) => {
     });
   };
 
+  // Helper function to map status to user-friendly text
+  const mapStatusToDisplayText = (status) => {
+    if (!status) return status;
+
+    const statusMap = {
+      open: 'Tiket Baru',
+      pending: 'Tiket Baru',
+      new: 'Tiket Baru',
+      in_progress: 'Diproses',
+      processing: 'Diproses',
+      assigned: 'Diproses',
+      closed: 'Selesai',
+      completed: 'Selesai',
+      resolved: 'Selesai',
+    };
+
+    return statusMap[status.toLowerCase()] || status;
+  };
+
   // Get notification content with colored text and ticket title
   const getNotificationContent = (notification) => {
     const { type, message, ticket_id } = notification;
@@ -213,18 +234,77 @@ const NotificationModal = ({ isOpen, onClose }) => {
       );
     }
 
-    // Fallback dengan ticket title jika ada
-    if (ticket_id && ticketTitle !== 'Loading...') {
+    // Handle status update notifications
+    if (
+      type === 'status_update' ||
+      message.includes('Status tiket telah diperbarui') ||
+      message.includes('status updated')
+    ) {
+      // Extract status from message or context
+      let statusText = '';
+
+      // Try to extract status from message
+      const statusMatch = message.match(
+        /dari \w+ menjadi (\w+)|to (\w+)|status updated to (\w+)/i
+      );
+      if (statusMatch) {
+        const extractedStatus =
+          statusMatch[1] || statusMatch[2] || statusMatch[3];
+        statusText = mapStatusToDisplayText(extractedStatus);
+      }
+
       return (
         <>
           <span className="text-gray-700">
-            {message} untuk tiket: {ticketTitle}
+            Status tiket telah diperbarui menjadi{' '}
+          </span>
+          <span className="text-orange-600 font-bold">{statusText}</span>
+          <span className="text-gray-700"> untuk tiket: {ticketTitle}</span>
+        </>
+      );
+    }
+
+    // Fallback dengan ticket title jika ada
+    if (ticket_id && ticketTitle !== 'Loading...') {
+      // Check if message contains status-related text and replace it
+      let processedMessage = message;
+
+      // Replace technical status terms with user-friendly ones
+      processedMessage = processedMessage.replace(/\bopen\b/gi, 'Tiket Baru');
+      processedMessage = processedMessage.replace(
+        /\bin_progress\b/gi,
+        'Diproses'
+      );
+      processedMessage = processedMessage.replace(/\bclosed\b/gi, 'Selesai');
+      processedMessage = processedMessage.replace(
+        /\bpending\b/gi,
+        'Tiket Baru'
+      );
+      processedMessage = processedMessage.replace(/\bcompleted\b/gi, 'Selesai');
+      processedMessage = processedMessage.replace(/\bresolved\b/gi, 'Selesai');
+
+      return (
+        <>
+          <span className="text-gray-700">
+            {processedMessage} untuk tiket: {ticketTitle}
           </span>
         </>
       );
     }
 
-    return <span className="text-gray-700">{message}</span>;
+    // Process the general message
+    let processedMessage = message;
+    processedMessage = processedMessage.replace(/\bopen\b/gi, 'Tiket Baru');
+    processedMessage = processedMessage.replace(
+      /\bin_progress\b/gi,
+      'Diproses'
+    );
+    processedMessage = processedMessage.replace(/\bclosed\b/gi, 'Selesai');
+    processedMessage = processedMessage.replace(/\bpending\b/gi, 'Tiket Baru');
+    processedMessage = processedMessage.replace(/\bcompleted\b/gi, 'Selesai');
+    processedMessage = processedMessage.replace(/\bresolved\b/gi, 'Selesai');
+
+    return <span className="text-gray-700">{processedMessage}</span>;
   };
 
   // Get sender name from state or fallback
@@ -232,10 +312,33 @@ const NotificationModal = ({ isOpen, onClose }) => {
     const senderId = notification.sender_id;
     if (!senderId) return 'Unknown User';
 
+    // Check if sender is admin by checking user role
+    const currentUserRole = localStorage.getItem('userRole');
+    const userData = localStorage.getItem('userData');
+    let currentUserId = null;
+
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+        currentUserId = parsed.id || parsed.user_id;
+      } catch (error) {
+        console.error('Error parsing userData:', error);
+      }
+    }
+
+    // If this is notification from admin to student
+    if (
+      currentUserRole === 'student' &&
+      senderId &&
+      senderId.toString() !== currentUserId?.toString()
+    ) {
+      // Check if sender has admin role by fetching from API or assume it's admin
+      return 'Admin';
+    }
+
     // Return from state if available, otherwise fallback
     return userNames[senderId] || `User-${senderId.slice(-6)}`;
   };
-
   // Close modal when clicking outside and setup auto-refresh
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -269,14 +372,15 @@ const NotificationModal = ({ isOpen, onClose }) => {
       // Get all unread notifications
       const result = await getNotificationsAPI({ read: false, per_page: 100 });
       const allNotifications = result.notifications?.data || result.data || [];
-      
+
       // Filter feedback notifications untuk tiket ini
       const feedbackNotifications = allNotifications.filter(
-        notif => 
-          notif.ticket_id === ticketId && 
-          (notif.type === 'chat_message' || notif.message.includes('Feedback baru'))
+        (notif) =>
+          notif.ticket_id === ticketId &&
+          (notif.type === 'chat_message' ||
+            notif.message.includes('Feedback baru'))
       );
-      
+
       // Mark semua feedback notifications sebagai read
       for (const notif of feedbackNotifications) {
         try {
@@ -285,8 +389,10 @@ const NotificationModal = ({ isOpen, onClose }) => {
           console.error('Error marking feedback notification as read:', err);
         }
       }
-      
-      console.log(`✅ Marked ${feedbackNotifications.length} feedback notifications as read for ticket ${ticketId}`);
+
+      console.log(
+        `✅ Marked ${feedbackNotifications.length} feedback notifications as read for ticket ${ticketId}`
+      );
     } catch (error) {
       console.error('Error marking all feedback notifications as read:', error);
     }
