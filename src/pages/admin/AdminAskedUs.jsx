@@ -35,6 +35,8 @@ const AdminAskedUs = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [faqToDelete, setFAQToDelete] = useState(null);
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('Semua Status');
@@ -362,6 +364,25 @@ const AdminAskedUs = () => {
     }
   };
 
+  // Handle delete FAQ
+  const handleDeleteFAQ = async () => {
+    if (!faqToDelete) return;
+
+    try {
+      await deleteFAQAPI(faqToDelete.id);
+      await loadFAQs();
+      setShowDeleteModal(false);
+      setFAQToDelete(null);
+    } catch (error) {
+      setError('Gagal menghapus FAQ: ' + error.message);
+    }
+  };
+
+  const cancelDeleteFAQ = () => {
+    setShowDeleteModal(false);
+    setFAQToDelete(null);
+  };
+
   // Filter FAQs based on status
   const filteredFAQs = faqData.filter((faq) => {
     // Di admin, tampilkan semua FAQ (baik published maupun draft)
@@ -467,37 +488,39 @@ const AdminAskedUs = () => {
                   {/* SVG Icon berdasarkan status */}
                   {statusFilter === 'Published' ? (
                     <svg
-                    width="22"
-                    height="16"
-                    viewBox="0 0 20 14"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <g clipPath="url(#clip0_published)">
-                      <path
-                        d="M10 4.4C9.27668 4.4 8.58299 4.67393 8.07153 5.16152C7.56006 5.64912 7.27273 6.31044 7.27273 7C7.27273 7.68956 7.56006 8.35088 8.07153 8.83848C8.58299 9.32607 9.27668 9.6 10 9.6C10.7233 9.6 11.417 9.32607 11.9285 8.83848C12.4399 8.35088 12.7273 7.68956 12.7273 7C12.7273 6.31044 12.4399 5.64912 11.9285 5.16152C11.417 4.67393 10.7233 4.4 10 4.4ZM10 11.3333C8.79447 11.3333 7.63832 10.8768 6.78588 10.0641C5.93344 9.25147 5.45455 8.14927 5.45455 7C5.45455 5.85073 5.93344 4.74853 6.78588 3.93587C7.63832 3.12321 8.79447 2.66667 10 2.66667C11.2055 2.66667 12.3617 3.12321 13.2141 3.93587C14.0666 4.74853 14.5455 5.85073 14.5455 7C14.5455 8.14927 14.0666 9.25147 13.2141 10.0641C12.3617 10.8768 11.2055 11.3333 10 11.3333ZM10 0.5C5.45455 0.5 1.57273 3.19533 0 7C1.57273 10.8047 5.45455 13.5 10 13.5C14.5455 13.5 18.4273 10.8047 20 7C18.4273 3.19533 14.5455 0.5 10 0.5Z"
-                        fill="#28A745"
-                      />
-                    </g>
-                  </svg>
+                      width="22"
+                      height="16"
+                      viewBox="0 0 20 14"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <g clipPath="url(#clip0_published)">
+                        <path
+                          d="M10 4.4C9.27668 4.4 8.58299 4.67393 8.07153 5.16152C7.56006 5.64912 7.27273 6.31044 7.27273 7C7.27273 7.68956 7.56006 8.35088 8.07153 8.83848C8.58299 9.32607 9.27668 9.6 10 9.6C10.7233 9.6 11.417 9.32607 11.9285 8.83848C12.4399 8.35088 12.7273 7.68956 12.7273 7C12.7273 6.31044 12.4399 5.64912 11.9285 5.16152C11.417 4.67393 10.7233 4.4 10 4.4ZM10 11.3333C8.79447 11.3333 7.63832 10.8768 6.78588 10.0641C5.93344 9.25147 5.45455 8.14927 5.45455 7C5.45455 5.85073 5.93344 4.74853 6.78588 3.93587C7.63832 3.12321 8.79447 2.66667 10 2.66667C11.2055 2.66667 12.3617 3.12321 13.2141 3.93587C14.0666 4.74853 14.5455 5.85073 14.5455 7C14.5455 8.14927 14.0666 9.25147 13.2141 10.0641C12.3617 10.8768 11.2055 11.3333 10 11.3333ZM10 0.5C5.45455 0.5 1.57273 3.19533 0 7C1.57273 10.8047 5.45455 13.5 10 13.5C14.5455 13.5 18.4273 10.8047 20 7C18.4273 3.19533 14.5455 0.5 10 0.5Z"
+                          fill="#28A745"
+                        />
+                      </g>
+                    </svg>
                   ) : statusFilter === 'Draft' ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 32 32"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
                     >
                       <path
                         fill="currentColor"
-                        d="m29.707 19.293l-3-3a1 1 0 0 0-1.414 0L16 25.586V30h4.414l9.293-9.293a1 1 0 0 0 0-1.414M19.586 28H18v-1.586l5-5L24.586 23zM26 21.586L24.414 20L26 18.414L27.586 20zM8 16h10v2H8zm0-6h12v2H8z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M26 4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v13a10.98 10.98 0 0 0 5.824 9.707L13 29.467V27.2l-4.234-2.258A8.99 8.99 0 0 1 4 17V4h20v9h2Z"
+                        d="M10.94 6.08A7 7 0 0 1 12 6c3.18 0 6.17 2.29 7.91 6a15 15 0 0 1-.9 1.64a1 1 0 0 0-.16.55a1 1 0 0 0 1.86.5a16 16 0 0 0 1.21-2.3a1 1 0 0 0 0-.79C19.9 6.91 16.1 4 12 4a8 8 0 0 0-1.4.12a1 1 0 1 0 .34 2ZM3.71 2.29a1 1 0 0 0-1.42 1.42l3.1 3.09a14.6 14.6 0 0 0-3.31 4.8a1 1 0 0 0 0 .8C4.1 17.09 7.9 20 12 20a9.26 9.26 0 0 0 5.05-1.54l3.24 3.25a1 1 0 0 0 1.42 0a1 1 0 0 0 0-1.42Zm6.36 9.19l2.45 2.45A1.8 1.8 0 0 1 12 14a2 2 0 0 1-2-2a1.8 1.8 0 0 1 .07-.52M12 18c-3.18 0-6.17-2.29-7.9-6a12.1 12.1 0 0 1 2.7-3.79L8.57 10A4 4 0 0 0 14 15.43L15.59 17A7.24 7.24 0 0 1 12 18"
                       />
                     </svg>
                   ) : null}
-                  <span>{statusFilter}</span>
+                  <span>
+                    {statusFilter === 'Published'
+                      ? 'Aktif'
+                      : statusFilter === 'Draft'
+                        ? 'Tidak Aktif'
+                        : statusFilter}
+                  </span>
                   <svg
                     width="11"
                     height="8"
@@ -544,7 +567,7 @@ const AdminAskedUs = () => {
                       }}
                       className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm"
                     >
-                      Published
+                      Aktif
                     </button>
                     <button
                       onClick={() => {
@@ -557,7 +580,7 @@ const AdminAskedUs = () => {
                       }}
                       className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm"
                     >
-                      Draft
+                      Tidak Aktif
                     </button>
                   </div>
                 )}
@@ -748,11 +771,14 @@ const AdminAskedUs = () => {
                   >
                     {/* Left side - Checkbox and FAQ Info */}
                     <div className="flex items-start flex-1">
-                      <label className="flex items-start cursor-pointer">
+                      <label className="flex items-start justify-between gap-4 cursor-pointer">
                         <div className="ml-4 flex-1">
                           {/* Status Aktif dan View Count */}
                           <div className="flex items-center space-x-2 mb-1">
                             <div className="flex items-center space-x-1">
+                              <span className="text-sm font-medium text-gray-500 w-8">
+                                #{index + 1}
+                              </span>
                               {item.is_public ? (
                                 <>
                                   {/* Mata aktif */}
@@ -789,15 +815,15 @@ const AdminAskedUs = () => {
                                 <>
                                   {/* Mata non-aktif */}
                                   <svg
-                                    width="20"
-                                    height="14"
-                                    viewBox="0 0 20 14"
-                                    fill="none"
                                     xmlns="http://www.w3.org/2000/svg"
+                                    width="15"
+                                    height="15"
+                                    viewBox="0 0 24 24"
+                                    color="gray"
                                   >
                                     <path
-                                      d="M0 7C1.57273 3.19533 5.45455 0.5 10 0.5C14.5455 0.5 18.4273 3.19533 20 7C18.4273 10.8047 14.5455 13.5 10 13.5C5.45455 13.5 1.57273 10.8047 0 7Z"
-                                      fill="#D1D5DB"
+                                      fill="currentColor"
+                                      d="M10.94 6.08A7 7 0 0 1 12 6c3.18 0 6.17 2.29 7.91 6a15 15 0 0 1-.9 1.64a1 1 0 0 0-.16.55a1 1 0 0 0 1.86.5a16 16 0 0 0 1.21-2.3a1 1 0 0 0 0-.79C19.9 6.91 16.1 4 12 4a8 8 0 0 0-1.4.12a1 1 0 1 0 .34 2ZM3.71 2.29a1 1 0 0 0-1.42 1.42l3.1 3.09a14.6 14.6 0 0 0-3.31 4.8a1 1 0 0 0 0 .8C4.1 17.09 7.9 20 12 20a9.26 9.26 0 0 0 5.05-1.54l3.24 3.25a1 1 0 0 0 1.42 0a1 1 0 0 0 0-1.42Zm6.36 9.19l2.45 2.45A1.8 1.8 0 0 1 12 14a2 2 0 0 1-2-2a1.8 1.8 0 0 1 .07-.52M12 18c-3.18 0-6.17-2.29-7.9-6a12.1 12.1 0 0 1 2.7-3.79L8.57 10A4 4 0 0 0 14 15.43L15.59 17A7.24 7.24 0 0 1 12 18"
                                     />
                                   </svg>
                                   <span className="text-gray-400 text-sm font-medium">
@@ -839,95 +865,92 @@ const AdminAskedUs = () => {
                           </div>
 
                           {/* Jawaban ringkas */}
-                          <p className=" text-base text-gray-600 line-clamp-2 mb-2">
+                          <div className="text-gray-500 text-sm">
                             {item.answer}
-                          </p>
+                          </div>
                         </div>
                       </label>
                     </div>
 
                     {/* Right side - Action Buttons */}
                     <div className="flex flex-col items-end text-right space-y-2 ml-4">
-                      <span className="text-base text-gray-400">
-                        {(() => {
-                          const createdAt = new Date(item.created_at);
-                          const now = new Date();
-                          const isToday =
-                            createdAt.toDateString() === now.toDateString();
-                          const isYesterday =
-                            new Date(
-                              now.setDate(now.getDate() - 1)
-                            ).toDateString() === createdAt.toDateString();
+                      <div className="text-base text-gray-400 text-right">
+                        <div className="text-sm">
+                          Dibuat Pada:{' '}
+                          {(() => {
+                            const createdAt = new Date(item.created_at);
+                            const time = createdAt.toLocaleTimeString('id-ID', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            });
 
-                          const time = createdAt.toLocaleTimeString('id-ID', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          });
-                          const dayLabel = isToday
-                            ? 'Hari ini'
-                            : isYesterday
-                              ? 'Kemarin'
-                              : createdAt.toLocaleDateString('id-ID', {
-                                  weekday: 'long',
-                                });
+                            return `${createdAt.toLocaleDateString('id-ID', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                            })}, ${time}`;
+                          })()}
+                        </div>
+                        <div className="text-sm">
+                          Terakhir Update:{' '}
+                          {(() => {
+                            const updatedAt = new Date(item.updated_at);
+                            const time = updatedAt.toLocaleTimeString('id-ID', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            });
 
-                          return `${dayLabel}, ${time}`;
-                        })()}
-                      </span>
-                      <button
-                        onClick={() => handleEdit(item)}
-                        className="p-2 text-black hover:text-blue-600 transition-colors"
-                        title="Edit FAQ"
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                            return `${updatedAt.toLocaleDateString('id-ID', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                            })}, ${time}`;
+                          })()}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="p-2 text-black hover:text-blue-600 transition-colors"
+                          title="Edit FAQ"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              'Apakah Anda yakin ingin menghapus FAQ ini?'
-                            )
-                          ) {
-                            deleteFAQAPI(item.id)
-                              .then(() => {
-                                loadFAQs();
-                              })
-                              .catch((error) => {
-                                setError(
-                                  'Gagal menghapus FAQ: ' + error.message
-                                );
-                              });
-                          }
-                        }}
-                        className="p-2 text-black hover:text-red-600 transition-colors"
-                        title="Hapus FAQ"
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setFAQToDelete(item);
+                            setShowDeleteModal(true);
+                          }}
+                          className="p-2 text-black hover:text-red-600 transition-colors"
+                          title="Hapus FAQ"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -1244,6 +1267,52 @@ const AdminAskedUs = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && faqToDelete && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={cancelDeleteFAQ}
+        >
+          <div
+            className="bg-white rounded-lg max-w-md w-full mx-4 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-blue-950 px-6 py-4">
+              <h3 className="text-white text-xl font-semibold">Hapus FAQ</h3>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <p className="text-black mb-1 font-normal">
+                Apakah anda yakin ingin menghapus FAQ berikut?
+              </p>
+              <p className="text-black font-semibold mb-4">
+                "{faqToDelete.question}"
+              </p>
+              <p className="text-red-600 text-sm mb-6">
+                Tindakan ini tidak dapat dibatalkan.
+              </p>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={cancelDeleteFAQ}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleDeleteFAQ}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Hapus
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
