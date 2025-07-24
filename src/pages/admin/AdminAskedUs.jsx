@@ -9,6 +9,22 @@ import {
 import SearchBar from '../../components/SearchBar';
 import Navigation from '../../components/Navigation';
 
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 const Modal = React.memo(({ show, onClose, title, children }) => {
   if (!show) return null;
 
@@ -79,6 +95,12 @@ const AdminAskedUs = () => {
   const [answerInput, setAnswerInput] = useState('');
   const [categoryInput, setCategoryInput] = useState(1);
   const [isPublicInput, setIsPublicInput] = useState(true);
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, current_page: 1 }));
+    loadFAQs({ search: debouncedSearchQuery });
+  }, [debouncedSearchQuery]);
 
   // Load categories
   const loadCategories = useCallback(async () => {
@@ -121,8 +143,8 @@ const AdminAskedUs = () => {
           }
         }
 
-        if (searchQuery && searchQuery.trim()) {
-          apiFilters.search = searchQuery.trim();
+        if (debouncedSearchQuery && debouncedSearchQuery.trim()) {
+          apiFilters.search = debouncedSearchQuery.trim();
         }
 
         const result = await getFAQsAdminAPI(apiFilters);
@@ -169,19 +191,23 @@ const AdminAskedUs = () => {
     },
     [
       selectedCategory,
-      searchQuery,
+      debouncedSearchQuery,
       pagination.current_page,
       pagination.per_page,
+      categories,
     ]
   );
 
   // Load data on mount
   useEffect(() => {
-    const initializeData = async () => {
-      await Promise.all([loadCategories(), loadFAQs()]);
-    };
-    initializeData();
-  }, [loadCategories, loadFAQs]);
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    if (categories.length > 0) {
+      loadFAQs();
+    }
+  }, [categories.length]);
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -463,7 +489,6 @@ const AdminAskedUs = () => {
                 disabled={loading}
                 className="w-full"
                 initialValue={searchQuery}
-                debounceMs={150}
               />
             </div>
 
