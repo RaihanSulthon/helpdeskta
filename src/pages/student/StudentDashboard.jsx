@@ -192,18 +192,18 @@ const StudentDashboard = () => {
 
     try {
       const date = new Date(dateString);
-      const now = new Date();
-      const diffTime = Math.abs(now - date);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 1) return 'Kemarin';
-      if (diffDays === 0) return 'Hari Ini';
-      if (diffDays <= 7) return `${diffDays} hari lalu`;
-      return date.toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      });
+      return (
+        date.toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }) +
+        ', ' +
+        date.toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      );
     } catch (error) {
       return 'Tanggal tidak valid';
     }
@@ -909,7 +909,7 @@ const StudentDashboard = () => {
               <div className="relative category-dropdown">
                 <Button
                   onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
+                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg shadow-gray-300 shadow-md flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
                     categoryFilter !== 'Semua Kategori'
                       ? 'bg-red-200 font-semibold'
                       : 'bg-white hover:bg-red-100'
@@ -1164,7 +1164,7 @@ const StudentDashboard = () => {
               {/* Read Status Filter - Updated styling */}
               <div className="relative">
                 <Button
-                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
+                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg  shadow-gray-300 shadow-md flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
                     readFilter !== 'Semua' && readFilter !== 'Belum Dibaca'
                       ? 'bg-red-200 font-semibold'
                       : 'bg-white hover:bg-red-100'

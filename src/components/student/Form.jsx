@@ -1,4 +1,4 @@
-// components/student/Form.jsx - FIXED VERSION
+// components/student/Form.jsx - UPDATED VERSION with file upload
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../Button';
@@ -7,6 +7,7 @@ import TextArea from '../TextArea';
 import Label from '../Label';
 import Select from '../Select';
 import Icon from '../Icon';
+import Toast from '../Toast';
 import {
   submitTicketAPI,
   getCategoriesAPI,
@@ -24,7 +25,57 @@ function Form() {
   const [subCategories, setSubCategories] = useState([]);
   const [submittedTicketId, setSubmittedTicketId] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
   const { user } = useAuth();
+  const [toast, setToast] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const clearFieldError = (fieldName) => {
+    setFieldErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[fieldName];
+      return newErrors;
+    });
+  };
+
+  const validateFieldRealTime = (fieldName, value) => {
+    switch (fieldName) {
+      case 'judul':
+        if (value && value.trim().length >= 5) {
+          clearFieldError('judul');
+        }
+        break;
+      case 'isi':
+        if (value && value.trim().length >= 10) {
+          clearFieldError('isi');
+        }
+        break;
+      case 'nim':
+        if (value && /^[0-9]+$/.test(value.trim())) {
+          clearFieldError('nim');
+        }
+        break;
+      case 'email':
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (value && emailRegex.test(value.trim())) {
+          clearFieldError('email');
+        }
+        break;
+      default:
+        // Untuk field lain, clear error jika ada nilai
+        if (value && value.trim() !== '') {
+          clearFieldError(fieldName);
+        }
+    }
+  };
+
+  const showToast = (message, type = 'info', duration = 3000) => {
+    setToast({ message, type, duration });
+  };
+
+  const hideToast = () => {
+    setToast(null);
+  };
   const [formData, setFormData] = useState({
     jenis: 'PENGADUAN',
     judul: '',
@@ -41,16 +92,17 @@ function Form() {
     noHp: '',
     anonymous: false,
   });
+
   useEffect(() => {
     if (user && !formData.anonymous) {
       setFormData((prev) => ({
         ...prev,
         email: user.email || prev.email,
         nama: user.name || prev.nama,
-        // Tambahkan field lain jika tersedia di user object
       }));
     }
   }, [user, formData.anonymous]);
+
   // Load categories on component mount
   useEffect(() => {
     loadCategories();
@@ -147,6 +199,60 @@ function Form() {
     ];
   };
 
+  // Handle file selection
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+
+    if (file) {
+      // Validate file type
+      const allowedTypes = [
+        'image/png',
+        'image/jpeg',
+        'image/jpg',
+        'application/pdf',
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        const errorMsg =
+          'Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.';
+        setError(errorMsg);
+        showToast(errorMsg, 'error', 4000); // UBAH INI
+        e.target.value = '';
+        return;
+      }
+
+      // Validate file size (5MB)
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        const errorMsg = 'Ukuran file terlalu besar. Maksimal 5MB.';
+        setError(errorMsg);
+        showToast(errorMsg, 'error', 4000); // UBAH INI
+        e.target.value = '';
+        return;
+      }
+
+      setSelectedFile(file);
+      setError('');
+      showToast('File berhasil dipilih', 'success', 2000); // UBAH INI
+
+      // Create preview for images
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => setFilePreview(e.target.result);
+        reader.readAsDataURL(file);
+      } else {
+        setFilePreview(null);
+      }
+    }
+  };
+  // Remove selected file
+  const removeFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    // Clear file input
+    const fileInput = document.getElementById('file-input');
+    if (fileInput) fileInput.value = '';
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
@@ -163,117 +269,153 @@ function Form() {
         newFormData.prodi = '';
         newFormData.semester = '';
         newFormData.noHp = '';
-        // Email tetap dipertahankan jika user sudah login
         if (!user?.email) {
           newFormData.email = '';
         }
+        // Clear semua field errors untuk identity fields
+        setFieldErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.nama;
+          delete newErrors.nim;
+          delete newErrors.prodi;
+          delete newErrors.semester;
+          delete newErrors.noHp;
+          if (!user?.email) {
+            delete newErrors.email;
+          }
+          return newErrors;
+        });
       }
 
       setFormData(newFormData);
     } else {
       // Mencegah perubahan email jika user sudah login dan tidak anonymous
       if (name === 'email' && user?.email && !formData.anonymous) {
-        return; // Tidak mengizinkan perubahan email
+        return;
+      }
+
+      // Clear error untuk field yang sedang diisi jika ada valuenya
+      if (value && value.trim() !== '') {
+        clearFieldError(name);
       }
 
       setFormData({
         ...formData,
         [name]: value,
       });
-
+      validateFieldRealTime(name, value);
       // Reset sub-kategori jika kategori berubah
       if (name === 'kategori') {
         setFormData((prev) => ({
           ...prev,
           subKategori: '',
         }));
+        // Clear error untuk subKategori juga
+        clearFieldError('subKategori');
+      }
+
+      // Clear error untuk subKategori ketika dipilih
+      if (name === 'subKategori' && value) {
+        clearFieldError('subKategori');
       }
     }
   };
-
   const createTicketNotification = async (ticketData, userInfo) => {
     try {
       const adminId = getAdminId();
       const message = generateNotificationMessage('new_ticket', {
-        ticketTitle: userInfo.judul
+        ticketTitle: userInfo.judul,
       });
-      
+
       await createNotificationAPI({
         recipient_id: adminId,
-        type: "custom_notification",
-        subject: "Custom Notification", 
-        content: "This is a custom notification."
+        type: 'custom_notification',
+        subject: 'Custom Notification',
+        content: 'This is a custom notification.',
       });
-      
-      console.log('Ticket notification created successfully for admin:', adminId);
+
+      console.log(
+        'Ticket notification created successfully for admin:',
+        adminId
+      );
     } catch (error) {
       console.error('Failed to create ticket notification:', error);
       // Jangan throw error, biarkan proses create ticket tetap berhasil
     }
   };
 
-  // FIXED VALIDATION FUNCTION
+  // UPDATED VALIDATION FUNCTION
   const validateForm = () => {
     const errors = [];
+    const fieldErrors = {};
 
     // Basic validation
     if (!formData.judul || formData.judul.trim() === '') {
       errors.push('Judul laporan harus diisi');
+      fieldErrors.judul = true;
     } else if (formData.judul.trim().length < 5) {
       errors.push('Judul laporan minimal 5 karakter');
+      fieldErrors.judul = true;
     }
 
     if (!formData.isi || formData.isi.trim() === '') {
       errors.push('Deskripsi harus diisi');
+      fieldErrors.isi = true;
     } else if (formData.isi.trim().length < 10) {
       errors.push('Deskripsi minimal 10 karakter');
+      fieldErrors.isi = true;
     }
 
     if (!formData.kategori || formData.kategori === '') {
       errors.push('Kategori harus dipilih');
+      fieldErrors.kategori = true;
     }
 
     if (!formData.subKategori || formData.subKategori === '') {
       errors.push('Sub kategori harus dipilih');
+      fieldErrors.subKategori = true;
     }
 
     // Validate identity fields only if not anonymous
     if (!formData.anonymous) {
       if (!formData.nama || formData.nama.trim() === '') {
         errors.push('Nama lengkap harus diisi');
+        fieldErrors.nama = true;
       }
 
       if (!formData.nim || formData.nim.trim() === '') {
         errors.push('NIM/NIK harus diisi');
+        fieldErrors.nim = true;
       } else if (!/^[0-9]+$/.test(formData.nim.trim())) {
         errors.push('NIM/NIK harus berupa angka');
+        fieldErrors.nim = true;
       }
 
       if (!formData.anonymous && !user?.email) {
         if (!formData.email || formData.email.trim() === '') {
           errors.push('Email harus diisi');
+          fieldErrors.email = true;
         } else {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(formData.email.trim())) {
             errors.push('Format email tidak valid');
+            fieldErrors.email = true;
           }
         }
       }
     }
 
     if (errors.length > 0) {
-      setError(errors.join('. '));
+      setFieldErrors(fieldErrors);
+      showToast(errors[0], 'error', 4000); // Tampilkan error pertama sebagai toast
       return false;
     }
 
-    setError('');
+    setFieldErrors({});
     return true;
   };
 
-  // FIXED SUBMIT FUNCTION
-  // Modified handleSubmit function in Form.jsx
-  // This version always sends email data, regardless of anonymous status
-
+  // UPDATED SUBMIT FUNCTION with file upload
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -282,11 +424,11 @@ function Form() {
       console.log('Validation failed');
       return;
     }
-  
+
     setIsLoading(true);
-  
+
     try {
-      // Prepare clean data for API - IMPORTANT: Field names must match API expectations
+      // Prepare clean data for API
       const submitData = {
         // Core ticket data
         judul: formData.judul.trim(),
@@ -295,9 +437,7 @@ function Form() {
         sub_category_id: parseInt(formData.subKategori),
         anonymous: formData.anonymous, // Will be converted to string in API
 
-        // MODIFIED: Always send actual email data
-        // For anonymous: send empty strings for identity fields except email
-        // For non-anonymous: send all actual data
+        // Identity data based on anonymous status
         nama: formData.anonymous ? '' : (formData.nama || '').trim(),
         nim: formData.anonymous ? '' : (formData.nim || '').trim(),
         prodi: formData.anonymous ? '' : (formData.prodi || '').trim(),
@@ -307,26 +447,28 @@ function Form() {
         email: (formData.email || '').trim(), // Always send actual email
         no_hp: formData.anonymous ? '' : (formData.noHp || '').trim(),
       };
-  
-      console.log("Prepared Submit Data:", submitData);
-  
+
+      console.log('Prepared Submit Data:', submitData);
+      console.log('Selected File:', selectedFile);
+
       // Final validation before API call
       if (isNaN(submitData.category_id) || submitData.category_id <= 0) {
         throw new Error('Kategori tidak valid');
       }
-  
+
       if (
         isNaN(submitData.sub_category_id) ||
         submitData.sub_category_id <= 0
       ) {
         throw new Error('Sub kategori tidak valid');
       }
-  
-      console.log("Calling API with data:", submitData);
-  
-      const response = await submitTicketAPI(submitData);
-      console.log("API Response:", response);
-  
+
+      console.log('Calling API with data:', submitData);
+
+      // Call API with file support
+      const response = await submitTicketAPI(submitData, selectedFile);
+      console.log('API Response:', response);
+
       // Extract ticket ID from response
       let ticketId = null;
       if (response?.data?.id) {
@@ -336,22 +478,25 @@ function Form() {
       } else if (response?.ticket?.id) {
         ticketId = response.ticket.id;
       }
-  
-      // *** TAMBAHAN: Create notification setelah ticket berhasil dibuat ***
+
+      // Create notification setelah ticket berhasil dibuat
       if (ticketId) {
         await createTicketNotification(response.data || response, {
           nama: submitData.nama,
           email: submitData.email,
-          judul: submitData.judul
+          judul: submitData.judul,
         });
       }
-  
+
       setSubmittedTicketId(ticketId);
       setIsSubmitted(true);
       setIsLoading(false);
       setRetryCount(0);
-  
-      // Reset form
+      showToast(
+        'Laporan berhasil dikirim! Anda akan dialihkan...',
+        'success',
+        4000
+      );
       setFormData({
         jenis: 'PENGADUAN',
         judul: '',
@@ -368,7 +513,13 @@ function Form() {
         noHp: '',
         anonymous: false,
       });
-  
+
+      // Reset file
+      setSelectedFile(null);
+      setFilePreview(null);
+      const fileInput = document.getElementById('file-input');
+      if (fileInput) fileInput.value = '';
+
       // Navigate after delay
       setTimeout(() => {
         if (ticketId) {
@@ -380,10 +531,10 @@ function Form() {
     } catch (error) {
       console.error('Submit Error Details:', error);
       setIsLoading(false);
-  
+
       // Enhanced error handling
-      let errorMessage = "Terjadi kesalahan saat mengirim laporan";
-  
+      let errorMessage = 'Terjadi kesalahan saat mengirim laporan';
+
       if (
         error.message.includes('Validation failed') ||
         error.message.includes('validation')
@@ -420,12 +571,14 @@ function Form() {
       } else {
         errorMessage = error.message || errorMessage;
       }
-  
+
       setError(errorMessage);
       setRetryCount((prev) => prev + 1);
+
+      // TAMBAHKAN ini:
+      showToast(errorMessage, 'error', 5000);
     }
   };
-  
 
   // Retry submit function
   const handleRetrySubmit = () => {
@@ -542,7 +695,11 @@ function Form() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <Label htmlFor="nama" required={!formData.anonymous}>
+              <Label
+                htmlFor="nama"
+                required={!formData.anonymous}
+                className={fieldErrors.nama ? 'text-red-600' : ''}
+              >
                 Nama Lengkap
               </Label>
               <TextField
@@ -552,13 +709,17 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan nama lengkap Anda"
                 disabled={formData.anonymous}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.nama ? 'border-red-500 bg-red-50' : ''}`}
                 required={!formData.anonymous}
               />
             </div>
 
             <div>
-              <Label htmlFor="nim" required={!formData.anonymous}>
+              <Label
+                htmlFor="nim"
+                required={!formData.anonymous}
+                className={fieldErrors.nim ? 'text-red-600' : ''}
+              >
                 NIM/NIK
               </Label>
               <TextField
@@ -568,13 +729,18 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan NIM atau NIK Anda"
                 disabled={formData.anonymous}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.nim ? 'border-red-500 bg-red-50' : ''}`}
                 required={!formData.anonymous}
               />
             </div>
 
             <div>
-              <Label htmlFor="prodi">Program Studi</Label>
+              <Label
+                htmlFor="prodi"
+                className={fieldErrors.prodi ? 'text-red-600' : ''}
+              >
+                Program Studi
+              </Label>
               <TextField
                 id="prodi"
                 name="prodi"
@@ -582,12 +748,17 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan program studi Anda"
                 disabled={formData.anonymous}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.prodi ? 'border-red-500 bg-red-50' : ''}`}
               />
             </div>
 
             <div>
-              <Label htmlFor="semester">Semester</Label>
+              <Label
+                htmlFor="semester"
+                className={fieldErrors.semester ? 'text-red-600' : ''}
+              >
+                Semester
+              </Label>
               <Select
                 id="semester"
                 name="semester"
@@ -598,12 +769,16 @@ function Form() {
                 )}
                 placeholder="Pilih Semester"
                 disabled={formData.anonymous}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.semester ? 'border-red-500 bg-red-50' : ''}`}
               />
             </div>
 
             <div>
-              <Label htmlFor="email" required={!formData.anonymous}>
+              <Label
+                htmlFor="email"
+                required={!formData.anonymous}
+                className={fieldErrors.email ? 'text-red-600' : ''}
+              >
                 Email
               </Label>
               <TextField
@@ -613,17 +788,21 @@ function Form() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Masukkan email Anda"
-                disabled={formData.anonymous || !!user?.email} // Disabled
+                disabled={formData.anonymous || !!user?.email}
                 className={`mt-1 ${
                   formData.anonymous || !!user?.email ? 'bg-gray-100' : ''
-                }`}
+                } ${fieldErrors.email ? 'border-red-500 bg-red-50' : ''}`}
                 required={!formData.anonymous}
               />
-              {user?.email && !formData.anonymous}
             </div>
 
             <div>
-              <Label htmlFor="noHp">Nomor HP</Label>
+              <Label
+                htmlFor="noHp"
+                className={fieldErrors.noHp ? 'text-red-600' : ''}
+              >
+                Nomor HP
+              </Label>
               <TextField
                 id="noHp"
                 name="noHp"
@@ -631,7 +810,7 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan nomor HP Anda"
                 disabled={formData.anonymous}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.noHp ? 'border-red-500 bg-red-50' : ''}`}
               />
             </div>
           </div>
@@ -660,7 +839,11 @@ function Form() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <Label htmlFor="kategori" required>
+              <Label
+                htmlFor="kategori"
+                required
+                className={fieldErrors.kategori ? 'text-red-600' : ''}
+              >
                 Kategori
               </Label>
               <Select
@@ -670,13 +853,17 @@ function Form() {
                 onChange={handleChange}
                 options={kategoriOptions}
                 placeholder="Pilih Kategori"
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.kategori ? 'border-red-500 bg-red-50' : ''}`}
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="subKategori" required>
+              <Label
+                htmlFor="subKategori"
+                required
+                className={fieldErrors.subKategori ? 'text-red-600' : ''}
+              >
                 Sub Kategori
               </Label>
               <Select
@@ -687,14 +874,18 @@ function Form() {
                 options={getSubCategoriesForCategory(formData.kategori)}
                 placeholder="Pilih Sub Kategori"
                 disabled={!formData.kategori}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.subKategori ? 'border-red-500 bg-red-50' : ''}`}
                 required
               />
             </div>
           </div>
 
           <div className="mb-6">
-            <Label htmlFor="judul" required>
+            <Label
+              htmlFor="judul"
+              required
+              className={fieldErrors.judul ? 'text-red-600' : ''}
+            >
               Judul Laporan
             </Label>
             <TextField
@@ -703,13 +894,17 @@ function Form() {
               value={formData.judul}
               onChange={handleChange}
               placeholder="Berikan judul yang singkat dan jelas (minimal 5 karakter)"
-              className="mt-1"
+              className={`mt-1 ${fieldErrors.judul ? 'border-red-500 bg-red-50' : ''}`}
               required
             />
           </div>
 
           <div className="mb-6">
-            <Label htmlFor="isi" required>
+            <Label
+              htmlFor="isi"
+              required
+              className={fieldErrors.isi ? 'text-red-600' : ''}
+            >
               Deskripsi
             </Label>
             <TextArea
@@ -719,11 +914,12 @@ function Form() {
               onChange={handleChange}
               placeholder="Sampaikan secara detail keluhan atau laporan Anda... (minimal 10 karakter)"
               rows={6}
-              className="mt-1"
+              className={`mt-1 ${fieldErrors.isi ? 'border-red-500 bg-red-50' : ''}`}
               required
             />
           </div>
 
+          {/* UPDATED Lampiran Section dengan preview */}
           <div className="mb-6">
             <Label>
               Lampiran (opsional)
@@ -731,9 +927,13 @@ function Form() {
                 Maksimal 5 MB (.jpg, .png, .pdf)
               </span>
             </Label>
+
             <div className="mt-2">
               <div className="flex items-center justify-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                <label
+                  htmlFor="file-input"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <svg
                       className="w-8 h-8 mb-3 text-gray-400"
@@ -757,13 +957,100 @@ function Form() {
                     </p>
                   </div>
                   <input
+                    id="file-input"
                     type="file"
                     className="hidden"
                     accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={handleFileChange}
                   />
                 </label>
               </div>
             </div>
+
+            {/* File Preview */}
+            {selectedFile && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    {/* File Icon */}
+                    <div className="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-lg">
+                      {selectedFile.type.startsWith('image/') ? (
+                        <svg
+                          className="w-6 h-6 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-6 h-6 text-red-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                          />
+                        </svg>
+                      )}
+                    </div>
+
+                    {/* File Info */}
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {selectedFile.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {selectedFile.type} •{' '}
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Remove Button */}
+                  <button
+                    type="button"
+                    onClick={removeFile}
+                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Image Preview */}
+                {filePreview && selectedFile.type.startsWith('image/') && (
+                  <div className="mt-3">
+                    <img
+                      src={filePreview}
+                      alt="Preview"
+                      className="max-w-full h-48 object-contain border border-gray-200 rounded-lg bg-gray-50"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <button
@@ -839,11 +1126,23 @@ function Form() {
                 <li>• Pilih kategori dan sub kategori yang sesuai</li>
                 <li>• Jika anonymous, data identitas tidak perlu diisi</li>
                 <li>• Pastikan email valid untuk mendapat notifikasi</li>
+                <li>• Lampiran opsional: JPG, PNG, PDF maksimal 5MB</li>
               </ul>
             </div>
           </div>
         </div>
       </form>
+      {toast && (
+        <div className="fixed top-4 right-4 z-50">
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            duration={toast.duration}
+            isVisible={true}
+            onClose={hideToast}
+          />
+        </div>
+      )}
     </div>
   );
 }

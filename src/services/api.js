@@ -1,5 +1,3 @@
-// src/services/api.js - FIXED VERSION with proper logout API
-
 const BASE_URL = 'https://apibackendtio.mynextskill.com/api';
 
 // Helper function untuk retry logic
@@ -751,11 +749,7 @@ export const logoutAPI = async () => {
   }
 };
 
-// Submit Ticket API
-// Modified submitTicketAPI function in api.js
-// This version always sends the actual email, regardless of anonymous status
-
-export const submitTicketAPI = async (formData) => {
+export const submitTicketAPI = async (formData, file = null) => {
   try {
     const token = localStorage.getItem('token');
 
@@ -765,6 +759,7 @@ export const submitTicketAPI = async (formData) => {
 
     console.log('=== API SUBMISSION DEBUG ===');
     console.log('Input form data:', formData);
+    console.log('Input file:', file);
 
     // Validate required fields before sending
     if (!formData.judul || formData.judul.trim() === '') {
@@ -786,51 +781,125 @@ export const submitTicketAPI = async (formData) => {
       throw new Error('Sub kategori harus dipilih');
     }
 
-    const requestBody = {
-      judul: formData.judul.trim(),
-      deskripsi: formData.deskripsi.trim(),
-      category_id: parseInt(formData.category_id),
-      sub_category_id: parseInt(formData.sub_category_id),
-      anonymous: formData.anonymous ? '1' : '0',
-    };
+    // Validate file if provided
+    if (file) {
+      const allowedTypes = [
+        'image/png',
+        'image/jpeg',
+        'image/jpg',
+        'application/pdf',
+      ];
+      const maxSize = 5 * 1024 * 1024; // 5MB
 
-    // MODIFIED: Always send actual data, but for anonymous users,
-    // send empty/default values except for email
-    if (formData.anonymous) {
-      // For anonymous users: send default values but keep actual email
-      requestBody.nama = 'Anonim';
-      requestBody.nim = '0';
-      requestBody.prodi = 'Anonim';
-      requestBody.semester = '0';
-      requestBody.email = formData.email ? formData.email.trim() : ''; // Keep actual email
-      requestBody.no_hp = '0';
-    } else {
-      // For non-anonymous users: send all actual data
-      requestBody.nama = formData.nama ? formData.nama.trim() : '';
-      requestBody.nim = formData.nim ? formData.nim.trim() : '';
-      requestBody.prodi = formData.prodi ? formData.prodi.trim() : '';
-      requestBody.semester = formData.semester
-        ? formData.semester.toString()
-        : '';
-      requestBody.email = formData.email ? formData.email.trim() : '';
-      requestBody.no_hp = formData.no_hp ? formData.no_hp.trim() : '';
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error(
+          'Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.'
+        );
+      }
+
+      if (file.size > maxSize) {
+        throw new Error('Ukuran file terlalu besar. Maksimal 5MB.');
+      }
     }
 
-    console.log('Final request body:', requestBody);
+    // Prepare request data
+    let requestBody;
+    let headers = {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    };
+
+    // Use FormData for file upload
+    if (file) {
+      requestBody = new FormData();
+
+      // Add all form fields
+      requestBody.append('judul', formData.judul.trim());
+      requestBody.append('deskripsi', formData.deskripsi.trim());
+      requestBody.append('category_id', parseInt(formData.category_id));
+      requestBody.append('sub_category_id', parseInt(formData.sub_category_id));
+      requestBody.append('anonymous', formData.anonymous ? '1' : '0');
+
+      // Add identity fields based on anonymous status
+      if (formData.anonymous) {
+        requestBody.append('nama', 'Anonim');
+        requestBody.append('nim', '0');
+        requestBody.append('prodi', 'Anonim');
+        requestBody.append('semester', '0');
+        requestBody.append(
+          'email',
+          formData.email ? formData.email.trim() : ''
+        );
+        requestBody.append('no_hp', '0');
+      } else {
+        requestBody.append('nama', formData.nama ? formData.nama.trim() : '');
+        requestBody.append('nim', formData.nim ? formData.nim.trim() : '');
+        requestBody.append(
+          'prodi',
+          formData.prodi ? formData.prodi.trim() : ''
+        );
+        requestBody.append(
+          'semester',
+          formData.semester ? formData.semester.toString() : ''
+        );
+        requestBody.append(
+          'email',
+          formData.email ? formData.email.trim() : ''
+        );
+        requestBody.append(
+          'no_hp',
+          formData.no_hp ? formData.no_hp.trim() : ''
+        );
+      }
+
+      // Add file with key "lampiran"
+      requestBody.append('lampiran', file);
+
+      // Don't set Content-Type for FormData, browser will set it automatically
+    } else {
+      // Use JSON for requests without files
+      headers['Content-Type'] = 'application/json';
+
+      const requestData = {
+        judul: formData.judul.trim(),
+        deskripsi: formData.deskripsi.trim(),
+        category_id: parseInt(formData.category_id),
+        sub_category_id: parseInt(formData.sub_category_id),
+        anonymous: formData.anonymous ? '1' : '0',
+      };
+
+      if (formData.anonymous) {
+        requestData.nama = 'Anonim';
+        requestData.nim = '0';
+        requestData.prodi = 'Anonim';
+        requestData.semester = '0';
+        requestData.email = formData.email ? formData.email.trim() : '';
+        requestData.no_hp = '0';
+      } else {
+        requestData.nama = formData.nama ? formData.nama.trim() : '';
+        requestData.nim = formData.nim ? formData.nim.trim() : '';
+        requestData.prodi = formData.prodi ? formData.prodi.trim() : '';
+        requestData.semester = formData.semester
+          ? formData.semester.toString()
+          : '';
+        requestData.email = formData.email ? formData.email.trim() : '';
+        requestData.no_hp = formData.no_hp ? formData.no_hp.trim() : '';
+      }
+
+      requestBody = JSON.stringify(requestData);
+    }
+
+    console.log('Making API request to:', `${BASE_URL}/tickets`);
+    console.log('Request headers:', headers);
 
     const options = {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       mode: 'cors',
       credentials: 'omit',
-      body: JSON.stringify(requestBody),
+      body: requestBody,
     };
 
-    console.log('Making API request to:', `${BASE_URL}/tickets`);
     const response = await retryFetch(`${BASE_URL}/tickets`, options, 3);
 
     console.log('Response status:', response.status);
@@ -1719,6 +1788,19 @@ export const markNotificationAsReadAPI = async (notificationId) => {
       throw new Error('Token tidak ditemukan. Silakan login ulang.');
     }
 
+    const response = await retryFetch(
+      `${BASE_URL}/notifications/${notificationId}/read`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        mode: 'cors',
+        credentials: 'omit',
+      }
+    );
     const response = await retryFetch(
       `${BASE_URL}/notifications/${notificationId}/read`,
       {
