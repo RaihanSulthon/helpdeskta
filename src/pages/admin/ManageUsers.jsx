@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import SearchBar from '../../components/SearchBar';
 import Navigation from '../../components/Navigation';
 import { useNavigate } from 'react-router-dom';
+import {
+  makeAPICall,
+  getUserStatisticsAPI,
+  getAllUsersAPI,
+} from '../../services/api';
 
 const ManageUsers = () => {
   const navigate = useNavigate();
@@ -85,6 +90,33 @@ const ManageUsers = () => {
   );
 
   const BASE_URL = 'https://apibackendtio.mynextskill.com/api';
+  // Add this at the top after BASE_URL constant
+  const makeAPICall = async (endpoint) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Token tidak ditemukan. Silakan login ulang.');
+      }
+
+      const response = await fetch(`${BASE_URL}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('API call error:', error);
+      throw error;
+    }
+  };
 
   const formatLastTicket = (dateString) => {
     if (!dateString) return 'Tidak ada tiket';
@@ -106,105 +138,6 @@ const ManageUsers = () => {
       });
     } catch (error) {
       return 'Tanggal tidak valid';
-    }
-  };
-
-  const makeAPICall = async (endpoint, options = {}) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('Token tidak ditemukan. Silakan login ulang.');
-    }
-
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      mode: 'cors',
-      credentials: 'omit',
-      ...options,
-    });
-
-    if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      try {
-        const errorResult = await response.json();
-        errorMessage = errorResult.message || errorMessage;
-      } catch (parseError) {
-        console.warn('Could not parse error response:', parseError);
-      }
-      throw new Error(errorMessage);
-    }
-
-    return response.json();
-  };
-
-  const fetchStatistics = async () => {
-    try {
-      const result = await makeAPICall('/users/statistics');
-      if (result.status === 'success') {
-        setStatistics(result.data);
-      }
-    } catch (error) {
-      console.error('Error fetching statistics:', error);
-    }
-  };
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const apiFilters = {
-        page: pagination.current_page,
-        per_page: pagination.per_page,
-      };
-      const queryString = new URLSearchParams(apiFilters).toString();
-      const endpoint = `/users?${queryString}`;
-      const result = await makeAPICall(endpoint);
-
-      if (result.status === 'success') {
-        let usersData = [];
-        let totalCount = 0;
-        let totalPages = 1;
-
-        if (result.data?.data) {
-          usersData = result.data.data;
-          totalCount = result.data.total || usersData.length;
-          totalPages = Math.ceil(totalCount / pagination.per_page);
-        } else if (Array.isArray(result.data)) {
-          usersData = result.data;
-          totalCount = usersData.length;
-          totalPages = Math.ceil(totalCount / pagination.per_page);
-        }
-
-        const usersWithCheckbox = usersData.map((user) => ({
-          ...user,
-          isChecked: false,
-          registered: new Date(user.created_at).toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          }),
-          avatar: `/api/placeholder/40/40`,
-        }));
-
-        setUsers(usersWithCheckbox);
-        setOriginalUsers(usersWithCheckbox);
-
-        setPagination((prev) => ({
-          ...prev,
-          total: totalCount,
-          total_pages: totalPages,
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setError(error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -328,6 +261,118 @@ const ManageUsers = () => {
     }
   };
 
+  const fetchStatistics = async () => {
+    try {
+      const statisticsData = await getUserStatisticsAPI();
+      setStatistics(statisticsData);
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+    }
+  };
+
+  // Tambahkan function getLastTicketDate sebelum fetchUsers
+  const getLastTicketDate = async (userId) => {
+    try {
+      let result;
+      try {
+        result = await makeAPICall(`/users/${userId}/tickets`);
+      } catch (error) {
+        try {
+          result = await makeAPICall(`/tickets?user_id=${userId}`);
+        } catch (error2) {
+          const allTicketsResult = await makeAPICall('/tickets');
+          if (allTicketsResult.status === 'success') {
+            const allTickets =
+              allTicketsResult.data?.tickets || allTicketsResult.data || [];
+            result = {
+              status: 'success',
+              data: {
+                tickets: allTickets.filter(
+                  (ticket) => ticket.user_id === userId
+                ),
+              },
+            };
+          } else {
+            throw new Error('Could not fetch tickets');
+          }
+        }
+      }
+
+      let ticketsData = [];
+      if (result.status === 'success' && result.data?.tickets) {
+        ticketsData = result.data.tickets;
+      } else if (result.status === 'success' && Array.isArray(result.data)) {
+        ticketsData = result.data;
+      } else if (Array.isArray(result)) {
+        ticketsData = result;
+      }
+
+      if (ticketsData.length === 0) {
+        return null;
+      }
+
+      // Sort tickets by created_at descending (latest first)
+      const sortedTickets = ticketsData.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+
+      return sortedTickets[0].created_at;
+    } catch (error) {
+      console.error('Error fetching last ticket date for user:', userId, error);
+      return null;
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const {
+        users: usersWithCheckbox,
+        totalCount,
+        totalPages,
+      } = await getAllUsersAPI(pagination);
+
+      // Filter non-admin users first
+      const nonAdminUsers = usersWithCheckbox.filter(
+        (user) => user.role !== 'admin'
+      );
+
+      // Process each user with async operations for last ticket date
+      const usersWithLastTicketDate = await Promise.all(
+        nonAdminUsers.map(async (user) => {
+          // Get last ticket date for this specific user
+          const userLastTicketDate = await getLastTicketDate(user.id);
+
+          return {
+            ...user,
+            // Get ticket counts from ticket_statistics
+            totalTickets: user.ticket_statistics?.total || 0,
+            newTickets: user.ticket_statistics?.open || 0,
+            inProgressTickets: user.ticket_statistics?.in_progress || 0,
+            closedTickets: user.ticket_statistics?.closed || 0,
+            lastTicketDate: userLastTicketDate, // ✅ Now properly defined
+          };
+        })
+      );
+
+      setUsers(usersWithLastTicketDate);
+      setOriginalUsers(usersWithLastTicketDate);
+
+      setPagination((prev) => ({
+        ...prev,
+        total: totalCount,
+        total_pages: totalPages,
+      }));
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
   }, [pagination.current_page]);
@@ -423,7 +468,9 @@ const ManageUsers = () => {
                           <p className="text-sm text-gray-600">
                             Last Ticket:{' '}
                             <span className="font-medium text-gray-900">
-                              {user.registered}
+                              {user.lastTicketDate
+                                ? formatDate(user.lastTicketDate)
+                                : 'Belum ada tiket'}
                             </span>
                           </p>
                         </div>
@@ -501,7 +548,7 @@ const ManageUsers = () => {
                               />
                             </svg>
                             <span className="text-blue-600 font-semibold">
-                              {user.tickets_statistics?.new || 0}
+                              {user.tickets_statistics?.open || 0}
                             </span>
                           </div>
 

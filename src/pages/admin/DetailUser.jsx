@@ -16,6 +16,7 @@ const DetailManage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [ticketsPerPage] = useState(10);
   const [feedbackCounts, setFeedbackCounts] = useState({});
+  const [loadingFeedbackCounts, setLoadingFeedbackCounts] = useState(false);
 
   const BASE_URL = 'https://apibackendtio.mynextskill.com/api';
 
@@ -157,6 +158,32 @@ const DetailManage = () => {
     }
   };
 
+  // Tambahkan function ini setelah fetchUserTickets
+  const loadFeedbackCounts = async (tickets) => {
+    try {
+      setLoadingFeedbackCounts(true);
+      const counts = {};
+
+      for (const ticket of tickets) {
+        try {
+          const data = await getTicketDetailAPI(ticket.id);
+          counts[ticket.id] = {
+            total: data.chat_count || 0,
+            unread: data.unread_chat_count || 0,
+          };
+        } catch (error) {
+          counts[ticket.id] = { total: 0, unread: 0 };
+        }
+      }
+
+      setFeedbackCounts(counts);
+    } catch (error) {
+      console.error('Error loading feedback counts:', error);
+    } finally {
+      setLoadingFeedbackCounts(false);
+    }
+  };
+
   // Get ticket counts by status
   const getTicketCounts = () => {
     const total = tickets.length;
@@ -214,6 +241,16 @@ const DetailManage = () => {
       );
     }
   }, [userId]);
+
+  useEffect(() => {
+    fetchUserTickets();
+  }, [userId, currentPage, activeFilter]);
+
+  useEffect(() => {
+    if (tickets.length > 0) {
+      loadFeedbackCounts(tickets);
+    }
+  }, [tickets]);
 
   // Helper functions for styling - DIPERBAIKI
   const getStatusBorderColor = (category) => {

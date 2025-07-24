@@ -2025,3 +2025,95 @@ export const uploadAttachmentAPI = async (ticketId, message, file) => {
     throw new Error(error.message || 'Gagal mengupload attachment');
   }
 };
+
+export const makeAPICall = async (endpoint, options = {}) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('Token tidak ditemukan. Silakan login ulang.');
+  }
+
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    mode: 'cors',
+    credentials: 'omit',
+    ...options,
+  });
+
+  if (!response.ok) {
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    try {
+      const errorResult = await response.json();
+      errorMessage = errorResult.message || errorMessage;
+    } catch (parseError) {
+      console.warn('Could not parse error response:', parseError);
+    }
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+};
+
+// Tambahkan ke api.js
+export const getUserStatisticsAPI = async () => {
+  try {
+    const result = await makeAPICall('/users/statistics');
+    if (result.status === 'success') {
+      return result.data;
+    }
+    throw new Error('Failed to fetch statistics');
+  } catch (error) {
+    console.error('Error fetching statistics:', error);
+    throw new Error(error.message || 'Gagal mengambil statistik pengguna');
+  }
+};
+
+// Get All Users API
+export const getAllUsersAPI = async (pagination) => {
+  try {
+    const apiFilters = {
+      page: pagination.current_page,
+      per_page: pagination.per_page,
+    };
+    const queryString = new URLSearchParams(apiFilters).toString();
+    const endpoint = `/users?${queryString}`;
+    const result = await makeAPICall(endpoint);
+
+    if (result.status === 'success') {
+      let usersData = [];
+      let totalCount = 0;
+      let totalPages = 1;
+
+      if (result.data?.data) {
+        usersData = result.data.data;
+        totalCount = result.data.total || usersData.length;
+        totalPages = Math.ceil(totalCount / pagination.per_page);
+      } else if (Array.isArray(result.data)) {
+        usersData = result.data;
+        totalCount = usersData.length;
+        totalPages = Math.ceil(totalCount / pagination.per_page);
+      }
+
+      const usersWithCheckbox = usersData.map((user) => ({
+        ...user,
+        isChecked: false,
+        registered: new Date(user.created_at).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }),
+        avatar: `/api/placeholder/40/40`,
+      }));
+
+      return { users: usersWithCheckbox, totalCount, totalPages };
+    }
+    throw new Error('Failed to fetch users');
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    throw new Error(error.message || 'Gagal mengambil data pengguna');
+  }
+};
