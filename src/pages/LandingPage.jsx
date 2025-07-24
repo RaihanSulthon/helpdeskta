@@ -115,6 +115,14 @@ function LandingPage() {
           {/* Right section - Login/User Menu */}
           {!isLoggedIn ? (
             <div className="flex space-x-4">
+              <div className="flex space-x-4">
+              <Button
+                className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-6 py-2 font-medium"
+                onClick={() => navigate('/signup')}
+              >
+                Sign Up
+              </Button>
+            </div>
               <Button
                 className="bg-white text-red-600 hover:bg-gray-100 px-6 py-2 font-medium"
                 onClick={() => navigate('/login')}

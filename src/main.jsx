@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 import LandingPage from './pages/LandingPage';
 import Layout from './pages/Layout';
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -48,6 +49,7 @@ createRoot(document.getElementById('root')).render(
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/Signup" element={<Signup />} />
         {/* SPL-aware role-based redirect */}
         <Route path="/dashboard" element={<RoleBasedRedirect />} />
         {/* Student routes dengan SPL validation */}
