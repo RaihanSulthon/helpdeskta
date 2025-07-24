@@ -1801,19 +1801,6 @@ export const markNotificationAsReadAPI = async (notificationId) => {
         credentials: 'omit',
       }
     );
-    const response = await retryFetch(
-      `${BASE_URL}/notifications/${notificationId}/read`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        mode: 'cors',
-        credentials: 'omit',
-      }
-    );
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
