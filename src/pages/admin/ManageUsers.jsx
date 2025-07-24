@@ -179,35 +179,18 @@ const ManageUsers = () => {
   };
 
   const getDisplayedUsers = () => {
-    if (pagination.total > users.length) {
-      return users;
-    }
-
-    const filtered = getFilteredUsers(users);
-    const startIndex = (pagination.current_page - 1) * pagination.per_page;
-    const endIndex = startIndex + pagination.per_page;
-    return filtered.slice(startIndex, endIndex);
+    return users;
   };
 
   const displayedUsers = getDisplayedUsers();
 
   const getPaginationInfo = () => {
-    if (pagination.total > users.length) {
-      return {
-        totalItems: pagination.total,
-        totalPages: pagination.total_pages,
-        currentPage: pagination.current_page,
-        perPage: pagination.per_page,
-      };
-    } else {
-      const filtered = getFilteredUsers(users);
-      return {
-        totalItems: filtered.length,
-        totalPages: Math.ceil(filtered.length / pagination.per_page),
-        currentPage: pagination.current_page,
-        perPage: pagination.per_page,
-      };
-    }
+    return {
+      totalItems: pagination.total,
+      totalPages: pagination.total_pages,
+      currentPage: pagination.current_page,
+      perPage: pagination.per_page,
+    };
   };
 
   const paginationInfo = getPaginationInfo();
@@ -216,23 +199,11 @@ const ManageUsers = () => {
     try {
       setSearchQuery(query);
 
-      if (!query.trim()) {
-        setUsers(originalUsers);
-        setError('');
-        return;
-      }
+      // Reset ke halaman 1 saat search
+      setPagination((prev) => ({ ...prev, current_page: 1 }));
 
-      const queryLower = query.toLowerCase();
-      const searchFiltered = originalUsers.filter((user) => {
-        return (
-          user.name?.toLowerCase().includes(queryLower) ||
-          user.email?.toLowerCase().includes(queryLower) ||
-          user.nim?.toLowerCase().includes(queryLower) ||
-          user.prodi?.toLowerCase().includes(queryLower)
-        );
-      });
-
-      setUsers(searchFiltered);
+      // Reload data dengan search query
+      await fetchUsers();
     } catch (error) {
       console.error('Search error:', error);
       setError('Gagal melakukan pencarian: ' + error.message);
@@ -245,8 +216,9 @@ const ManageUsers = () => {
     setError('');
   };
 
-  const handlePageChange = (page) => {
+  const handlePageChange = async (page) => {
     setPagination((prev) => ({ ...prev, current_page: page }));
+    await fetchUsers();
   };
 
   const handlePreviousPage = () => {
@@ -323,64 +295,10 @@ const ManageUsers = () => {
     }
   };
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const {
-        users: usersWithCheckbox,
-        totalCount,
-        totalPages,
-      } = await getAllUsersAPI(pagination);
-
-      // Filter non-admin users first
-      const nonAdminUsers = usersWithCheckbox.filter(
-        (user) => user.role !== 'admin'
-      );
-
-      // Process each user with async operations for last ticket date
-      const usersWithLastTicketDate = await Promise.all(
-        nonAdminUsers.map(async (user) => {
-          // Get last ticket date for this specific user
-          const userLastTicketDate = await getLastTicketDate(user.id);
-
-          return {
-            ...user,
-            // Get ticket counts from ticket_statistics
-            totalTickets: user.ticket_statistics?.total || 0,
-            newTickets: user.ticket_statistics?.open || 0,
-            inProgressTickets: user.ticket_statistics?.in_progress || 0,
-            closedTickets: user.ticket_statistics?.closed || 0,
-            lastTicketDate: userLastTicketDate, // ✅ Now properly defined
-          };
-        })
-      );
-
-      setUsers(usersWithLastTicketDate);
-      setOriginalUsers(usersWithLastTicketDate);
-
-      setPagination((prev) => ({
-        ...prev,
-        total: totalCount,
-        total_pages: totalPages,
-      }));
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchUsers();
-  }, [pagination.current_page]);
-
-  useEffect(() => {
     fetchStatistics();
-    fetchUsers();
-  }, []);
+  }, []); // useEffect untuk initial load
 
   useEffect(() => {
     const currentFilters = {
@@ -391,6 +309,143 @@ const ManageUsers = () => {
     };
     saveFiltersToStorage(currentFilters);
   }, [statusFilter, roleFilter, selectedDateRange, customDateRange]);
+
+  const calculateFavoriteCategory = (userTickets) => {
+    if (!userTickets || userTickets.length === 0) {
+      return { favorite_category: null, favorite_category_count: 0 };
+    }
+
+    const categoryCount = {};
+    userTickets.forEach((ticket) => {
+      const category = ticket.category?.name || ticket.categoryType || 'Umum';
+      categoryCount[category] = (categoryCount[category] || 0) + 1;
+    });
+
+    let maxCount = 0;
+    let favoriteCategory = null;
+
+    Object.entries(categoryCount).forEach(([category, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        favoriteCategory = category;
+      }
+    });
+
+    return {
+      favorite_category: favoriteCategory,
+      favorite_category_count: maxCount,
+    };
+  };
+
+  const getUserTickets = async (userId) => {
+    try {
+      let result;
+      try {
+        result = await makeAPICall(`/users/${userId}/tickets`);
+      } catch (error) {
+        try {
+          result = await makeAPICall(`/tickets?user_id=${userId}`);
+        } catch (error2) {
+          const allTicketsResult = await makeAPICall('/tickets');
+          if (allTicketsResult.status === 'success') {
+            const allTickets =
+              allTicketsResult.data?.tickets || allTicketsResult.data || [];
+            result = {
+              status: 'success',
+              data: {
+                tickets: allTickets.filter(
+                  (ticket) => ticket.user_id === userId
+                ),
+              },
+            };
+          } else {
+            throw new Error('Could not fetch tickets');
+          }
+        }
+      }
+
+      let ticketsData = [];
+      if (result.status === 'success' && result.data?.tickets) {
+        ticketsData = result.data.tickets;
+      } else if (result.status === 'success' && Array.isArray(result.data)) {
+        ticketsData = result.data;
+      } else if (Array.isArray(result)) {
+        ticketsData = result;
+      }
+
+      return ticketsData;
+    } catch (error) {
+      console.error(`Error fetching tickets for user ${userId}:`, error);
+      return [];
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const apiParams = {
+        ...pagination,
+        search: searchQuery.trim() || undefined,
+      };
+
+      const {
+        users: usersWithCheckbox,
+        totalCount,
+        totalPages,
+      } = await getAllUsersAPI(apiParams);
+
+      // Filter non-admin users first
+      const nonAdminUsers = usersWithCheckbox.filter(
+        (user) => user.role !== 'admin'
+      );
+
+      const filteredTotalCount = nonAdminUsers.length;
+      const filteredTotalPages = Math.ceil(
+        filteredTotalCount / pagination.per_page
+      );
+
+      // Process each user with async operations for last ticket date AND favorite category
+      const usersWithLastTicketDate = await Promise.all(
+        nonAdminUsers.map(async (user) => {
+          // Get last ticket date for this specific user
+          const userLastTicketDate = await getLastTicketDate(user.id);
+
+          // Get user tickets to calculate favorite category
+          const userTickets = await getUserTickets(user.id);
+          const favoriteData = calculateFavoriteCategory(userTickets);
+
+          return {
+            ...user,
+            // Get ticket counts from ticket_statistics
+            totalTickets: user.ticket_statistics?.total || 0,
+            newTickets: user.ticket_statistics?.open || 0,
+            inProgressTickets: user.ticket_statistics?.in_progress || 0,
+            closedTickets: user.ticket_statistics?.closed || 0,
+            lastTicketDate: userLastTicketDate,
+            // Add favorite category data
+            favorite_category: favoriteData.favorite_category,
+            favorite_category_count: favoriteData.favorite_category_count,
+          };
+        })
+      );
+
+      setUsers(usersWithLastTicketDate);
+      setOriginalUsers(usersWithLastTicketDate);
+
+      setPagination((prev) => ({
+        ...prev,
+        total: filteredTotalCount,
+        total_pages: filteredTotalPages,
+      }));
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -431,7 +486,8 @@ const ManageUsers = () => {
 
       <div className="bg-white rounded-lg shadow min-h-[600px]">
         <Navigation topOffset="">
-          <div className="flex items-center gap-4 pt-6">
+          <div className="flex items-center justify-between pt-6">
+            {/* Search Bar - Left Side */}
             <div className="w-80">
               <SearchBar
                 placeholder="Cari nama, email, NIM, atau prodi mahasiswa..."
@@ -443,6 +499,98 @@ const ManageUsers = () => {
                 debounceMs={150}
               />
             </div>
+
+            {/* Pagination - Right Side */}
+            {pagination.total > 0 && (
+              <div className="flex items-center space-x-2">
+                {/* Previous Button */}
+                <button
+                  onClick={handlePreviousPage}
+                  disabled={paginationInfo.currentPage === 1}
+                  className=" shadow-xl w-8 h-8 flex items-center justify-center text-gray-400 bg-white border border-gray-300 rounded hover:bg-gray-100 hover:scale-105 duration-300 transition-all disabled:cursor-not-allowed"
+                >
+                  <svg
+                    width="8"
+                    height="16"
+                    viewBox="0 0 8 16"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M7.5 2L0.5 8L7.5 14"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+
+                {/* Page Numbers */}
+                {Array.from(
+                  { length: Math.min(5, paginationInfo.totalPages) },
+                  (_, i) => {
+                    let startPage = Math.max(1, paginationInfo.currentPage - 2);
+                    let endPage = Math.min(
+                      paginationInfo.totalPages,
+                      startPage + 4
+                    );
+
+                    if (endPage - startPage < 4) {
+                      startPage = Math.max(1, endPage - 4);
+                    }
+
+                    const page = startPage + i;
+                    if (page > endPage) return null;
+
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`w-8 h-8 flex items-center justify-center text-sm font-medium rounded border ${
+                          page === paginationInfo.currentPage
+                            ? 'bg-red-200 text-black border-gray-400 rounded-lg hover:bg-red-500 hover:text-white hover:scale-105 hover:shadow-xl transition-all duration-300'
+                            : 'bg-white text-black border-gray-400 hover:bg-gray-100 hover:scale-105 hover:shadow-xl transition-all duration-300'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  }
+                )}
+
+                {/* Next Button */}
+                <button
+                  onClick={handleNextPage}
+                  disabled={
+                    paginationInfo.currentPage === paginationInfo.totalPages
+                  }
+                  className=" shadow-xl w-8 h-8 flex items-center justify-center text-gray-400 bg-white border border-gray-300 rounded hover:bg-gray-100 hover:scale-105 duration-300 transition-all disabled:cursor-not-allowed"
+                >
+                  <svg
+                    width="8"
+                    height="16"
+                    viewBox="0 0 8 16"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M0.5 14L7.5 8L0.5 2"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+
+                {/* Page Info */}
+                <span className="text-sm text-gray-500 ml-4">
+                  Halaman {paginationInfo.currentPage} /{' '}
+                  {paginationInfo.totalPages}
+                </span>
+              </div>
+            )}
           </div>
         </Navigation>
 
@@ -466,7 +614,7 @@ const ManageUsers = () => {
                         </h3>
                         <div className="text-right">
                           <p className="text-sm text-gray-600">
-                            Last Ticket:{' '}
+                            Tiket Terakhir:{' '}
                             <span className="font-medium text-gray-900">
                               {user.lastTicketDate
                                 ? formatDate(user.lastTicketDate)
@@ -479,7 +627,7 @@ const ManageUsers = () => {
                       <div className="flex items-center space-x-4">
                         <div
                           className="flex items-center space-x-2 text-sm text-gray-600"
-                          title="Tanggal"
+                          title="Tanggal Registrasi"
                         >
                           <svg
                             width="17"
@@ -639,131 +787,6 @@ const ManageUsers = () => {
             )}
           </div>
         </div>
-
-        {/* FORCE PAGINATION - Hapus kondisi totalPages > 1 untuk testing */}
-        {!loading && displayedUsers.length > 0 && (
-          <div className="mt-6 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-b-lg">
-            <div className="flex flex-1 justify-between sm:hidden">
-              <button
-                onClick={handlePreviousPage}
-                disabled={paginationInfo.currentPage === 1}
-                className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <button
-                onClick={handleNextPage}
-                disabled={
-                  paginationInfo.currentPage === paginationInfo.totalPages
-                }
-                className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
-
-            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Showing{' '}
-                  <span className="font-medium">
-                    {(paginationInfo.currentPage - 1) * paginationInfo.perPage +
-                      1}
-                  </span>{' '}
-                  to{' '}
-                  <span className="font-medium">
-                    {Math.min(
-                      paginationInfo.currentPage * paginationInfo.perPage,
-                      paginationInfo.totalItems
-                    )}
-                  </span>{' '}
-                  of{' '}
-                  <span className="font-medium">
-                    {paginationInfo.totalItems}
-                  </span>{' '}
-                  results
-                </p>
-              </div>
-
-              <div>
-                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm">
-                  <button
-                    onClick={handlePreviousPage}
-                    disabled={paginationInfo.currentPage === 1}
-                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-
-                  {Array.from(
-                    { length: Math.min(5, paginationInfo.totalPages) },
-                    (_, i) => {
-                      let startPage = Math.max(
-                        1,
-                        paginationInfo.currentPage - 2
-                      );
-                      let endPage = Math.min(
-                        paginationInfo.totalPages,
-                        startPage + 4
-                      );
-
-                      if (endPage - startPage < 4) {
-                        startPage = Math.max(1, endPage - 4);
-                      }
-
-                      const page = startPage + i;
-                      if (page > endPage) return null;
-
-                      return (
-                        <button
-                          key={page}
-                          onClick={() => handlePageChange(page)}
-                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                            page === paginationInfo.currentPage
-                              ? 'z-10 bg-red-600 text-white'
-                              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      );
-                    }
-                  )}
-
-                  <button
-                    onClick={handleNextPage}
-                    disabled={
-                      paginationInfo.currentPage === paginationInfo.totalPages
-                    }
-                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                </nav>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
