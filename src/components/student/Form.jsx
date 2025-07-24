@@ -118,7 +118,7 @@ function Form() {
         }
       }
     };
-  
+
     loadUserProfile();
   }, [user, formData.anonymous]);
 
@@ -293,14 +293,6 @@ function Form() {
 
       // Reset identity fields jika switch ke anonim
       if (name === 'anonymous' && checked) {
-        newFormData.nama = '';
-        newFormData.nim = '';
-        newFormData.prodi = '';
-        newFormData.semester = '';
-        newFormData.noHp = '';
-        if (!user?.email) {
-          newFormData.email = '';
-        }
         // Clear semua field errors untuk identity fields
         setFieldErrors((prev) => {
           const newErrors = { ...prev };
@@ -624,33 +616,6 @@ function Form() {
     }
   };
 
-  // Success Alert Component
-  const SuccessAlert = () => (
-    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <strong className="font-bold">🎉 Berhasil! </strong>
-          <span className="block sm:inline">
-            Laporan Anda telah berhasil dikirim
-            {submittedTicketId ? ` dengan ID #${submittedTicketId}` : ''}.
-          </span>
-        </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={handleViewTicket}
-            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
-          >
-            Lihat {submittedTicketId ? 'Detail' : 'Dashboard'}
-          </button>
-        </div>
-      </div>
-      <div className="mt-2 text-sm">
-        Anda akan dialihkan ke halaman{' '}
-        {submittedTicketId ? 'detail tiket' : 'dashboard'} dalam 3 detik...
-      </div>
-    </div>
-  );
-
   // Error Alert Component
   const ErrorAlert = () => (
     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
@@ -738,7 +703,9 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan nama lengkap Anda"
                 disabled={formData.anonymous}
-                className={`mt-1 ${fieldErrors.nama ? 'border-red-500 bg-red-50' : ''}`}
+                className={`mt-1 ${
+                  formData.anonymous ? 'bg-gray-100 text-gray-500' : ''
+                } ${fieldErrors.nama ? 'border-red-500 bg-red-50' : ''}`}
                 required={!formData.anonymous}
               />
             </div>
@@ -758,7 +725,9 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan NIM atau NIK Anda"
                 disabled={formData.anonymous}
-                className={`mt-1 ${fieldErrors.nim ? 'border-red-500 bg-red-50' : ''}`}
+                className={`mt-1 ${
+                  formData.anonymous ? 'bg-gray-100 text-gray-500' : ''
+                } ${fieldErrors.nim ? 'border-red-500 bg-red-50' : ''}`}
                 required={!formData.anonymous}
               />
             </div>
@@ -777,7 +746,9 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan program studi Anda"
                 disabled={formData.anonymous}
-                className={`mt-1 ${fieldErrors.prodi ? 'border-red-500 bg-red-50' : ''}`}
+                className={`mt-1 ${
+                  formData.anonymous ? 'bg-gray-100 text-gray-500' : ''
+                } ${fieldErrors.prodi ? 'border-red-500 bg-red-50' : ''}`}
               />
             </div>
 
@@ -839,7 +810,9 @@ function Form() {
                 onChange={handleChange}
                 placeholder="Masukkan nomor HP Anda"
                 disabled={formData.anonymous}
-                className={`mt-1 ${fieldErrors.noHp ? 'border-red-500 bg-red-50' : ''}`}
+                className={`mt-1 ${
+                  formData.anonymous ? 'bg-gray-100 text-gray-500' : ''
+                } ${fieldErrors.noHp ? 'border-red-500 bg-red-50' : ''}`}
               />
             </div>
           </div>
