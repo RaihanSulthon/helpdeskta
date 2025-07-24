@@ -12,6 +12,7 @@ import {
   submitTicketAPI,
   getCategoriesAPI,
   createNotificationAPI,
+  getUserProfileAPI,
 } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { getAdminId, generateNotificationMessage } from '../../utils/userUtils';
@@ -88,10 +89,38 @@ function Form() {
     nim: '',
     prodi: '',
     semester: '',
-    email: user?.email || '',
+    email: '',
     noHp: '',
     anonymous: false,
   });
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (user && !formData.anonymous) {
+        try {
+          const userProfile = await getUserProfileAPI();
+          setFormData((prev) => ({
+            ...prev,
+            email: userProfile.email || prev.email,
+            nama: userProfile.name || prev.nama,
+            nim: userProfile.nim || prev.nim,
+            prodi: userProfile.prodi || prev.prodi,
+            noHp: userProfile.no_hp || prev.noHp,
+          }));
+        } catch (error) {
+          console.error('Error loading user profile:', error);
+          // Fallback to user data from auth context if API fails
+          setFormData((prev) => ({
+            ...prev,
+            email: user.email || prev.email,
+            nama: user.name || prev.nama,
+          }));
+        }
+      }
+    };
+  
+    loadUserProfile();
+  }, [user, formData.anonymous]);
 
   useEffect(() => {
     if (user && !formData.anonymous) {

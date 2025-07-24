@@ -45,10 +45,6 @@ export const AuthProvider = ({ children }) => {
         email: result.user.email,
         name: result.user.name,
         role: result.user.role,
-        // Add additional fields if they exist
-        nim: result.user.nim || null,
-        prodi: result.user.prodi || null,
-        semester: result.user.semester || null,
       };
 
       // Simpan data user, token, dan role secara terpisah

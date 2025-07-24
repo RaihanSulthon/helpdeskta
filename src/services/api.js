@@ -703,6 +703,43 @@ export const loginAPI = async (email, password) => {
   }
 };
 
+export const getUserProfileAPI = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login ulang.');
+    }
+
+    const options = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      mode: 'cors',
+      credentials: 'omit',
+    };
+
+    const response = await retryFetch(`${BASE_URL}/auth/profile`, options);
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Gagal mengambil profil user');
+    }
+
+    return result.data.user;
+  } catch (error) {
+    console.error('Get User Profile API Error:', error);
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error(
+        'Tidak dapat terhubung ke server. Pastikan server berjalan dan coba lagi.'
+      );
+    }
+    throw new Error(error.message || 'Terjadi kesalahan saat mengambil profil user');
+  }
+};
+
 // Logout API
 export const logoutAPI = async () => {
   try {
