@@ -1105,7 +1105,7 @@ export const getFAQCategoriesAPI = async () => {
     }
 
     const result = await response.json();
-    console.log('Get FAQ Categories API response:', result);
+    // console.log('Get FAQ Categories API response:', result);
 
     // Extract categories from response
     if (result?.data && Array.isArray(result.data)) {
@@ -1233,7 +1233,7 @@ export const getCategoriesAPI = async () => {
     }
 
     const result = await response.json();
-    console.log('Categories API response:', result);
+    // console.log('Categories API response:', result);
 
     // Handle the response structure: { status, message, data: [...] }
     const categories = result.data || result || [];

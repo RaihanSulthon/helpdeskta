@@ -126,9 +126,7 @@ const DetailTicket = () => {
         noHp: data.no_hp || '',
         anonymous: data.anonymous === true || data.anonymous === 1,
       };
-
-      console.log('Transformed attachments:', transformedData.attachments); // Debug log
-
+      
       setTicketData(transformedData);
       setTotalFeedbackCount(data.chat_count || 0);
       setNewFeedbackCount(data.unread_chat_count || 0);
