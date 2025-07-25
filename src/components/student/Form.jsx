@@ -616,70 +616,8 @@ function Form() {
     }
   };
 
-  // Error Alert Component
-  const ErrorAlert = () => (
-    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <strong className="font-bold">❌ Error! </strong>
-          <span className="block mt-1">{error}</span>
-
-          {error.includes('server') && (
-            <div className="mt-2 text-sm bg-red-50 p-2 rounded">
-              <strong>Tips:</strong> Server mungkin sedang maintenance. Coba
-              lagi dalam beberapa menit.
-            </div>
-          )}
-
-          {error.includes('koneksi') && (
-            <div className="mt-2 text-sm bg-red-50 p-2 rounded">
-              <strong>Tips:</strong>
-              <ul className="list-disc list-inside mt-1">
-                <li>Periksa koneksi internet Anda</li>
-                <li>Refresh halaman dan coba lagi</li>
-                <li>Gunakan koneksi yang lebih stabil</li>
-              </ul>
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col space-y-2 ml-4">
-          {retryCount < 3 && (
-            <button
-              onClick={handleRetrySubmit}
-              disabled={isLoading}
-              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              {isLoading ? 'Mencoba...' : 'Coba Lagi'}
-            </button>
-          )}
-          <button
-            onClick={() => setError('')}
-            className="text-red-500 hover:text-red-700 text-lg font-bold"
-          >
-            ×
-          </button>
-        </div>
-      </div>
-
-      {retryCount >= 3 && (
-        <div className="mt-3 p-2 bg-red-50 rounded text-sm">
-          <strong>Sudah mencoba {retryCount} kali.</strong> Silakan:
-          <ul className="list-disc list-inside mt-1">
-            <li>Periksa koneksi internet</li>
-            <li>Refresh halaman</li>
-            <li>Hubungi administrator jika masalah berlanjut</li>
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <div className="bg-white rounded-lg w-full max-w-full px-4">
-      {isSubmitted && <SuccessAlert />}
-      {error && <ErrorAlert />}
-
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Bagian 1: Identitas Pelapor */}
         <div>
