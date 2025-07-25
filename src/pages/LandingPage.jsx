@@ -175,13 +175,13 @@ function LandingPage() {
           {!isLoggedIn ? (
             <div className="flex space-x-4">
               <div className="flex space-x-4">
-              <Button
-                className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-6 py-2 font-medium"
-                onClick={() => navigate('/signup')}
-              >
-                Sign Up
-              </Button>
-            </div>
+                <Button
+                  className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-6 py-2 font-medium"
+                  onClick={() => navigate('/signup')}
+                >
+                  Sign Up
+                </Button>
+              </div>
               <Button
                 className="bg-white text-red-600 hover:bg-gray-100 px-6 py-2 font-medium"
                 onClick={() => navigate('/login')}
@@ -191,12 +191,6 @@ function LandingPage() {
             </div>
           ) : (
             <div className="flex items-center space-x-4">
-              <Button
-                className="px-4 py-2 bg-white text-red-600 hover:bg-gray-100 rounded font-medium"
-                onClick={handleDashboardClick}
-              >
-                Dashboard
-              </Button>
               <div className="text-white text-sm">
                 Welcome,{' '}
                 <span className="font-medium capitalize">
@@ -209,7 +203,13 @@ function LandingPage() {
                 </span>
               </div>
               <Button
-                className="bg-white text-red-600 hover:bg-gray-100 px-4 py-2 font-medium"
+                className="px-4 py-2 bg-white text-red-600 hover:bg-gray-100 rounded font-medium transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                onClick={handleDashboardClick}
+              >
+                Dashboard
+              </Button>
+              <Button
+                className="bg-white text-red-600 hover:bg-gray-100 px-4 py-2 font-medium transition-all duration-300 hover:scale-105 hover:shadow-xl"
                 onClick={handleLogout}
               >
                 Logout
@@ -256,19 +256,19 @@ function LandingPage() {
               ) : (
                 <>
                   <Button
-                    className="bg-white text-red-600 hover:bg-gray-100 px-8 py-3 text-lg font-medium"
+                    className="bg-red-600 text-white hover:bg-white hover:text-red-600 border-2 border-white transition-all duration-300 hover:scale-105 hover:shadow-xl  px-8 py-3 text-lg font-medium"
                     onClick={handleDashboardClick}
                   >
                     Go to Dashboard
                   </Button>
                   <Button
-                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
+                    className="border-2 border-white text-white transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
                     onClick={() => navigate('/laak-info')}
                   >
                     LAAK Info Portal
                   </Button>
                   <Button
-                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
+                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium transition-all duration-300 hover:scale-105 hover:shadow-xl"
                     onClick={() =>
                       navigate(
                         userRole === 'student'
@@ -286,13 +286,15 @@ function LandingPage() {
             </div>
           </div>
 
-          {/* Right Content - Placeholder */}
-          <div className="hidden md:block w-1/2">
-            <div className="bg-white bg-opacity-10 rounded-lg p-8 h-80">
-              {/* Placeholder for image or illustration */}
-              <div className="w-full h-full bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                <span className="text-white text-lg">Image Placeholder</span>
-              </div>
+          {/* Right Content - App Logo */}
+          <div className="md:block w-1/2">
+            {/* App Logo */}
+            <div className="w-full ml-4 h-full flex items-center justify-center">
+              <img
+                src={appLogo}
+                alt="Tell-Us App Logo"
+                className="w-80 h-80 object-contain"
+              />
             </div>
           </div>
         </div>
@@ -527,13 +529,18 @@ function LandingPage() {
 
           {/* View All FAQ Button */}
           {faqData.length > 0 && (
+            // Di section Asked Us, button "Lihat Semua FAQ"
             <div className="text-center mt-8">
               <Button
-                className="bg-white text-red-600 hover:bg-gray-100 px-6 py-3 font-medium"
+                className="bg-red-600 text-white border-2 hover:bg-white hover:text-red-600 transition-all duration-300 hover:scale-105 hover:shadow-xl border-white px-8 py-3 text-lg font-medium"
                 onClick={() => {
-                  if (isLoggedIn) {
+                  const currentRole = getUserRole();
+                  if (currentRole === 'admin') {
+                    navigate('/admin/askedus');
+                  } else if (currentRole === 'student') {
                     navigate('/student/askedus');
                   } else {
+                    // Jika belum login atau role tidak dikenal, arahkan ke login
                     navigate('/login');
                   }
                 }}
@@ -542,270 +549,6 @@ function LandingPage() {
               </Button>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Reach Us Section */}
-      <div id="reach-us-section" className="bg-red-600 py-16">
-        <div className="container mx-auto px-4">
-          {/* Section Title */}
-          <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              Reach Us
-            </h2>
-            <p className="text-white text-lg opacity-90">
-              Lihat Contact Person Layanan yang kami sediakan.
-            </p>
-          </div>
-
-          {/* White Container */}
-          <div className="bg-white rounded-2xl p-8 max-w-6xl mx-auto">
-            {/* Contact Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              {/* Contact Card 1 */}
-              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex items-start space-x-4">
-                <div className="w-20 h-20 bg-red-500 rounded-lg flex-shrink-0"></div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg mb-2">
-                    Dr. ARFIVE GANDHI, S.T., M.T.I.
-                  </h3>
-                  <div className="text-sm text-gray-600 mb-2">
-                    Bidang Keahlian
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <span className="bg-pink-100 text-gray-700 px-3 py-1 rounded-full text-xs">
-                      Keamanan Informasi, Auditor Sistem Informasi, Penelitian
-                      Kualitatif Keamanan Informasi
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
-                      </svg>
-                      arfivegandhi@telkomuniversity.ac.id
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                      TULT Lt 5
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Card 2 */}
-              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex items-start space-x-4">
-                <div className="w-20 h-20 bg-red-500 rounded-lg flex-shrink-0"></div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg mb-2">
-                    MAHENDRA DWIFEBRI PURBOLAKSONO, S.Kom., M.Kom.
-                  </h3>
-                  <div className="text-sm text-gray-600 mb-2">
-                    Bidang Keahlian
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <span className="bg-pink-100 text-gray-700 px-3 py-1 rounded-full text-xs">
-                      Data Mining / Text Mining, Auditor Sistem Informasi
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
-                      </svg>
-                      mahendradp@telkomuniversity.ac.id
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                      TULT Lt 5
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Card 3 - Blurred */}
-              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex items-start space-x-4 opacity-30 blur-sm">
-                <div className="w-20 h-20 bg-red-500 rounded-lg flex-shrink-0"></div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg mb-2">
-                    Dr. NAMA DOSEN, S.T., M.T.
-                  </h3>
-                  <div className="text-sm text-gray-600 mb-2">
-                    Bidang Keahlian
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <span className="bg-pink-100 text-gray-700 px-3 py-1 rounded-full text-xs">
-                      Bidang Keahlian Dosen
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
-                      </svg>
-                      email@telkomuniversity.ac.id
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                      TULT Lt 5
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Card 4 - Blurred */}
-              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex items-start space-x-4 opacity-30 blur-sm">
-                <div className="w-20 h-20 bg-red-500 rounded-lg flex-shrink-0"></div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg mb-2">
-                    Dr. NAMA DOSEN, S.T., M.T.
-                  </h3>
-                  <div className="text-sm text-gray-600 mb-2">
-                    Bidang Keahlian
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <span className="bg-pink-100 text-gray-700 px-3 py-1 rounded-full text-xs">
-                      Bidang Keahlian Dosen
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
-                      </svg>
-                      email@telkomuniversity.ac.id
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                      TULT Lt 5
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* View All Button - Centered */}
-            <div className="text-center relative">
-              <Button
-                className="bg-red-600 text-white hover:bg-red-700 px-6 py-3 rounded-lg font-medium relative z-10"
-                onClick={() => navigate('/daftar-kontak')}
-              >
-                Lihat Semua Kontak Dosen
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
 
