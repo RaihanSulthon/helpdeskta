@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navigation from '../../components/Navigation';
 import Button from '../../components/Button';
+import { getTicketDetailAPI } from '../../services/api';
 
 const DetailManage = () => {
   const { userId } = useParams();
@@ -148,7 +149,8 @@ const DetailManage = () => {
         description: ticket.deskripsi || ticket.description || '',
         originalDate: ticket.created_at,
         priority: ticket.priority || 'medium',
-        hasUnreadChat: (ticket.unread_chat_count || 0) > 0,
+        chatCount: ticket.chat_count || 0,
+        unreadChatCount: ticket.unread_chat_count || 0,
       }));
 
       setTickets(transformedTickets);
@@ -163,19 +165,24 @@ const DetailManage = () => {
     try {
       setLoadingFeedbackCounts(true);
       const counts = {};
-
+  
       for (const ticket of tickets) {
+        // ✅ Gunakan API call seperti di StudentDashboard.jsx
         try {
           const data = await getTicketDetailAPI(ticket.id);
           counts[ticket.id] = {
-            total: data.chat_count || 0,
-            unread: data.unread_chat_count || 0,
+            total: data.chat_count || 0,  // ✅ Dari API response
+            unread: data.unread_chat_count || 0,  // ✅ Dari API response
           };
         } catch (error) {
-          counts[ticket.id] = { total: 0, unread: 0 };
+          console.error(`Error loading feedback for ticket ${ticket.id}:`, error);
+          counts[ticket.id] = {
+            total: ticket.chatCount || 0,  // ✅ Fallback ke data lokal
+            unread: ticket.unreadChatCount || 0,  // ✅ Fallback ke data lokal
+          };
         }
       }
-
+  
       setFeedbackCounts(counts);
     } catch (error) {
       console.error('Error loading feedback counts:', error);
@@ -242,9 +249,9 @@ const DetailManage = () => {
     }
   }, [userId]);
 
-  useEffect(() => {
-    fetchUserTickets();
-  }, [userId, currentPage, activeFilter]);
+  // useEffect(() => {
+  //   fetchUserTickets();
+  // }, [userId, currentPage, activeFilter]);
 
   useEffect(() => {
     if (tickets.length > 0) {
