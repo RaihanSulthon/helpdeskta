@@ -1,39 +1,39 @@
 // StatusBadge.jsx - Komponen untuk badge status pesan baru
-import React from "react";
+import React from 'react';
 
-const StatusBadge = ({ hasNewMessages, status, className = "" }) => {
+const StatusBadge = ({ hasNewMessages, status, className = '' }) => {
   if (!hasNewMessages) return null;
 
   // GANTI fungsi getStatusConfig dengan:
   const getStatusConfig = (status) => {
     switch (status) {
-      case "Tiket Baru":
+      case 'Tiket Baru':
         return {
-          bgColor: "bg-blue-500",
-          textColor: "text-white",
-          text: "baru", // TETAP "baru"
-          pulseColor: "animate-pulse",
+          bgColor: 'bg-blue-500',
+          textColor: 'text-white',
+          text: 'baru', // TETAP "baru"
+          pulseColor: 'animate-pulse',
         };
-      case "Sedang Diproses":
+      case 'Sedang Diproses':
         return {
-          bgColor: "bg-orange-500",
-          textColor: "text-white",
-          text: "baru", // GANTI dari "update" ke "baru"
-          pulseColor: "animate-pulse",
+          bgColor: 'bg-orange-500',
+          textColor: 'text-white',
+          text: 'baru', // GANTI dari "update" ke "baru"
+          pulseColor: 'animate-pulse',
         };
-      case "Selesai":
+      case 'Selesai':
         return {
-          bgColor: "bg-green-500",
-          textColor: "text-white",
-          text: "baru", // GANTI dari "selesai" ke "baru"
-          pulseColor: "animate-pulse",
+          bgColor: 'bg-green-500',
+          textColor: 'text-white',
+          text: 'baru', // GANTI dari "selesai" ke "baru"
+          pulseColor: 'animate-pulse',
         };
       default:
         return {
-          bgColor: "bg-gray-500",
-          textColor: "text-white",
-          text: "baru",
-          pulseColor: "animate-pulse",
+          bgColor: 'bg-gray-500',
+          textColor: 'text-white',
+          text: 'baru',
+          pulseColor: 'animate-pulse',
         };
     }
   };
@@ -61,67 +61,67 @@ const FilterButton = ({
   // Fungsi untuk mendapatkan warna garis bawah berdasarkan status
   const getActiveBorderColor = (status) => {
     switch (status) {
-      case "Semua":
-        return "border-blue-600";
-      case "Tiket Baru":
-        return "border-blue-600"; // 🔧 CHANGED: Konsisten dengan badge biru
-      case "Sedang Diproses":
-        return "border-orange-600";
-      case "Selesai":
-        return "border-green-600";
+      case 'Semua':
+        return 'border-blue-600';
+      case 'Tiket Baru':
+        return 'border-blue-600'; // 🔧 CHANGED: Konsisten dengan badge biru
+      case 'Sedang Diproses':
+        return 'border-orange-600';
+      case 'Selesai':
+        return 'border-green-600';
       default:
-        return "border-blue-600";
+        return 'border-blue-600';
     }
   };
 
   const getHoverBorderColor = (status) => {
     switch (status) {
-      case "Semua":
-        return "hover:border-blue-300";
-      case "Tiket Baru":
-        return "hover:border-blue-300"; // 🔧 CHANGED: Konsisten
-      case "Sedang Diproses":
-        return "hover:border-orange-300";
-      case "Selesai":
-        return "hover:border-green-300";
+      case 'Semua':
+        return 'hover:border-blue-300';
+      case 'Tiket Baru':
+        return 'hover:border-blue-300'; // 🔧 CHANGED: Konsisten
+      case 'Sedang Diproses':
+        return 'hover:border-orange-300';
+      case 'Selesai':
+        return 'hover:border-green-300';
       default:
-        return "hover:border-blue-300";
+        return 'hover:border-blue-300';
     }
   };
 
   const getIconColor = (status, isActive) => {
     if (isActive) {
       switch (status) {
-        case "Semua":
-          return "text-blue-700";
-        case "Tiket Baru":
-          return "text-blue-700"; // 🔧 CHANGED: Konsisten dengan warna biru
-        case "Sedang Diproses":
-          return "text-orange-700";
-        case "Selesai":
-          return "text-green-700";
+        case 'Semua':
+          return 'text-blue-700';
+        case 'Tiket Baru':
+          return 'text-blue-700'; // 🔧 CHANGED: Konsisten dengan warna biru
+        case 'Sedang Diproses':
+          return 'text-orange-700';
+        case 'Selesai':
+          return 'text-green-700';
         default:
-          return "text-blue-700";
+          return 'text-blue-700';
       }
     } else {
-      return "text-gray-500";
+      return 'text-gray-500';
     }
   };
 
   const getStatusColor = (status, isActive) => {
     const baseColors = {
-      Semua: isActive ? "text-blue-600" : "text-blue-600",
-      "Tiket Baru": isActive ? "text-blue-600" : "text-blue-500", // 🔧 CHANGED
-      "Sedang Diproses": isActive ? "text-orange-600" : "text-orange-500",
-      Selesai: isActive ? "text-green-600" : "text-green-500",
+      Semua: isActive ? 'text-blue-600' : 'text-blue-600',
+      'Tiket Baru': isActive ? 'text-blue-600' : 'text-blue-500', // 🔧 CHANGED
+      'Sedang Diproses': isActive ? 'text-orange-600' : 'text-orange-500',
+      Selesai: isActive ? 'text-green-600' : 'text-green-500',
     };
-    return baseColors[status] || "text-blue-600";
+    return baseColors[status] || 'text-blue-600';
   };
 
   // Status icons (keeping existing)
   const getStatusIcon = (status) => {
     switch (status) {
-      case "Semua":
+      case 'Semua':
         return (
           <svg
             className="w-6 h-6"
@@ -138,7 +138,7 @@ const FilterButton = ({
             />
           </svg>
         );
-      case "Tiket Baru":
+      case 'Tiket Baru':
         return (
           <svg
             className="w-6 h-6"
@@ -155,7 +155,7 @@ const FilterButton = ({
             />
           </svg>
         );
-      case "Sedang Diproses":
+      case 'Sedang Diproses':
         return (
           <svg
             className="w-6 h-6"
@@ -172,7 +172,7 @@ const FilterButton = ({
             />
           </svg>
         );
-      case "Selesai":
+      case 'Selesai':
         return (
           <svg
             className="w-6 h-6"
@@ -216,9 +216,9 @@ const FilterButton = ({
             className={`font-semibold ${
               active
                 ? getStatusColor(statusType, true)
-                    .replace("text-", "text-")
-                    .replace("-600", "-700")
-                : "text-gray-700"
+                    .replace('text-', 'text-')
+                    .replace('-600', '-700')
+                : 'text-gray-700'
             }`}
           >
             {label}
@@ -230,7 +230,7 @@ const FilterButton = ({
           {/* Angka Count */}
           <div
             className={`text-2xl font-bold ${
-              active ? getStatusColor(statusType, true) : "text-gray-900"
+              active ? getStatusColor(statusType, true) : 'text-gray-900'
             }`}
           >
             {count.toLocaleString()}
@@ -257,27 +257,25 @@ const FilterButton = ({
 // Helper functions untuk border dan background (unchanged)
 const getStatusBorderColor = (category) => {
   switch (category) {
-    case "Tiket Baru":
-      return "border-l-blue-500 ml-5"; // 🔧 CHANGED: Konsisten dengan warna biru
-    case "Sedang Diproses":
-      return "border-l-orange-500 ml-5";
-    case "Selesai":
-      return "border-l-green-500 ml-5";
+    case 'Tiket Baru':
+      return 'border-l-blue-500 ml-5'; // 🔧 CHANGED: Konsisten dengan warna biru
+    case 'Sedang Diproses':
+      return 'border-l-orange-500 ml-5';
+    case 'Selesai':
+      return 'border-l-green-500 ml-5';
     default:
-      return "border-l-gray-300 ml-5";
+      return 'border-l-gray-300 ml-5';
   }
 };
 
 const getStatusBgColor = (category) => {
   switch (category) {
-    case "Tiket Baru":
-      return "bg-blue-50"; // 🔧 CHANGED: Konsisten dengan warna biru
-    case "Sedang Diproses":
-      return "bg-orange-50";
-    case "Selesai":
-      return "bg-green-50";
+    case 'Sedang Diproses':
+      return 'bg-orange-50';
+    case 'Selesai':
+      return 'bg-green-50';
     default:
-      return "bg-gray-50";
+      return 'bg-gray-50';
   }
 };
 
