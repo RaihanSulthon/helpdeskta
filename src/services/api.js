@@ -167,8 +167,6 @@ export const getFAQsAdminAPI = async (filters = {}) => {
     const queryString = queryParams.toString();
     const url = `${BASE_URL}/admin/faqs${queryString ? `?${queryString}` : ''}`;
 
-    console.log('Fetching Admin FAQs from:', url);
-
     const response = await retryFetch(url, {
       method: 'GET',
       headers: {

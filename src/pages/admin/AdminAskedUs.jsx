@@ -198,16 +198,17 @@ const AdminAskedUs = () => {
     ]
   );
 
-  // Load data on mount
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
+  
   useEffect(() => {
     if (categories.length > 0) {
       loadFAQs();
     }
-  }, [categories.length]);
+  }, [selectedCategory, loadFAQs, categories.length]);
+
+  // Load data on mount
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   const handleSearch = (query) => {
     setSearchQuery(query);
