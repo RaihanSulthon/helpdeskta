@@ -31,6 +31,8 @@ const ManageUsers = () => {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
       });
     } catch (error) {
       return 'Tanggal tidak valid';
@@ -179,7 +181,29 @@ const ManageUsers = () => {
   };
 
   const getDisplayedUsers = () => {
-    return users;
+    const keyword = searchQuery.trim().toLowerCase();
+
+    return getFilteredUsers(users).filter((user) => {
+      const nameMatch = user.name?.toLowerCase().includes(keyword);
+      const nimMatch = user.nim?.toLowerCase().includes(keyword);
+      const categoryMatch = user.favorite_category
+        ?.toLowerCase()
+        .includes(keyword);
+
+      // Konversi tanggal ke format yang bisa dicari
+      const createdAt = new Date(user.created_at);
+      const createdAtStr = createdAt
+        .toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+        .toLowerCase(); // contoh hasil: "23 juli 2025"
+
+      const createdAtMatch = createdAtStr.includes(keyword);
+
+      return nameMatch || nimMatch || createdAtMatch || categoryMatch;
+    });
   };
 
   const displayedUsers = getDisplayedUsers();
@@ -198,12 +222,7 @@ const ManageUsers = () => {
   const handleSearch = async (query) => {
     try {
       setSearchQuery(query);
-
-      // Reset ke halaman 1 saat search
       setPagination((prev) => ({ ...prev, current_page: 1 }));
-
-      // Reload data dengan search query
-      await fetchUsers();
     } catch (error) {
       console.error('Search error:', error);
       setError('Gagal melakukan pencarian: ' + error.message);
@@ -490,13 +509,13 @@ const ManageUsers = () => {
             {/* Search Bar - Left Side */}
             <div className="w-80">
               <SearchBar
-                placeholder="Cari nama, email, NIM, atau prodi mahasiswa..."
+                placeholder="Cari nim / nama mahasiswa"
                 onSearch={handleSearch}
                 onClear={handleClearSearch}
                 disabled={loading}
                 className="w-full"
                 initialValue={searchQuery}
-                debounceMs={150}
+                debounceMs={1000}
               />
             </div>
 
@@ -623,8 +642,15 @@ const ManageUsers = () => {
                           </p>
                         </div>
                       </div>
-
                       <div className="flex items-center space-x-4">
+                        {/* TAMBAH DIV NIM INI */}
+                        <div
+                          className="flex items-center space-x-2 text-sm text-gray-600"
+                          title="NIM"
+                        >
+                          <span>{user.nim || 'Tidak ada'}</span>
+                        </div>
+
                         <div
                           className="flex items-center space-x-2 text-sm text-gray-600"
                           title="Tanggal Registrasi"
@@ -669,7 +695,7 @@ const ManageUsers = () => {
                           <span>
                             {user.favorite_category || 'Belum ada'}
                             {user.favorite_category_count > 0 && (
-                              <span className="ml-1 text-blue-600 font-semibold">
+                              <span className="ml-1 text-black font-semibold">
                                 ({user.favorite_category_count})
                               </span>
                             )}
@@ -695,7 +721,7 @@ const ManageUsers = () => {
                                 strokeWidth="1.5"
                               />
                             </svg>
-                            <span className="text-blue-600 font-semibold">
+                            <span className="text-gray-500 font-semibold">
                               {user.tickets_statistics?.open || 0}
                             </span>
                           </div>
@@ -762,20 +788,18 @@ const ManageUsers = () => {
 
                       <button
                         onClick={() => handleViewDetail(user.id)}
-                        className="mt-2 border-2 border-gray-300 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
+                        className="mt-4 border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-lg rounded-lg flex items-center space-x-2  hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
                       >
                         <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
+                          width="20"
+                          height="20"
                           viewBox="0 0 20 20"
+                          fill="none"
                           xmlns="http://www.w3.org/2000/svg"
                         >
                           <path
-                            d="M2.22266 0.754883H17.7773C18.1864 0.754883 18.5183 0.892314 18.8135 1.1875C19.1087 1.4827 19.2456 1.81392 19.2451 2.22168V17.7773C19.2451 18.1868 19.1081 18.5193 18.8135 18.8145C18.5196 19.1088 18.1881 19.2456 17.7783 19.2451H2.22266C1.81318 19.2451 1.48172 19.1077 1.1875 18.8135C0.893414 18.5194 0.755487 18.1879 0.754883 17.7773V2.22266C0.754883 1.81362 0.891727 1.48181 1.18652 1.1875C1.4451 0.929365 1.73183 0.79235 2.07324 0.761719L2.22266 0.754883ZM1.4668 12.9775H6.16699C6.23726 12.9776 6.28445 12.9934 6.32715 13.0195C6.39907 13.0636 6.4598 13.1207 6.51172 13.1982V13.1973C6.88645 13.7867 7.37279 14.2674 7.9668 14.6309C8.58679 15.0102 9.26999 15.199 10 15.1982C10.73 15.1982 11.4132 15.0092 12.0332 14.6299C12.6275 14.2662 13.1143 13.7857 13.4893 13.1963C13.5412 13.1184 13.6017 13.0612 13.6729 13.0176C13.7147 12.992 13.7617 12.9773 13.8311 12.9775H18.5332V1.4668H1.4668V12.9775Z"
-                            strokeWidth="1.51"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                            d="M2.22222 20C1.61111 20 1.08815 19.7826 0.653333 19.3478C0.218519 18.913 0.000740741 18.3896 0 17.7778V2.22222C0 1.61111 0.217778 1.08815 0.653333 0.653333C1.08889 0.218519 1.61185 0.000740741 2.22222 0H17.7778C18.3889 0 18.9122 0.217778 19.3478 0.653333C19.7833 1.08889 20.0007 1.61185 20 2.22222V17.7778C20 18.3889 19.7826 18.9122 19.3478 19.3478C18.913 19.7833 18.3896 20.0007 17.7778 20H2.22222ZM10 14.4444C10.5926 14.4444 11.1389 14.2915 11.6389 13.9856C12.1389 13.6796 12.5463 13.277 12.8611 12.7778C12.9722 12.6111 13.1111 12.4767 13.2778 12.3744C13.4444 12.2722 13.6296 12.2215 13.8333 12.2222H17.7778V2.22222H2.22222V12.2222H6.16667C6.37037 12.2222 6.55556 12.2733 6.72222 12.3756C6.88889 12.4778 7.02778 12.6119 7.13889 12.7778C7.4537 13.2778 7.86111 13.6807 8.36111 13.9867C8.86111 14.2926 9.40741 14.4452 10 14.4444Z"
+                            fill="#ED1C24"
                           />
                         </svg>
                         <span>Lihat Semua</span>

@@ -95,7 +95,7 @@ const AdminAskedUs = () => {
   const [answerInput, setAnswerInput] = useState('');
   const [categoryInput, setCategoryInput] = useState(1);
   const [isPublicInput, setIsPublicInput] = useState(true);
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const debouncedSearchQuery = useDebounce(searchQuery, 2000);
 
   useEffect(() => {
     setPagination((prev) => ({ ...prev, current_page: 1 }));

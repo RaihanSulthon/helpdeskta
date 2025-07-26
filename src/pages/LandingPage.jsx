@@ -249,26 +249,29 @@ function LandingPage() {
                   >
                     Get Started
                   </Button>
-                  <Button className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium">
-                    Learn More
+                  <Button
+                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
+                    onClick={() => navigate('/laak-info')}
+                  >
+                    LAAK Info Portal
                   </Button>
                 </>
               ) : (
                 <>
                   <Button
-                    className="bg-red-600 text-white hover:bg-white hover:text-red-600 border-2 border-white transition-all duration-300 hover:scale-105 hover:shadow-xl  px-8 py-3 text-lg font-medium"
+                    className="bg-white text-red-600 hover:bg-gray-100 px-8 py-3 text-lg font-medium"
                     onClick={handleDashboardClick}
                   >
                     Go to Dashboard
                   </Button>
                   <Button
-                    className="border-2 border-white text-white transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
+                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
                     onClick={() => navigate('/laak-info')}
                   >
                     LAAK Info Portal
                   </Button>
                   <Button
-                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
                     onClick={() =>
                       navigate(
                         userRole === 'student'
