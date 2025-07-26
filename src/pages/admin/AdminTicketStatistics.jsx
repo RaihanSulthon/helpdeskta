@@ -289,6 +289,153 @@ const AdminTicketStatistics = () => {
     fetchStatistics({ period: 'minggu_ini' });
   };
 
+  // Export tickets data to CSV
+  const exportToCSV = async () => {
+    try {
+      setLoading(true);
+      
+      // Get all tickets data for export
+      const queryParams = new URLSearchParams();
+      
+      // Apply current filters
+      if (selectedPeriod !== 'custom') {
+        const now = new Date();
+        let startDate, endDate;
+
+        switch (selectedPeriod) {
+          case 'hari_ini':
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            break;
+          case 'minggu_ini':
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - now.getDay());
+            startDate = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate());
+            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            break;
+          case 'bulan_ini':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            break;
+          case 'tahun_ini':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+            break;
+        }
+
+        if (startDate && endDate) {
+          queryParams.append('startDate', startDate.toISOString().split('T')[0]);
+          queryParams.append('endDate', endDate.toISOString().split('T')[0]);
+        }
+      } else if (dateRange.date_from && dateRange.date_to) {
+        if (dateRange.date_from === dateRange.date_to) {
+          queryParams.append('startDate', `${dateRange.date_from} 00:00:00`);
+          queryParams.append('endDate', `${dateRange.date_to} 23:59:59`);
+        } else {
+          queryParams.append('startDate', `${dateRange.date_from} 00:00:00`);
+          queryParams.append('endDate', `${dateRange.date_to} 23:59:59`);
+        }
+      }
+      
+      // Get large number to include all tickets
+      queryParams.append('per_page', '10000');
+      queryParams.append('sortBy', 'created_at');
+      queryParams.append('sortOrder', 'desc');
+
+      const queryString = queryParams.toString();
+      const endpoint = `/tickets${queryString ? `?${queryString}` : ''}`;
+
+      const result = await makeAPICall(endpoint);
+      
+      if (result.status === 'success' && result.data && result.data.tickets) {
+        const tickets = result.data.tickets;
+        
+        // Create CSV headers
+        const headers = [
+          'ID Tiket',
+          'Judul',
+          'Pengirim',
+          'Email',
+          'NIM',
+          'Program Studi',
+          'Semester',
+          'No HP',
+          'Kategori',
+          'Sub Kategori',
+          'Status',
+          'Prioritas',
+          'Deskripsi',
+          'Tanggal Dibuat',
+          'Terakhir Diupdate',
+          'Anonymous'
+        ];
+        
+        // Create CSV rows
+        const csvRows = [headers.join(',')];
+        
+        tickets.forEach(ticket => {
+          const row = [
+            ticket.id || '',
+            `"${(ticket.judul || ticket.title || '').replace(/"/g, '""')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1 ? 'Anonymous' : `"${(ticket.nama || ticket.name || '').replace(/"/g, '""')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1 ? 'Anonymous' : `"${(ticket.email || '').replace(/"/g, '""')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1 ? 'Anonymous' : `"${(ticket.nim || '').replace(/"/g, '""')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1 ? 'Anonymous' : `"${(ticket.prodi || '').replace(/"/g, '""')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1 ? 'Anonymous' : `"${(ticket.semester || '').replace(/"/g, '""')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1 ? 'Anonymous' : `"${(ticket.no_hp || '').replace(/"/g, '""')}"`,
+            `"${(ticket.category?.name || '').replace(/"/g, '""')}"`,
+            `"${(ticket.sub_category?.name || '').replace(/"/g, '""')}"`,
+            `"${(ticket.status || '').replace(/"/g, '""')}"`,
+            `"${(ticket.priority || 'medium').replace(/"/g, '""')}"`,
+            `"${(ticket.deskripsi || ticket.description || '').replace(/"/g, '""')}"`,
+            `"${new Date(ticket.created_at).toLocaleString('id-ID')}"`,
+            `"${new Date(ticket.updated_at || ticket.created_at).toLocaleString('id-ID')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1 ? 'Ya' : 'Tidak'
+          ];
+          csvRows.push(row.join(','));
+        });
+        
+        // Create and download CSV file
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        
+        // Generate filename with current date and filter info
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        let filterStr = '';
+        
+        if (selectedPeriod !== 'custom') {
+          filterStr = selectedPeriod.replace('_', '-');
+        } else if (dateRange.date_from && dateRange.date_to) {
+          filterStr = `${dateRange.date_from}-to-${dateRange.date_to}`;
+        } else {
+          filterStr = 'all-data';
+        }
+        
+        link.setAttribute('download', `ticket-statistics-${filterStr}-${dateStr}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        // Show success message (you can replace this with a toast notification)
+        alert(`Data berhasil diekspor! ${tickets.length} tiket telah disimpan ke file CSV.`);
+      } else {
+        alert('Tidak ada data untuk diekspor.');
+      }
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      alert('Gagal mengekspor data: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Colors for charts
   const COLORS = [
     '#ef4444',
@@ -363,7 +510,11 @@ const AdminTicketStatistics = () => {
               Dashboard statistik dan laporan tiket
             </p>
           </div>
-          <button className="bg-white text-blue-900 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-2">
+          <button 
+            onClick={exportToCSV}
+            disabled={true}
+            className="bg-white text-blue-900 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-2 opacity-50 cursor-not-allowed"
+          >
             <svg
               className="w-4 h-4"
               fill="none"
@@ -432,7 +583,11 @@ const AdminTicketStatistics = () => {
             Dashboard statistik dan laporan tiket
           </p>
         </div>
-        <button className="bg-white text-blue-900 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-2">
+        <button 
+          onClick={exportToCSV}
+          disabled={loading}
+          className="bg-white text-blue-900 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           <svg
             className="w-4 h-4"
             fill="none"
@@ -446,7 +601,7 @@ const AdminTicketStatistics = () => {
               d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <span>Ekspor Data</span>
+          <span>{loading ? 'Mengekspor...' : 'Ekspor Data'}</span>
         </button>
       </div>
 
