@@ -20,7 +20,36 @@ const DetailManage = () => {
   const [loadingFeedbackCounts, setLoadingFeedbackCounts] = useState(false);
 
   const BASE_URL = 'https://apibackendtio.mynextskill.com/api';
+  const [favoriteCategory, setFavoriteCategory] = useState({
+    category: null,
+    count: 0,
+  });
+  const calculateFavoriteCategory = (userTickets) => {
+    if (!userTickets || userTickets.length === 0) {
+      return { category: null, count: 0 };
+    }
 
+    const categoryCount = {};
+    userTickets.forEach((ticket) => {
+      const category = ticket.categoryType || 'Umum';
+      categoryCount[category] = (categoryCount[category] || 0) + 1;
+    });
+
+    let maxCount = 0;
+    let favoriteCategory = null;
+
+    Object.entries(categoryCount).forEach(([category, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        favoriteCategory = category;
+      }
+    });
+
+    return {
+      category: favoriteCategory,
+      count: maxCount,
+    };
+  };
   // API call helper
   const makeAPICall = async (endpoint) => {
     try {
@@ -154,9 +183,14 @@ const DetailManage = () => {
       }));
 
       setTickets(transformedTickets);
+
+      // Hitung kategori favorit setelah tickets diset
+      const favoriteData = calculateFavoriteCategory(transformedTickets);
+      setFavoriteCategory(favoriteData);
     } catch (error) {
       console.error('Error fetching user tickets:', error);
       setTickets([]);
+      setFavoriteCategory({ category: null, count: 0 });
     }
   };
 
@@ -165,24 +199,27 @@ const DetailManage = () => {
     try {
       setLoadingFeedbackCounts(true);
       const counts = {};
-  
+
       for (const ticket of tickets) {
         // ✅ Gunakan API call seperti di StudentDashboard.jsx
         try {
           const data = await getTicketDetailAPI(ticket.id);
           counts[ticket.id] = {
-            total: data.chat_count || 0,  // ✅ Dari API response
-            unread: data.unread_chat_count || 0,  // ✅ Dari API response
+            total: data.chat_count || 0, // ✅ Dari API response
+            unread: data.unread_chat_count || 0, // ✅ Dari API response
           };
         } catch (error) {
-          console.error(`Error loading feedback for ticket ${ticket.id}:`, error);
+          console.error(
+            `Error loading feedback for ticket ${ticket.id}:`,
+            error
+          );
           counts[ticket.id] = {
-            total: ticket.chatCount || 0,  // ✅ Fallback ke data lokal
-            unread: ticket.unreadChatCount || 0,  // ✅ Fallback ke data lokal
+            total: ticket.chatCount || 0, // ✅ Fallback ke data lokal
+            unread: ticket.unreadChatCount || 0, // ✅ Fallback ke data lokal
           };
         }
       }
-  
+
       setFeedbackCounts(counts);
     } catch (error) {
       console.error('Error loading feedback counts:', error);
@@ -475,10 +512,10 @@ const DetailManage = () => {
                 {counts.selesai}
               </span>
             </div>
-            <div className="border-2 border-gray-400 shadow-gray-300 text-sm rounded-lg px-3 py-1  items-center space-x-2 transition-all duration-300 shadow-lg cursor-pointer w-auto justify-center">
-              <div className="flex items-center space-x-2 ">
+            <div className="border-2 border-gray-400 shadow-gray-300 text-sm rounded-lg px-3 py-1 items-center space-x-2 transition-all duration-300 shadow-lg cursor-pointer w-auto justify-center">
+              <div className="flex items-center space-x-2">
                 <svg
-                  className="w-4 h-4"
+                  className="ml-2"
                   width="20"
                   height="15"
                   viewBox="0 0 27 20"
@@ -495,9 +532,11 @@ const DetailManage = () => {
                     />
                   </g>
                 </svg>
-                <span className="font-semibold">TAK</span>
+
                 <span className="text-black text-ms px-2 py-1 rounded-full min-w-[20px] text-center font-semibold">
-                  {counts.tak}
+                  {favoriteCategory.category
+                    ? `${favoriteCategory.category} (${favoriteCategory.count})`
+                    : 'Belum ada'}
                 </span>
               </div>
             </div>

@@ -507,7 +507,7 @@ const ManageUsers = () => {
         <Navigation topOffset="">
           <div className="flex items-center justify-between pt-6">
             {/* Search Bar - Left Side */}
-            <div className="w-80">
+            <div className="w-80 shadow-md shadow-gray-300">
               <SearchBar
                 placeholder="Cari nim / nama mahasiswa"
                 onSearch={handleSearch}
