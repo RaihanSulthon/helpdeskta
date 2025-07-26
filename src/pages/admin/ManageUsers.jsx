@@ -183,7 +183,7 @@ const ManageUsers = () => {
   const getDisplayedUsers = () => {
     const keyword = searchQuery.trim().toLowerCase();
 
-    return getFilteredUsers(users).filter((user) => {
+    const filteredUsers = getFilteredUsers(users).filter((user) => {
       const nameMatch = user.name?.toLowerCase().includes(keyword);
       const nimMatch = user.nim?.toLowerCase().includes(keyword);
       const categoryMatch = user.favorite_category
@@ -204,6 +204,12 @@ const ManageUsers = () => {
 
       return nameMatch || nimMatch || createdAtMatch || categoryMatch;
     });
+
+    // Apply pagination: slice berdasarkan halaman saat ini
+    const startIndex = (pagination.current_page - 1) * pagination.per_page;
+    const endIndex = startIndex + pagination.per_page;
+
+    return filteredUsers.slice(startIndex, endIndex);
   };
 
   const displayedUsers = getDisplayedUsers();

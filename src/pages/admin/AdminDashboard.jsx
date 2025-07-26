@@ -375,17 +375,14 @@ const AdminDashboard = () => {
 
     switch (columnKey) {
       case 'tiket-baru':
-        // Badge muncul jika ada tiket baru hari ini yang belum dibaca admin
         shouldShowBadge = hasNewTicketsToday || hasNewFeedback;
         break;
 
       case 'diproses':
-        // Badge muncul jika ada feedback/chat baru dari user
         shouldShowBadge = hasNewFeedback;
         break;
 
       case 'selesai':
-        // Badge muncul jika ada feedback/chat baru dari user (rating, komplain, dll)
         shouldShowBadge = hasNewFeedback;
         break;
 
