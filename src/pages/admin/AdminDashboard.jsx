@@ -1584,14 +1584,14 @@ const AdminDashboard = () => {
                 <Button
                   onClick={cancelDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 border-2 rounded-lg hover:bg-gray-500 hover:text-white transition-all duration-300 hover:scale-105 font-medium"
+                  className="px-6 py-2 bg-gray-300 text-white rounded-lg hover:bg-white hover:text-gray-600 border-2 border-gray-300 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
                 >
                   Batal
                 </Button>
                 <Button
                   onClick={confirmDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-white hover:text-red-600 border-2 border-red-600 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
                 >
                   {isDeleting ? (
                     <>

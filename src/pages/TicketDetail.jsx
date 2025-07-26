@@ -93,8 +93,6 @@ const DetailTicket = () => {
       setError('');
       const data = await getTicketDetailAPI(ticketId);
 
-      console.log('Raw ticket data:', data); // Debug log
-
       const transformedData = {
         id: data.id || 'Tidak tersedia',
         title: data.judul || data.title || 'Judul tidak tersedia',
@@ -126,7 +124,7 @@ const DetailTicket = () => {
         noHp: data.no_hp || '',
         anonymous: data.anonymous === true || data.anonymous === 1,
       };
-      
+
       setTicketData(transformedData);
       setTotalFeedbackCount(data.chat_count || 0);
       setNewFeedbackCount(data.unread_chat_count || 0);
@@ -160,8 +158,6 @@ const DetailTicket = () => {
           attachment.file_url || attachment.url || attachment.path || '',
         file_size: attachment.file_size || attachment.size || null,
       };
-
-      console.log('Processed attachment:', processedAttachment);
       return processedAttachment;
     });
   };
@@ -972,14 +968,14 @@ const DetailTicket = () => {
                 <button
                   onClick={cancelDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 border-2 border-[#E01A3F] text-[#E01A3F] rounded-lg hover:bg-[#E01A3F] hover:text-white transition-colors disabled:opacity-50 font-medium"
+                  className="px-6 py-2 bg-gray-300 text-white rounded-lg hover:bg-white hover:text-gray-600 border-2 border-gray-300 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
                 >
                   Batal
                 </button>
                 <button
                   onClick={confirmDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 bg-[#E01A3F] text-white rounded-lg hover:bg-[#C41E3A] transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium"
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-white hover:text-red-600 border-2 border-red-600 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
                 >
                   {isDeleting ? (
                     <>

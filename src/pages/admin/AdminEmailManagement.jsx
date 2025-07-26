@@ -673,7 +673,7 @@ const AdminEmailManagement = () => {
                     }}
                     className="px-6 hover:scale-105 hover:shadow-lg transition-all duration-300 border-2 border-blue-700 text-blue-700 rounded-lg hover:bg-gray-50"
                   >
-                    <span className='font-bold'>Clear</span>
+                    <span className="font-bold">Clear</span>
                   </button>
                   <button
                     type="submit"
@@ -813,14 +813,14 @@ const AdminEmailManagement = () => {
                 <button
                   onClick={cancelDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 border-2 border-[#E01A3F] text-[#E01A3F] rounded-lg hover:bg-[#E01A3F] hover:text-white transition-colors disabled:opacity-50 font-medium"
+                  className="px-6 py-2 bg-gray-300 text-white rounded-lg hover:bg-white hover:text-gray-600 border-2 border-gray-300 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
                 >
                   Batal
                 </button>
                 <button
                   onClick={confirmDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 bg-[#E01A3F] text-white rounded-lg hover:bg-[#C41E3A] transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium"
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-white hover:text-red-600 border-2 border-red-600 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
                 >
                   {isDeleting ? (
                     <>
