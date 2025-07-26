@@ -92,96 +92,99 @@ const AdminTicketStatistics = () => {
     }
   };
 
-  // Fetch statistics
+    // Fetch statistics from tickets data
   const fetchStatistics = async (filters = {}) => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching statistics with filters:', filters);
+      console.log('Fetching tickets data with filters:', filters);
 
       const queryParams = new URLSearchParams();
-      if (filters.date_from) queryParams.append('date_from', filters.date_from);
-      if (filters.date_to) queryParams.append('date_to', filters.date_to);
-      if (filters.period) queryParams.append('period', filters.period);
+      
+      // Handle period-based filtering
+      if (filters.period) {
+        const now = new Date();
+        let startDate, endDate;
+
+        switch (filters.period) {
+          case 'hari_ini':
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            break;
+          case 'minggu_ini':
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - now.getDay());
+            startDate = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate());
+            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            break;
+          case 'bulan_ini':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            break;
+          case 'tahun_ini':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+            break;
+        }
+
+        if (startDate && endDate) {
+          queryParams.append('startDate', startDate.toISOString().split('T')[0]);
+          queryParams.append('endDate', endDate.toISOString().split('T')[0]);
+        }
+      }
+      
+      // Handle custom date range
+      if (filters.date_from) queryParams.append('startDate', filters.date_from);
+      if (filters.date_to) queryParams.append('endDate', filters.date_to);
+      
+      // Get all tickets (large per_page to get all data for statistics)
+      queryParams.append('per_page', '1000');
+      queryParams.append('sortBy', 'created_at');
+      queryParams.append('sortOrder', 'desc');
 
       const queryString = queryParams.toString();
-      const endpoint = `/tickets/statistics${queryString ? `?${queryString}` : ''}`;
+      const endpoint = `/tickets${queryString ? `?${queryString}` : ''}`;
 
       const result = await makeAPICall(endpoint);
-      console.log('Statistics API response:', result);
+      console.log('Tickets API response:', result);
 
-      if (result.status === 'success' && result.data) {
-        // Add mock trend data if not provided by API
-        const trendData = result.data.trend_data || [
-          {
-            date: '5 Mei',
-            total: 5,
-            new: 1,
-            in_progress: 2,
-            resolved: 1,
-            closed: 1,
-          },
-          {
-            date: '6 Mei',
-            total: 6,
-            new: 1,
-            in_progress: 2,
-            resolved: 2,
-            closed: 1,
-          },
-          {
-            date: '7 Mei',
-            total: 7,
-            new: 2,
-            in_progress: 2,
-            resolved: 2,
-            closed: 1,
-          },
-          {
-            date: '8 Mei',
-            total: 6,
-            new: 2,
-            in_progress: 1,
-            resolved: 2,
-            closed: 1,
-          },
-          {
-            date: '9 Mei',
-            total: 6,
-            new: 1,
-            in_progress: 2,
-            resolved: 2,
-            closed: 1,
-          },
-          {
-            date: '10 Mei',
-            total: 7,
-            new: 2,
-            in_progress: 2,
-            resolved: 2,
-            closed: 1,
-          },
-          {
-            date: '11 Mei',
-            total: 5,
-            new: 2,
-            in_progress: 1,
-            resolved: 1,
-            closed: 1,
-          },
-          {
-            date: '12 Mei',
-            total: 4,
-            new: 1,
-            in_progress: 1,
-            resolved: 1,
-            closed: 1,
-          },
-        ];
+      if (result.status === 'success' && result.data && result.data.tickets) {
+        const tickets = result.data.tickets;
+        
+        // Calculate statistics from tickets data
+        const stats = {
+          total: tickets.length,
+          new: tickets.filter(t => t.status === 'open').length,
+          in_progress: tickets.filter(t => t.status === 'in_progress').length,
+          closed: tickets.filter(t => t.status === 'closed').length,
+          unread: tickets.filter(t => t.has_unread_chat).length,
+        };
+
+        // Calculate category statistics
+        const categoryStats = {};
+        tickets.forEach(ticket => {
+          if (ticket.category) {
+            const categoryName = ticket.category.name;
+            if (!categoryStats[categoryName]) {
+              categoryStats[categoryName] = {
+                category_id: ticket.category.id,
+                category_name: categoryName,
+                count: 0
+              };
+            }
+            categoryStats[categoryName].count++;
+          }
+        });
+
+        const by_category = Object.values(categoryStats);
+
+        // Generate trend data from tickets (group by date)
+        const trendData = generateTrendDataFromTickets(tickets);
 
         setStatistics({
-          ...result.data,
+          ...stats,
+          by_category,
           trend_data: trendData,
         });
       } else {
@@ -203,42 +206,48 @@ const AdminTicketStatistics = () => {
       setLoading(false);
     }
   };
-  // TAMBAH setelah fetchStatistics:
-  const fetchTicketsForCategories = async (filters = {}) => {
-    try {
-      const queryParams = new URLSearchParams();
-      if (filters.date_from) queryParams.append('date_from', filters.date_from);
-      if (filters.date_to) queryParams.append('date_to', filters.date_to);
-      if (filters.period) queryParams.append('period', filters.period);
 
-      const queryString = queryParams.toString();
-      const endpoint = `/tickets${queryString ? `?${queryString}` : ''}`;
-
-      const result = await makeAPICall(endpoint);
-
-      // Group by category
-      const categoryCount = {};
-      if (result.data && Array.isArray(result.data)) {
-        result.data.forEach((ticket) => {
-          const categoryName = ticket.category?.name || 'Unknown';
-          categoryCount[categoryName] = (categoryCount[categoryName] || 0) + 1;
-        });
+  // Helper function to generate trend data from tickets
+  const generateTrendDataFromTickets = (tickets) => {
+    const dateGroups = {};
+    
+    tickets.forEach(ticket => {
+      const date = new Date(ticket.created_at).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short'
+      });
+      
+      if (!dateGroups[date]) {
+        dateGroups[date] = {
+          date,
+          total: 0,
+          new: 0,
+          in_progress: 0,
+          resolved: 0,
+          closed: 0,
+        };
       }
-
-      // Convert to by_category format
-      const by_category = Object.entries(categoryCount).map(
-        ([name, count], index) => ({
-          category_id: index + 1,
-          category_name: name,
-          count: count,
-        })
-      );
-
-      return by_category;
-    } catch (error) {
-      console.error('Error fetching tickets for categories:', error);
-      return [];
-    }
+      
+      dateGroups[date].total++;
+      
+      switch (ticket.status) {
+        case 'open':
+          dateGroups[date].new++;
+          break;
+        case 'in_progress':
+          dateGroups[date].in_progress++;
+          break;
+    
+        case 'closed':
+          dateGroups[date].closed++;
+          break;
+      }
+    });
+    
+    // Convert to array and sort by date
+    return Object.values(dateGroups)
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .slice(-7); // Show last 7 days
   };
   // Initial data fetch
   useEffect(() => {
@@ -677,35 +686,32 @@ const AdminTicketStatistics = () => {
                       domain={[0, 'dataMax + 2']}
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <Line
-                      type="monotone"
-                      dataKey="total"
-                      stroke="#10b981"
-                      strokeWidth={3}
-                      dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                      activeDot={{ r: 6, fill: '#10b981' }}
-                    />
+                    
                     <Line
                       type="monotone"
                       dataKey="new"
-                      stroke="#f59e0b"
+                      stroke="#6b7280"
                       strokeWidth={2}
-                      dot={{ fill: '#f59e0b', strokeWidth: 2, r: 3 }}
+                      dot={{ fill: '#6b7280', strokeWidth: 2, r: 3 }}
+                      name="Baru (Open)"
                     />
                     <Line
                       type="monotone"
                       dataKey="in_progress"
-                      stroke="#6b7280"
+                      stroke="#f59e0b"
                       strokeWidth={2}
-                      dot={{ fill: '#6b7280', strokeWidth: 2, r: 3 }}
+                      dot={{ fill: '#f59e0b', strokeWidth: 2, r: 3 }}
+                      name="Sedang Diproses"
                     />
                     <Line
                       type="monotone"
                       dataKey="closed"
-                      stroke="#3b82f6"
+                      stroke="#10b981"
                       strokeWidth={2}
-                      dot={{ fill: '#3b82f6', strokeWidth: 2, r: 3 }}
+                      dot={{ fill: '#10b981', strokeWidth: 2, r: 3 }}
+                      name="Resolved"
                     />
+                  
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -788,6 +794,17 @@ const AdminTicketStatistics = () => {
                   icon: '✅',
                   label: 'Selesai',
                   value: statistics.closed,
+                  color: 'text-purple-600',
+                },
+                
+              
+                {
+                  icon: '📊',
+                  label: 'Persentase Selesai',
+                  value:
+                    statistics.total > 0
+                      ? `${Math.round((statistics.closed / statistics.total) * 100)}%`
+                      : '0%',
                   color: 'text-green-600',
                 },
               ].map((item, index) => (
