@@ -435,25 +435,27 @@ const StudentDashboard = () => {
     if (statusTickets.length === 0) return false;
 
     const shouldShow = statusTickets.some((ticket) => {
-      // ✅ FIX: Cek unread berdasarkan API original + status-specific clicked
+      // 🆕 KHUSUS untuk "Tiket Baru": HANYA cek feedback baru, ABAIKAN status unread tiket
+      if (statusType === 'Tiket Baru') {
+        const hasUnreadFeedback = (feedbackCounts[ticket.id]?.unread || 0) > 0;
+        return hasUnreadFeedback; // Hanya return true jika ada feedback baru
+      }
+
+      // ✅ Untuk "Sedang Diproses" dan "Selesai": tetap cek unread + feedback seperti biasa
       const isUnreadFromAPI = !(
         ticket.read_by_student === true ||
         ticket.read_by_student === 1 ||
         ticket.read_by_student === '1'
       );
 
-      // ✅ FIX: Cek apakah sudah diklik untuk status ini specifically
       const notClickedForThisStatus = !currentClickedTicketsByStatus[
         statusType
       ]?.has(ticket.id);
 
-      // ✅ FIX: Gabungkan kondisi
       const isUnreadForThisStatus = isUnreadFromAPI && notClickedForThisStatus;
-
       const hasUnreadFeedback = (feedbackCounts[ticket.id]?.unread || 0) > 0;
 
       const needsBadge = isUnreadForThisStatus || hasUnreadFeedback;
-
       return needsBadge;
     });
 
@@ -1434,9 +1436,9 @@ const StudentDashboard = () => {
                 <span
                   className={`px-2 py-1 rounded text-xs font-medium ${
                     ticket.category === 'Tiket Baru'
-                      ? 'bg-blue-100 text-blue-800' // 🔧 FIX: Ubah dari orange ke blue
+                      ? 'bg-blue-100 text-blue-800'
                       : ticket.category === 'Sedang Diproses'
-                        ? 'bg-orange-100 text-orange-800' // 🔧 FIX: Ubah dari blue ke orange
+                        ? 'bg-orange-100 text-orange-800'
                         : ticket.category === 'Selesai'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-gray-100 text-gray-800'
@@ -1540,6 +1542,11 @@ const StudentDashboard = () => {
                   </span>
                 )}
                 {(() => {
+                  // Skip titik biru untuk kategori "Tiket Baru"
+                  if (ticket.category === 'Tiket Baru') {
+                    return null;
+                  }
+
                   const isUnreadFromAPI = !(
                     ticket.read_by_student === true ||
                     ticket.read_by_student === 1 ||
