@@ -7,7 +7,6 @@ const retryFetch = async (url, options, maxRetries = 3) => {
       const response = await fetch(url, options);
       return response;
     } catch (error) {
-      console.log(`Attempt ${i + 1} failed:`, error.message);
       if (i === maxRetries - 1) throw error;
       // Wait before retry (exponential backoff)
       await new Promise((resolve) =>
@@ -2115,5 +2114,70 @@ export const getAllUsersAPI = async (pagination) => {
   } catch (error) {
     console.error('Error fetching users:', error);
     throw new Error(error.message || 'Gagal mengambil data pengguna');
+  }
+};
+
+// Show Anonymous Token API
+export const showAnonymousTokenAPI = async (ticketId, password) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login ulang.');
+    }
+
+    if (!ticketId) {
+      throw new Error('ID tiket tidak valid');
+    }
+
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      mode: 'cors',
+      credentials: 'omit',
+      body: JSON.stringify({
+        password: password
+      }),
+    };
+
+    const response = await retryFetch(
+      `${BASE_URL}/tickets/${ticketId}/reveal-token`,
+      options
+    );
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorResult = await response.json();
+        errorMessage = errorResult.message || errorMessage;
+      } catch (parseError) {
+        console.warn('Could not parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    
+    // Handle the response structure based on the Postman response
+    if (result.status === 'success' && result.data) {
+      return result.data;
+    } else {
+      return result;
+    }
+  } catch (error) {
+    console.error('Show Anonymous Token API Error:', error);
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error(
+        'Koneksi ke server gagal. Pastikan server berjalan dan coba lagi.'
+      );
+    }
+
+    throw new Error(
+      error.message || 'Terjadi kesalahan saat mengambil token tiket'
+    );
   }
 };

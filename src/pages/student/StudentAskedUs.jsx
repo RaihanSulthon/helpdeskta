@@ -38,7 +38,6 @@ const StudentAskedUs = () => {
   // Load categories
   const loadCategories = useCallback(async () => {
     try {
-      console.log('Loading categories...');
       const categoriesData = await getFAQCategoriesAPI();
       setCategories(categoriesData);
       console.log('Categories loaded:', categoriesData);
@@ -60,8 +59,6 @@ const StudentAskedUs = () => {
         setLoading(true);
         setError('');
 
-        console.log('=== LOADING FAQs FOR STUDENTS ===');
-
         // Prepare filters based on current state
         const apiFilters = {
           per_page: pagination.per_page,
@@ -78,9 +75,6 @@ const StudentAskedUs = () => {
         if (searchQuery && searchQuery.trim()) {
           apiFilters.search = searchQuery.trim();
         }
-
-        console.log('API Filters:', apiFilters);
-
         const result = await getFAQsAPI(apiFilters);
         console.log('=== FULL API RESPONSE ===', result);
 

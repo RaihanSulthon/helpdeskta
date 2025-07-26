@@ -354,11 +354,6 @@ function Form() {
         subject: 'Custom Notification',
         content: 'This is a custom notification.',
       });
-
-      console.log(
-        'Ticket notification created successfully for admin:',
-        adminId
-      );
     } catch (error) {
       console.error('Failed to create ticket notification:', error);
       // Jangan throw error, biarkan proses create ticket tetap berhasil
@@ -442,7 +437,6 @@ function Form() {
 
     // Validate form first
     if (!validateForm()) {
-      console.log('Validation failed');
       return;
     }
 
@@ -469,9 +463,6 @@ function Form() {
         no_hp: formData.anonymous ? '' : (formData.noHp || '').trim(),
       };
 
-      console.log('Prepared Submit Data:', submitData);
-      console.log('Selected File:', selectedFile);
-
       // Final validation before API call
       if (isNaN(submitData.category_id) || submitData.category_id <= 0) {
         throw new Error('Kategori tidak valid');
@@ -484,12 +475,8 @@ function Form() {
         throw new Error('Sub kategori tidak valid');
       }
 
-      console.log('Calling API with data:', submitData);
-
       // Call API with file support
       const response = await submitTicketAPI(submitData, selectedFile);
-      console.log('API Response:', response);
-
       // Extract ticket ID from response
       let ticketId = null;
       if (response?.data?.id) {

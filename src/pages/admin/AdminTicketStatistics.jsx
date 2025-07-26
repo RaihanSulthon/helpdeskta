@@ -73,14 +73,12 @@ const AdminTicketStatistics = () => {
   // Load categories from API - but use by_category from statistics instead
   const loadCategories = async () => {
     try {
-      console.log('Loading categories from API...');
       const result = await makeAPICall('/categories');
 
       if (result.status === 'success' && result.data) {
         console.log('Categories loaded:', result.data);
         setCategories(result.data);
       } else if (Array.isArray(result)) {
-        console.log('Categories loaded (array format):', result);
         setCategories(result);
       } else {
         console.warn('Unexpected categories API response:', result);
@@ -98,8 +96,6 @@ const AdminTicketStatistics = () => {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching statistics with filters:', filters);
-
       const queryParams = new URLSearchParams();
       if (filters.date_from) queryParams.append('date_from', filters.date_from);
       if (filters.date_to) queryParams.append('date_to', filters.date_to);
@@ -109,7 +105,6 @@ const AdminTicketStatistics = () => {
       const endpoint = `/tickets/statistics${queryString ? `?${queryString}` : ''}`;
 
       const result = await makeAPICall(endpoint);
-      console.log('Statistics API response:', result);
 
       if (result.status === 'success' && result.data) {
         // Add mock trend data if not provided by API

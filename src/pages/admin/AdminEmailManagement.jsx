@@ -203,7 +203,6 @@ const AdminEmailManagement = () => {
     if (!ticketData?.id || isUpdatingStatus) return;
     try {
       setIsUpdatingStatus(true);
-      console.log(`Updating ticket ${ticketData.id} status to:`, newStatus);
       await updateTicketStatusAPI(ticketData.id, newStatus);
       setTicketData((prev) => ({
         ...prev,
@@ -236,7 +235,6 @@ const AdminEmailManagement = () => {
     if (!ticketData?.id || isDeleting) return;
     try {
       setIsDeleting(true);
-      console.log('Deleting ticket:', ticketData.id);
       const result = await deleteTicketAPI(ticketData.id);
       console.log('Delete result:', result);
       if (result.success || result.status === 'success' || result) {

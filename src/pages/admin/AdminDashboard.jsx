@@ -680,7 +680,7 @@ const AdminDashboard = () => {
       setError('');
 
       const ticketsData = await getAdminTicketsAPI();
-      // console.log('Received tickets data:', ticketsData);
+      console.log('Received tickets data:', ticketsData);
 
       // Group tickets by status
       const groupedTickets = {
@@ -908,8 +908,6 @@ const AdminDashboard = () => {
 
         return newTickets;
       });
-
-      console.log('✅ Ticket status updated successfully to:', newStatus);
 
       // Show success toast
       const statusMessage =

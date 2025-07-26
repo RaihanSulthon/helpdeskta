@@ -120,7 +120,6 @@ const TicketFeedback = () => {
     if (!ticketData?.id || isDeleting) return;
     try {
       setIsDeleting(true);
-      console.log('Deleting ticket:', ticketData.id);
       const result = await deleteTicketAPI(ticketData.id);
       console.log('Delete result:', result);
       if (result.success || result.status === 'success' || result) {
@@ -152,7 +151,6 @@ const TicketFeedback = () => {
     if (!ticketData?.id || isUpdatingStatus) return;
     try {
       setIsUpdatingStatus(true);
-      console.log(`Updating ticket ${ticketData.id} status to:`, newStatus);
       await updateTicketStatusAPI(ticketData.id, newStatus);
       setTicketData((prev) => ({
         ...prev,
@@ -462,10 +460,6 @@ const TicketFeedback = () => {
         subject: 'Custom Notification',
         content: 'This is a custom notification.',
       });
-
-      console.log(
-        `Chat notification sent to ${recipientRole} (${recipientId})`
-      );
     } catch (error) {
       console.error('Failed to create chat notification:', error);
       // Jangan throw error, biarkan proses kirim chat tetap berhasil
@@ -515,24 +509,9 @@ const TicketFeedback = () => {
             });
         }
       }
-
-      // ✅ DEBUG: Cek struktur message yang baru dibuat
-      if (sendResponse.chatMessage || sendResponse.message) {
-        console.log(
-          'New message created:',
-          sendResponse.chatMessage || sendResponse.message
-        );
-        if (sendResponse.attachment) {
-          console.log('Message attachment:', sendResponse.attachment);
-        }
-      }
-
       // Clear input and reload messages
       setNewFeedback('');
       handleRemoveFile();
-
-      // ✅ TAMBAHKAN DEBUG: Log reload messages
-      console.log('=== RELOADING MESSAGES ===');
       await loadChatMessages();
 
       console.log('Feedback sent successfully!');
@@ -586,15 +565,12 @@ const TicketFeedback = () => {
       for (const notification of feedbackNotifications) {
         try {
           await markNotificationAsReadAPI(notification.id);
-          console.log(`✅ Marked feedback notification ${notification.id} as read`);
         } catch (err) {
           console.error('Error marking feedback notification as read:', err);
         }
       }
       
       if (feedbackNotifications.length > 0) {
-        console.log(`✅ Marked ${feedbackNotifications.length} feedback notifications as read for ticket ${ticketId}`);
-        
         // Emit event untuk memberitahu komponen lain
         window.dispatchEvent(new CustomEvent('feedbackNotificationsRead', {
           detail: { ticketId: parseInt(ticketId) }

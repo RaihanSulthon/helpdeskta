@@ -8,6 +8,7 @@ import {
   getChatMessagesAPI,
   getNotificationsAPI,
   markNotificationAsReadAPI,
+  showAnonymousTokenAPI,
 } from '../services/api';
 import Navigation from '../components/Navigation';
 import { ToastContainer } from '../components/Toast';
@@ -26,6 +27,16 @@ const DetailTicket = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const userRole = localStorage.getItem('userRole');
   const isAdmin = userRole === 'admin';
+  const [showTokenModal, setShowTokenModal] = useState(false);
+  const [tokenPassword, setTokenPassword] = useState('');
+  const [isRevealingToken, setIsRevealingToken] = useState(false);
+  const [revealedToken, setRevealedToken] = useState('');
+  const [tokenError, setTokenError] = useState('');
+  const [tokenTimer, setTokenTimer] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [adminToken, setAdminToken] = useState('');
+  const [loadingAdminToken, setLoadingAdminToken] = useState(false);
 
   useEffect(() => {
     if (ticketId) {
@@ -33,6 +44,27 @@ const DetailTicket = () => {
       markRelatedNotificationsAsRead(ticketId);
     }
   }, [ticketId, ticketData?.unread, ticketData?.read]);
+
+  useEffect(() => {
+    const loadAdminToken = async () => {
+      const userRole = localStorage.getItem('userRole');
+      if (userRole === 'admin' && ticketData?.anonymous && ticketData?.id) {
+        setLoadingAdminToken(true);
+        try {
+          // Untuk admin, gunakan password dummy karena backend dev bilang gapapa salah
+          const result = await showAnonymousTokenAPI(ticketData.id, 'admin123');
+          setAdminToken(result.token || 'Token tidak tersedia');
+        } catch (error) {
+          console.error('Error loading admin token:', error);
+          setAdminToken('Gagal memuat token');
+        } finally {
+          setLoadingAdminToken(false);
+        }
+      }
+    };
+
+    loadAdminToken();
+  }, [ticketData?.anonymous, ticketData?.id]);
 
   const addToast = (message, type = 'info', duration = 3000) => {
     const id = Date.now() + Math.random();
@@ -48,9 +80,7 @@ const DetailTicket = () => {
     if (!ticketData?.id || isDeleting) return;
     try {
       setIsDeleting(true);
-      console.log('Deleting ticket:', ticketData.id);
       const result = await deleteTicketAPI(ticketData.id);
-      console.log('Delete result:', result);
       if (result.success || result.status === 'success' || result) {
         addToast(
           `Tiket #${ticketData.id} - "${ticketData.title}" berhasil dihapus`,
@@ -136,10 +166,8 @@ const DetailTicket = () => {
     }
   };
 
-  // UPDATED: Process attachments function
   const processAttachments = (attachments) => {
     if (!Array.isArray(attachments)) {
-      console.log('Attachments is not an array:', attachments);
       return [];
     }
 
@@ -260,7 +288,6 @@ const DetailTicket = () => {
     if (!ticketData?.id || isUpdatingStatus) return;
     try {
       setIsUpdatingStatus(true);
-      console.log(`Updating ticket ${ticketData.id} status to:`, newStatus);
       await updateTicketStatusAPI(ticketData.id, newStatus);
       setTicketData((prev) => ({
         ...prev,
@@ -437,10 +464,104 @@ const DetailTicket = () => {
     });
   };
 
+  // Update handler untuk reveal token dengan logic yang lebih clear
+  const handleRevealToken = async () => {
+    if (!tokenPassword.trim()) {
+      setTokenError('Password wajib diisi');
+      return;
+    }
+
+    setIsRevealingToken(true);
+    setTokenError('');
+
+    try {
+      const userRole = localStorage.getItem('userRole');
+      const result = await showAnonymousTokenAPI(ticketId, tokenPassword);
+      const token = result.token || 'Token tidak tersedia';
+
+      setRevealedToken(token);
+
+      if (userRole === 'student') {
+        // Set timer 10 detik untuk mahasiswa
+        setTimeLeft(10);
+        const timer = setInterval(() => {
+          setTimeLeft((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              setRevealedToken('');
+              setTokenTimer(null);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        setTokenTimer(timer);
+      }
+      // Untuk admin, tidak ada timer - token akan tetap tampil
+
+      setShowTokenModal(false);
+      setTokenPassword('');
+    } catch (error) {
+      console.error('Error revealing token:', error);
+      setTokenError(error.message || 'Gagal menampilkan token');
+    } finally {
+      setIsRevealingToken(false);
+    }
+  };
+
+  // Update handler untuk copy token (support both student dan admin)
+  const handleCopyToken = async (tokenValue = null) => {
+    const tokenToCopy = tokenValue || revealedToken;
+    try {
+      await navigator.clipboard.writeText(tokenToCopy);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy token:', error);
+      // Fallback untuk browser yang tidak support clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = tokenToCopy;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    }
+  };
+
+  // Handler untuk hide token (manual atau otomatis)
+  const handleHideToken = () => {
+    if (tokenTimer) {
+      clearInterval(tokenTimer);
+      setTokenTimer(null);
+    }
+    setRevealedToken('');
+    setTimeLeft(0);
+    setCopySuccess(false);
+  };
+
+  // Update cancelTokenModal untuk clear timer
+  const cancelTokenModal = () => {
+    if (!isRevealingToken) {
+      setShowTokenModal(false);
+      setTokenPassword('');
+      setTokenError('');
+    }
+  };
+
+  // Cleanup timer saat component unmount
+  useEffect(() => {
+    return () => {
+      if (tokenTimer) {
+        clearInterval(tokenTimer);
+      }
+    };
+  }, [tokenTimer]);
+
   // UPDATED: Handle attachment download/view
   const handleDownloadAttachment = (attachment) => {
-    console.log('Attempting to download attachment:', attachment);
-
     if (!attachment.file_url) {
       addToast('URL file tidak tersedia', 'error', 3000);
       return;
@@ -910,6 +1031,304 @@ const DetailTicket = () => {
               </div>
             </div>
           )}
+          {/* 4. Anonymous Report Section */}
+          {ticketData.anonymous && (
+            <>
+              {/* Tampilan untuk Mahasiswa */}
+              {localStorage.getItem('userRole') === 'student' && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-3 h-3 text-purple-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path
+                          fillRule="evenodd"
+                          d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-purple-600 font-medium text-sm">
+                      Laporan Anonim:
+                    </span>
+                    <span className="text-purple-800 text-sm">
+                      Identitas Anda tidak ditampilkan dalam laporan ini untuk
+                      menjaga privasi.
+                    </span>
+                  </div>
+
+                  {/* Token Rahasia Section untuk Mahasiswa */}
+                  <div className="mt-4 pt-4 border-t border-purple-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-purple-600 font-medium text-sm">
+                          Token Rahasia
+                        </span>
+                        <p className="text-purple-700 text-xs mt-1">
+                          Token ini diperlukan jika Anda ingin verifikasi tiket
+                          secara langsung dengan admin
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {revealedToken ? (
+                          <div className="flex items-center gap-2">
+                            <div className="relative">
+                              <span className="bg-purple-100 px-3 py-1 rounded text-purple-800 font-mono text-sm border">
+                                {revealedToken}
+                              </span>
+                              {/* Timer indicator untuk mahasiswa */}
+                              {timeLeft > 0 && (
+                                <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
+                                  {timeLeft}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Copy Button */}
+                            <button
+                              onClick={handleCopyToken}
+                              className={`px-2 py-1 rounded text-xs transition-all ${
+                                copySuccess
+                                  ? 'bg-green-100 text-green-700 border border-green-300'
+                                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300'
+                              }`}
+                              title="Copy token"
+                            >
+                              {copySuccess ? (
+                                <div className="flex items-center gap-1">
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                  Copied!
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                    <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                                  </svg>
+                                  Copy
+                                </div>
+                              )}
+                            </button>
+
+                            {/* Hide Button untuk student jika masih ada waktu */}
+                            {timeLeft > 0 && (
+                              <button
+                                onClick={handleHideToken}
+                                className="text-purple-600 hover:text-purple-800 text-xs px-2 py-1 hover:bg-purple-50 rounded transition-colors"
+                              >
+                                Sembunyikan
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setShowTokenModal(true)}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          >
+                            Lihat
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Timer warning untuk mahasiswa */}
+                    {revealedToken && timeLeft > 0 && (
+                      <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                        <div className="flex items-center gap-1 text-yellow-700">
+                          <svg
+                            className="w-3 h-3"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <span className="font-medium">
+                            Token akan hilang dalam {timeLeft} detik. Segera
+                            copy jika diperlukan!
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Tampilan untuk Admin */}
+              {localStorage.getItem('userRole') === 'admin' && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  {/* Header */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-6 h-6 bg-orange-100 rounded flex items-center justify-center">
+                      <svg
+                        className="w-4 h-4 text-orange-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-orange-700 font-semibold text-base">
+                      📋 Panduan Verifikasi Tiket Anonymous
+                    </span>
+                  </div>
+
+                  {/* Content */}
+                  <div className="mb-4">
+                    <p className="text-orange-800 text-sm mb-3">
+                      Jika mahasiswa datang untuk verifikasi tiket ini, minta
+                      mereka menyebutkan:
+                    </p>
+                  </div>
+
+                  {/* Data List */}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-start">
+                      <span className="text-orange-700 font-medium text-sm min-w-0 w-24">
+                        • ID Tiket:
+                      </span>
+                      <span className="text-orange-800 text-sm font-mono bg-orange-100 px-2 py-0.5 rounded ml-2">
+                        {ticketData.id}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start">
+                      <span className="text-orange-700 font-medium text-sm min-w-0 w-24">
+                        • Judul:
+                      </span>
+                      <span className="text-orange-800 text-sm ml-2">
+                        {ticketData.title}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start">
+                      <span className="text-orange-700 font-medium text-sm min-w-0 w-24">
+                        • NIM:
+                      </span>
+                      <span className="text-orange-800 text-sm ml-2">
+                        {ticketData.nim || 'N/A'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start">
+                      <span className="text-orange-700 font-medium text-sm min-w-0 w-24">
+                        • Token:
+                      </span>
+                      <div className="flex items-center gap-2 ml-2">
+                        {loadingAdminToken ? (
+                          <div className="flex items-center gap-2">
+                            <svg
+                              className="animate-spin h-4 w-4 text-orange-600"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            <span className="text-orange-700 text-sm">
+                              Memuat token...
+                            </span>
+                          </div>
+                        ) : adminToken ? (
+                          <>
+                            <span className="text-orange-800 text-sm font-mono bg-orange-100 px-2 py-0.5 rounded border">
+                              {adminToken}
+                            </span>
+                            <button
+                              onClick={() => handleCopyToken(adminToken)}
+                              className={`px-2 py-1 rounded text-xs transition-all ${
+                                copySuccess
+                                  ? 'bg-green-100 text-green-700 border border-green-300'
+                                  : 'bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-300'
+                              }`}
+                              title="Copy token"
+                            >
+                              {copySuccess ? (
+                                <div className="flex items-center gap-1">
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                  Copied!
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                    <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                                  </svg>
+                                  Copy
+                                </div>
+                              )}
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-red-600 text-sm">
+                            Gagal memuat token
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Note */}
+                  <div className="mt-4 pt-3 border-t border-orange-200">
+                    <p className="text-orange-700 text-xs">
+                      Semua data harus sesuai untuk memverifikasi ownership
+                      tiket
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -993,6 +1412,130 @@ const DetailTicket = () => {
       )}
 
       <ToastContainer toasts={toasts} removeToast={removeToast} />
+      {/* Token Password Verification Modal */}
+      {showTokenModal && localStorage.getItem('userRole') === 'student' && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={cancelTokenModal}
+        >
+          <div
+            className="bg-white rounded-lg max-w-md w-full mx-4 overflow-hidden shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header - Dark theme seperti gambar */}
+            <div className="bg-gray-800 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
+                  <svg
+                    className="w-5 h-5 text-slate-700"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-white text-lg font-medium">
+                  Verifikasi Password
+                </h3>
+              </div>
+            </div>
+
+            {/* Content - White background */}
+            <div className="p-6 bg-white">
+              <p className="text-gray-700 text-sm mb-6 leading-relaxed">
+                Untuk keamanan, silakan masukkan password Anda untuk melihat
+                token tiket ini.
+              </p>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={tokenPassword}
+                  onChange={(e) => setTokenPassword(e.target.value)}
+                  placeholder="Masukkan password Anda"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  disabled={isRevealingToken}
+                  onKeyPress={(e) => {
+                    if (
+                      e.key === 'Enter' &&
+                      !isRevealingToken &&
+                      tokenPassword.trim()
+                    ) {
+                      handleRevealToken();
+                    }
+                  }}
+                />
+                {tokenError && (
+                  <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+                    <svg
+                      className="w-3 h-3"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    {tokenError}
+                  </p>
+                )}
+              </div>
+
+              {/* Buttons - Posisi di sebelah kanan */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={cancelTokenModal}
+                  disabled={isRevealingToken}
+                  className="px-4 py-3 text-gray-600 hover:border-2 hover:border-gray-600 bg-gray-200 rounded-md hover:bg-white hover:scale-105 duration-300 transition-all hover:shadow-lg font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRevealToken}
+                  disabled={isRevealingToken || !tokenPassword.trim()}
+                  className="px-4 py-3 bg-red-600 text-white rounded-md hover:bg-white hover:text-red-600 hover:scale-105 duration-300 transition-all hover:shadow-lg hover:border-2 hover:border-red-600 font-medium flex items-center gap-2"
+                >
+                  {isRevealingToken ? (
+                    <>
+                      <svg
+                        className="animate-spin h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Verifikasi...
+                    </>
+                  ) : (
+                    'Verifikasi'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 

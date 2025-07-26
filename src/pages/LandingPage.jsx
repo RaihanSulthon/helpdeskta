@@ -109,8 +109,6 @@ function LandingPage() {
 
   const handleDashboardClick = () => {
     const currentRole = getUserRole();
-    console.log('Dashboard click - Current role:', currentRole);
-
     switch (currentRole) {
       case 'admin':
         navigate('/admin/tickets');
@@ -645,14 +643,14 @@ function LandingPage() {
                 <div className="flex justify-end space-x-3">
                   <button
                     onClick={cancelLogout}
-                    className="px-6 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-300 hover:scale-105 duration-300 transition-all hover:shadow-lg font-medium"
+                    className="px-6 py-2 text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300 hover:scale-105 duration-300 transition-all hover:shadow-lg font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={confirmLogout}
-                    className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 hover:scale-105 duration-300 transition-all hover:shadow-lg font-medium"
-                  >
+                    className="px-4 py-3 bg-red-600 text-white rounded-md hover:bg-white hover:text-red-600 hover:scale-105 duration-300 transition-all hover:shadow-lg hover:border-2 hover:border-red-600 font-medium"
+                    >
                     Logout
                   </button>
                 </div>
