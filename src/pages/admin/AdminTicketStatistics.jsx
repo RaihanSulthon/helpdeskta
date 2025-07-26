@@ -135,8 +135,13 @@ const AdminTicketStatistics = () => {
       }
       
       // Handle custom date range
-      if (filters.date_from) queryParams.append('startDate', filters.date_from);
-      if (filters.date_to) queryParams.append('endDate', filters.date_to);
+      if (filters.date_from && filters.date_to && filters.date_from === filters.date_to) {
+        queryParams.append('startDate', `${filters.date_from} 00:00:00`);
+        queryParams.append('endDate', `${filters.date_to} 23:59:59`);
+      } else {
+        if (filters.date_from) queryParams.append('startDate', `${filters.date_from} 00:00:00`);
+        if (filters.date_to) queryParams.append('endDate', `${filters.date_to} 23:59:59`);
+      }
       
       // Get all tickets (large per_page to get all data for statistics)
       queryParams.append('per_page', '1000');
@@ -454,7 +459,7 @@ const AdminTicketStatistics = () => {
               <h3 className="text-lg font-semibold text-gray-800">
                 Insights / Periode (
                 {selectedPeriod === 'minggu_ini'
-                  ? 'Minggu Ini : 5 Mei 2025 - 12 Mei 2025'
+                  ? 'Minggu Ini'
                   : selectedPeriod === 'bulan_ini'
                     ? 'Bulan Ini'
                     : selectedPeriod === 'tahun_ini'
