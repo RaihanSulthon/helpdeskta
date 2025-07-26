@@ -34,6 +34,7 @@ const AdminTicketStatistics = () => {
     date_to: '',
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
   // API base URL and helper function
   const BASE_URL = 'https://apibackendtio.mynextskill.com/api';
@@ -90,7 +91,7 @@ const AdminTicketStatistics = () => {
     }
   };
 
-    // Fetch statistics from tickets data
+  // Fetch statistics from tickets data
   const fetchStatistics = async (filters = {}) => {
     try {
       setLoading(true);
@@ -99,7 +100,7 @@ const AdminTicketStatistics = () => {
       console.log('Fetching tickets data with filters:', filters);
 
       const queryParams = new URLSearchParams();
-      
+
       // Handle period-based filtering
       if (filters.period) {
         const now = new Date();
@@ -107,18 +108,47 @@ const AdminTicketStatistics = () => {
 
         switch (filters.period) {
           case 'hari_ini':
-            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            startDate = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate()
+            );
+            endDate = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+              23,
+              59,
+              59
+            );
             break;
           case 'minggu_ini':
             const weekStart = new Date(now);
             weekStart.setDate(now.getDate() - now.getDay());
-            startDate = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate());
-            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            startDate = new Date(
+              weekStart.getFullYear(),
+              weekStart.getMonth(),
+              weekStart.getDate()
+            );
+            endDate = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+              23,
+              59,
+              59
+            );
             break;
           case 'bulan_ini':
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            endDate = new Date(
+              now.getFullYear(),
+              now.getMonth() + 1,
+              0,
+              23,
+              59,
+              59
+            );
             break;
           case 'tahun_ini':
             startDate = new Date(now.getFullYear(), 0, 1);
@@ -127,20 +157,29 @@ const AdminTicketStatistics = () => {
         }
 
         if (startDate && endDate) {
-          queryParams.append('startDate', startDate.toISOString().split('T')[0]);
+          queryParams.append(
+            'startDate',
+            startDate.toISOString().split('T')[0]
+          );
           queryParams.append('endDate', endDate.toISOString().split('T')[0]);
         }
       }
-      
+
       // Handle custom date range
-      if (filters.date_from && filters.date_to && filters.date_from === filters.date_to) {
+      if (
+        filters.date_from &&
+        filters.date_to &&
+        filters.date_from === filters.date_to
+      ) {
         queryParams.append('startDate', `${filters.date_from} 00:00:00`);
         queryParams.append('endDate', `${filters.date_to} 23:59:59`);
       } else {
-        if (filters.date_from) queryParams.append('startDate', `${filters.date_from} 00:00:00`);
-        if (filters.date_to) queryParams.append('endDate', `${filters.date_to} 23:59:59`);
+        if (filters.date_from)
+          queryParams.append('startDate', `${filters.date_from} 00:00:00`);
+        if (filters.date_to)
+          queryParams.append('endDate', `${filters.date_to} 23:59:59`);
       }
-      
+
       // Get all tickets (large per_page to get all data for statistics)
       queryParams.append('per_page', '1000');
       queryParams.append('sortBy', 'created_at');
@@ -154,26 +193,26 @@ const AdminTicketStatistics = () => {
 
       if (result.status === 'success' && result.data && result.data.tickets) {
         const tickets = result.data.tickets;
-        
+
         // Calculate statistics from tickets data
         const stats = {
           total: tickets.length,
-          new: tickets.filter(t => t.status === 'open').length,
-          in_progress: tickets.filter(t => t.status === 'in_progress').length,
-          closed: tickets.filter(t => t.status === 'closed').length,
-          unread: tickets.filter(t => t.has_unread_chat).length,
+          new: tickets.filter((t) => t.status === 'open').length,
+          in_progress: tickets.filter((t) => t.status === 'in_progress').length,
+          closed: tickets.filter((t) => t.status === 'closed').length,
+          unread: tickets.filter((t) => t.has_unread_chat).length,
         };
 
         // Calculate category statistics
         const categoryStats = {};
-        tickets.forEach(ticket => {
+        tickets.forEach((ticket) => {
           if (ticket.category) {
             const categoryName = ticket.category.name;
             if (!categoryStats[categoryName]) {
               categoryStats[categoryName] = {
                 category_id: ticket.category.id,
                 category_name: categoryName,
-                count: 0
+                count: 0,
               };
             }
             categoryStats[categoryName].count++;
@@ -213,13 +252,13 @@ const AdminTicketStatistics = () => {
   // Helper function to generate trend data from tickets
   const generateTrendDataFromTickets = (tickets) => {
     const dateGroups = {};
-    
-    tickets.forEach(ticket => {
+
+    tickets.forEach((ticket) => {
       const date = new Date(ticket.created_at).toLocaleDateString('id-ID', {
         day: 'numeric',
-        month: 'short'
+        month: 'short',
       });
-      
+
       if (!dateGroups[date]) {
         dateGroups[date] = {
           date,
@@ -230,9 +269,9 @@ const AdminTicketStatistics = () => {
           closed: 0,
         };
       }
-      
+
       dateGroups[date].total++;
-      
+
       switch (ticket.status) {
         case 'open':
           dateGroups[date].new++;
@@ -240,13 +279,13 @@ const AdminTicketStatistics = () => {
         case 'in_progress':
           dateGroups[date].in_progress++;
           break;
-    
+
         case 'closed':
           dateGroups[date].closed++;
           break;
       }
     });
-    
+
     // Convert to array and sort by date
     return Object.values(dateGroups)
       .sort((a, b) => new Date(a.date) - new Date(b.date))
@@ -262,6 +301,23 @@ const AdminTicketStatistics = () => {
     };
     loadData();
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const dateDropdown = event.target.closest('.date-picker-container');
+
+      if (!dateDropdown && showDatePicker) {
+        setShowDatePicker(false);
+        setTimeout(() => setIsDatePickerVisible(false), 300);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDatePicker]);
 
   // Handle period change
   const handlePeriodChange = (period) => {
@@ -291,10 +347,10 @@ const AdminTicketStatistics = () => {
   const exportToCSV = async () => {
     try {
       setLoading(true);
-      
+
       // Get all tickets data for export
       const queryParams = new URLSearchParams();
-      
+
       // Apply current filters
       if (selectedPeriod !== 'custom') {
         const now = new Date();
@@ -302,18 +358,47 @@ const AdminTicketStatistics = () => {
 
         switch (selectedPeriod) {
           case 'hari_ini':
-            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            startDate = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate()
+            );
+            endDate = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+              23,
+              59,
+              59
+            );
             break;
           case 'minggu_ini':
             const weekStart = new Date(now);
             weekStart.setDate(now.getDate() - now.getDay());
-            startDate = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate());
-            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            startDate = new Date(
+              weekStart.getFullYear(),
+              weekStart.getMonth(),
+              weekStart.getDate()
+            );
+            endDate = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+              23,
+              59,
+              59
+            );
             break;
           case 'bulan_ini':
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            endDate = new Date(
+              now.getFullYear(),
+              now.getMonth() + 1,
+              0,
+              23,
+              59,
+              59
+            );
             break;
           case 'tahun_ini':
             startDate = new Date(now.getFullYear(), 0, 1);
@@ -322,7 +407,10 @@ const AdminTicketStatistics = () => {
         }
 
         if (startDate && endDate) {
-          queryParams.append('startDate', startDate.toISOString().split('T')[0]);
+          queryParams.append(
+            'startDate',
+            startDate.toISOString().split('T')[0]
+          );
           queryParams.append('endDate', endDate.toISOString().split('T')[0]);
         }
       } else if (dateRange.date_from && dateRange.date_to) {
@@ -334,7 +422,7 @@ const AdminTicketStatistics = () => {
           queryParams.append('endDate', `${dateRange.date_to} 23:59:59`);
         }
       }
-      
+
       // Get large number to include all tickets
       queryParams.append('per_page', '10000');
       queryParams.append('sortBy', 'created_at');
@@ -344,10 +432,10 @@ const AdminTicketStatistics = () => {
       const endpoint = `/tickets${queryString ? `?${queryString}` : ''}`;
 
       const result = await makeAPICall(endpoint);
-      
+
       if (result.status === 'success' && result.data && result.data.tickets) {
         const tickets = result.data.tickets;
-        
+
         // Create CSV headers
         const headers = [
           'ID Tiket',
@@ -365,22 +453,34 @@ const AdminTicketStatistics = () => {
           'Deskripsi',
           'Tanggal Dibuat',
           'Terakhir Diupdate',
-          'Anonymous'
+          'Anonymous',
         ];
-        
+
         // Create CSV rows
         const csvRows = [headers.join(',')];
-        
-        tickets.forEach(ticket => {
+
+        tickets.forEach((ticket) => {
           const row = [
             ticket.id || '',
             `"${(ticket.judul || ticket.title || '').replace(/"/g, '""')}"`,
-            ticket.anonymous === true || ticket.anonymous === 1 ? 'Anonymous' : `"${(ticket.nama || ticket.name || '').replace(/"/g, '""')}"`,
-            ticket.anonymous === true || ticket.anonymous === 1 ? 'Anonymous' : `"${(ticket.email || '').replace(/"/g, '""')}"`,
-            ticket.anonymous === true || ticket.anonymous === 1 ? 'Anonymous' : `"${(ticket.nim || '').replace(/"/g, '""')}"`,
-            ticket.anonymous === true || ticket.anonymous === 1 ? 'Anonymous' : `"${(ticket.prodi || '').replace(/"/g, '""')}"`,
-            ticket.anonymous === true || ticket.anonymous === 1 ? 'Anonymous' : `"${(ticket.semester || '').replace(/"/g, '""')}"`,
-            ticket.anonymous === true || ticket.anonymous === 1 ? 'Anonymous' : `"${(ticket.no_hp || '').replace(/"/g, '""')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1
+              ? 'Anonymous'
+              : `"${(ticket.nama || ticket.name || '').replace(/"/g, '""')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1
+              ? 'Anonymous'
+              : `"${(ticket.email || '').replace(/"/g, '""')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1
+              ? 'Anonymous'
+              : `"${(ticket.nim || '').replace(/"/g, '""')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1
+              ? 'Anonymous'
+              : `"${(ticket.prodi || '').replace(/"/g, '""')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1
+              ? 'Anonymous'
+              : `"${(ticket.semester || '').replace(/"/g, '""')}"`,
+            ticket.anonymous === true || ticket.anonymous === 1
+              ? 'Anonymous'
+              : `"${(ticket.no_hp || '').replace(/"/g, '""')}"`,
             `"${(ticket.category?.name || '').replace(/"/g, '""')}"`,
             `"${(ticket.sub_category?.name || '').replace(/"/g, '""')}"`,
             `"${(ticket.status || '').replace(/"/g, '""')}"`,
@@ -388,24 +488,28 @@ const AdminTicketStatistics = () => {
             `"${(ticket.deskripsi || ticket.description || '').replace(/"/g, '""')}"`,
             `"${new Date(ticket.created_at).toLocaleString('id-ID')}"`,
             `"${new Date(ticket.updated_at || ticket.created_at).toLocaleString('id-ID')}"`,
-            ticket.anonymous === true || ticket.anonymous === 1 ? 'Ya' : 'Tidak'
+            ticket.anonymous === true || ticket.anonymous === 1
+              ? 'Ya'
+              : 'Tidak',
           ];
           csvRows.push(row.join(','));
         });
-        
+
         // Create and download CSV file
         const csvContent = csvRows.join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([csvContent], {
+          type: 'text/csv;charset=utf-8;',
+        });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
-        
+
         link.setAttribute('href', url);
-        
+
         // Generate filename with current date and filter info
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
         let filterStr = '';
-        
+
         if (selectedPeriod !== 'custom') {
           filterStr = selectedPeriod.replace('_', '-');
         } else if (dateRange.date_from && dateRange.date_to) {
@@ -413,16 +517,21 @@ const AdminTicketStatistics = () => {
         } else {
           filterStr = 'all-data';
         }
-        
-        link.setAttribute('download', `ticket-statistics-${filterStr}-${dateStr}.csv`);
+
+        link.setAttribute(
+          'download',
+          `ticket-statistics-${filterStr}-${dateStr}.csv`
+        );
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        
+
         // Show success message (you can replace this with a toast notification)
-        alert(`Data berhasil diekspor! ${tickets.length} tiket telah disimpan ke file CSV.`);
+        alert(
+          `Data berhasil diekspor! ${tickets.length} tiket telah disimpan ke file CSV.`
+        );
       } else {
         alert('Tidak ada data untuk diekspor.');
       }
@@ -508,7 +617,7 @@ const AdminTicketStatistics = () => {
               Dashboard statistik dan laporan tiket
             </p>
           </div>
-          <button 
+          <button
             onClick={exportToCSV}
             disabled={true}
             className="bg-white text-blue-900 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-2 opacity-50 cursor-not-allowed"
@@ -581,7 +690,7 @@ const AdminTicketStatistics = () => {
             Dashboard statistik dan laporan tiket
           </p>
         </div>
-        <button 
+        <button
           onClick={exportToCSV}
           disabled={loading}
           className="bg-white text-blue-900 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -629,7 +738,15 @@ const AdminTicketStatistics = () => {
               {/* Date Range Picker - Updated styling */}
               <div className="relative date-picker-container">
                 <button
-                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  onClick={() => {
+                    if (showDatePicker) {
+                      setShowDatePicker(false);
+                      setTimeout(() => setIsDatePickerVisible(false), 300);
+                    } else {
+                      setIsDatePickerVisible(true);
+                      setTimeout(() => setShowDatePicker(true), 10);
+                    }
+                  }}
                   className={`border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
                     dateRange.date_from && dateRange.date_to
                       ? 'bg-red-200 font-semibold'
@@ -668,8 +785,14 @@ const AdminTicketStatistics = () => {
                 </button>
 
                 {/* Date Picker Dropdown - Enhanced styling */}
-                {showDatePicker && (
-                  <div className="absolute top-full left-0 mt-2 w-[500px] bg-white rounded-lg shadow-xl z-50 transform transition-all duration-300 ease-out origin-top-left opacity-100 scale-100 translate-y-0">
+                {isDatePickerVisible && (
+                  <div
+                    className={`absolute top-full right-0 mt-2 w-[500px] bg-white rounded-lg shadow-xl z-50 transform transition-all duration-300 ease-out origin-top-right ${
+                      showDatePicker
+                        ? 'opacity-100 scale-100 translate-y-0'
+                        : 'opacity-0 scale-95 -translate-y-2'
+                    }`}
+                  >
                     {/* Header with close button */}
                     <div className="bg-[#101B33] text-white p-4 rounded-t-lg flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -692,7 +815,10 @@ const AdminTicketStatistics = () => {
                         </div>
                       </div>
                       <button
-                        onClick={() => setShowDatePicker(false)}
+                        onClick={() => {
+                          setShowDatePicker(false);
+                          setTimeout(() => setIsDatePickerVisible(false), 300);
+                        }}
                         className="text-white hover:bg-white/20 rounded p-1 transition-colors"
                       >
                         <svg
@@ -729,8 +855,19 @@ const AdminTicketStatistics = () => {
                                   date_from: e.target.value,
                                 }))
                               }
-                              className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:w-6 [&::-webkit-calendar-picker-indicator]:h-6 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                             />
+                            <svg
+                              className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none"
+                              viewBox="0 0 21 20"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M0.5 18.125C0.5 19.1602 1.45982 20 2.64286 20H18.3571C19.5402 20 20.5 19.1602 20.5 18.125V7.5H0.5V18.125ZM14.7857 10.4688C14.7857 10.2109 15.0268 10 15.3214 10H17.1071C17.4018 10 17.6429 10.2109 17.6429 10.4688V12.0313C17.6429 12.2891 17.4018 12.5 17.1071 12.5H15.3214C15.0268 12.5 14.7857 12.2891 14.7857 12.0313V10.4688ZM14.7857 15.4688C14.7857 15.2109 15.0268 15 15.3214 15H17.1071C17.4018 15 17.6429 15.2109 17.6429 15.4688V17.0312C17.6429 17.2891 17.4018 17.5 17.1071 17.5H15.3214C15.0268 17.5 14.7857 17.2891 14.7857 17.0312V15.4688ZM9.07143 10.4688C9.07143 10.2109 9.3125 10 9.60714 10H11.3929C11.6875 10 11.9286 10.2109 11.9286 10.4688V12.0313C11.9286 12.2891 11.6875 12.5 11.3929 12.5H9.60714C9.3125 12.5 9.07143 12.2891 9.07143 12.0313V10.4688ZM9.07143 15.4688C9.07143 15.2109 9.3125 15 9.60714 15H11.3929C11.6875 15 11.9286 15.2109 11.9286 15.4688V17.0312C11.9286 17.2891 11.6875 17.5 11.3929 17.5H9.60714C9.3125 17.5 9.07143 17.2891 9.07143 17.0312V15.4688ZM3.35714 10.4688C3.35714 10.2109 3.59821 10 3.89286 10H5.67857C5.97321 10 6.21429 10.2109 6.21429 10.4688V12.0313C6.21429 12.2891 5.97321 12.5 5.67857 12.5H3.89286C3.59821 12.5 3.35714 12.2891 3.35714 12.0313V10.4688ZM3.35714 15.4688C3.35714 15.2109 3.59821 15 3.89286 15H5.67857C5.97321 15 6.21429 15.2109 6.21429 15.4688V17.0312C6.21429 17.2891 5.97321 17.5 5.67857 17.5H3.89286C3.59821 17.5 3.35714 17.2891 3.35714 17.0312V15.4688ZM18.3571 2.5H16.2143V0.625C16.2143 0.28125 15.8929 0 15.5 0H14.0714C13.6786 0 13.3571 0.28125 13.3571 0.625V2.5H7.64286V0.625C7.64286 0.28125 7.32143 0 6.92857 0H5.5C5.10714 0 4.78571 0.28125 4.78571 0.625V2.5H2.64286C1.45982 2.5 0.5 3.33984 0.5 4.375V6.25H20.5V4.375C20.5 3.33984 19.5402 2.5 18.3571 2.5Z"
+                                fill="#444746"
+                              />
+                            </svg>
                           </div>
                         </div>
                         <div>
@@ -748,8 +885,19 @@ const AdminTicketStatistics = () => {
                                   date_to: e.target.value,
                                 }))
                               }
-                              className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:w-6 [&::-webkit-calendar-picker-indicator]:h-6 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                             />
+                            <svg
+                              className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none"
+                              viewBox="0 0 21 20"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M0.5 18.125C0.5 19.1602 1.45982 20 2.64286 20H18.3571C19.5402 20 20.5 19.1602 20.5 18.125V7.5H0.5V18.125ZM14.7857 10.4688C14.7857 10.2109 15.0268 10 15.3214 10H17.1071C17.4018 10 17.6429 10.2109 17.6429 10.4688V12.0313C17.6429 12.2891 17.4018 12.5 17.1071 12.5H15.3214C15.0268 12.5 14.7857 12.2891 14.7857 12.0313V10.4688ZM14.7857 15.4688C14.7857 15.2109 15.0268 15 15.3214 15H17.1071C17.4018 15 17.6429 15.2109 17.6429 15.4688V17.0312C17.6429 17.2891 17.4018 17.5 17.1071 17.5H15.3214C15.0268 17.5 14.7857 17.2891 14.7857 17.0312V15.4688ZM9.07143 10.4688C9.07143 10.2109 9.3125 10 9.60714 10H11.3929C11.6875 10 11.9286 10.2109 11.9286 10.4688V12.0313C11.9286 12.2891 11.6875 12.5 11.3929 12.5H9.60714C9.3125 12.5 9.07143 12.2891 9.07143 12.0313V10.4688ZM9.07143 15.4688C9.07143 15.2109 9.3125 15 9.60714 15H11.3929C11.6875 15 11.9286 15.2109 11.9286 15.4688V17.0312C11.9286 17.2891 11.6875 17.5 11.3929 17.5H9.60714C9.3125 17.5 9.07143 17.2891 9.07143 17.0312V15.4688ZM3.35714 10.4688C3.35714 10.2109 3.59821 10 3.89286 10H5.67857C5.97321 10 6.21429 10.2109 6.21429 10.4688V12.0313C6.21429 12.2891 5.97321 12.5 5.67857 12.5H3.89286C3.59821 12.5 3.35714 12.2891 3.35714 12.0313V10.4688ZM3.35714 15.4688C3.35714 15.2109 3.59821 15 3.89286 15H5.67857C5.97321 15 6.21429 15.2109 6.21429 15.4688V17.0312C6.21429 17.2891 5.97321 17.5 5.67857 17.5H3.89286C3.59821 17.5 3.35714 17.2891 3.35714 17.0312V15.4688ZM18.3571 2.5H16.2143V0.625C16.2143 0.28125 15.8929 0 15.5 0H14.0714C13.6786 0 13.3571 0.28125 13.3571 0.625V2.5H7.64286V0.625C7.64286 0.28125 7.32143 0 6.92857 0H5.5C5.10714 0 4.78571 0.28125 4.78571 0.625V2.5H2.64286C1.45982 2.5 0.5 3.33984 0.5 4.375V6.25H20.5V4.375C20.5 3.33984 19.5402 2.5 18.3571 2.5Z"
+                                fill="#444746"
+                              />
+                            </svg>
                           </div>
                         </div>
                       </div>
@@ -844,7 +992,7 @@ const AdminTicketStatistics = () => {
                       domain={[0, 'dataMax + 2']}
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    
+
                     <Line
                       type="monotone"
                       dataKey="new"
@@ -869,7 +1017,6 @@ const AdminTicketStatistics = () => {
                       dot={{ fill: '#10b981', strokeWidth: 2, r: 3 }}
                       name="Resolved"
                     />
-                  
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -954,8 +1101,7 @@ const AdminTicketStatistics = () => {
                   value: statistics.closed,
                   color: 'text-purple-600',
                 },
-                
-              
+
                 {
                   icon: '📊',
                   label: 'Persentase Selesai',
