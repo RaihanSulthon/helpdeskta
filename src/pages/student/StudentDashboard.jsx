@@ -631,12 +631,12 @@ const StudentDashboard = () => {
       if (showDatePicker && !event.target.closest('.date-picker-container')) {
         setShowDatePicker(false);
       }
-      if (showReadDropdown && !event.target.closest('.relative')) {
-        setShowReadDropdown(false);
-      }
-      // ✅ TAMBAH: Handle category dropdown click outside
       if (showCategoryDropdown && !event.target.closest('.category-dropdown')) {
         setShowCategoryDropdown(false);
+      }
+      // Logika yang sudah diperbaiki untuk dropdown status baca
+      if (showReadDropdown && !event.target.closest('[data-dropdown="read-status"]')) {
+        setShowReadDropdown(false);
       }
     };
 
@@ -911,11 +911,10 @@ const StudentDashboard = () => {
               <div className="relative category-dropdown">
                 <Button
                   onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg shadow-gray-300 shadow-md flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
-                    categoryFilter !== 'Semua Kategori'
-                      ? 'bg-red-200 font-semibold'
-                      : 'bg-white hover:bg-red-100'
-                  }`}
+                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg shadow-gray-300 bg shadow-md flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${categoryFilter !== 'Semua Kategori'
+                    ? 'bg-red-200 font-semibold'
+                    : 'bg-white hover:bg-red-100'
+                    }`}
                 >
                   {/* Bookmark/Category Icon */}
                   <svg
@@ -953,7 +952,7 @@ const StudentDashboard = () => {
                         setCategoryFilter('Semua Kategori');
                         setShowCategoryDropdown(false);
                       }}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
+                      className="w-full text-left px-3 py-2 text-sm bg-white hover:bg-gray-100"
                     >
                       Semua Kategori
                     </Button>
@@ -964,7 +963,7 @@ const StudentDashboard = () => {
                           setCategoryFilter(category.name);
                           setShowCategoryDropdown(false);
                         }}
-                        className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm"
+                        className="w-full text-left px-3 py-2 bg-white hover:bg-gray-100 text-sm"
                       >
                         {category.name}
                       </Button>
@@ -977,11 +976,10 @@ const StudentDashboard = () => {
               <div className="relative date-picker-container">
                 <Button
                   onClick={() => setShowDatePicker(!showDatePicker)}
-                  className={`border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
-                    dateRangeFilter.startDate && dateRangeFilter.endDate
-                      ? 'bg-red-200 font-semibold'
-                      : 'bg-white hover:bg-red-100'
-                  }`}
+                  className={`border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${dateRangeFilter.startDate && dateRangeFilter.endDate
+                    ? 'bg-red-200 font-semibold'
+                    : 'bg-white hover:bg-red-100'
+                    }`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1040,7 +1038,7 @@ const StudentDashboard = () => {
                       </div>
                       <Button
                         onClick={() => setShowDatePicker(false)}
-                        className="text-white hover:bg-white/20 rounded p-1 transition-colors"
+                        className="text-white bg-red-600 hover:bg-red-800 hover:scale-105 transition-all duration-300"
                       >
                         <svg
                           className="w-6 h-6"
@@ -1164,13 +1162,12 @@ const StudentDashboard = () => {
               </div>
 
               {/* Read Status Filter - Updated styling */}
-              <div className="relative">
+              <div className="relative" data-dropdown="read-status">
                 <Button
-                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg  shadow-gray-300 shadow-md flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
-                    readFilter !== 'Semua' && readFilter !== 'Belum Dibaca'
-                      ? 'bg-red-200 font-semibold'
-                      : 'bg-white hover:bg-red-100'
-                  }`}
+                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg  shadow-gray-300 shadow-md flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${readFilter === 'Sudah Dibaca'
+                    ? 'bg-red-200 font-semibold'
+                    : 'bg-white hover:bg-red-100'
+                    }`}
                   onClick={() => setShowReadDropdown(!showReadDropdown)}
                 >
                   <svg
@@ -1231,11 +1228,7 @@ const StudentDashboard = () => {
                     {['Semua', 'Sudah Dibaca', 'Belum Dibaca'].map((option) => (
                       <Button
                         key={option}
-                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
-                          readFilter === option
-                            ? 'bg-blue-50 text-blue-700'
-                            : 'text-gray-700'
-                        }`}
+                        className="w-full text-left px-3 py-2 text-sm bg-white text-gray-700 hover:bg-gray-100"
                         onClick={() => {
                           setReadFilter(option);
                           setShowReadDropdown(false);
@@ -1271,7 +1264,7 @@ const StudentDashboard = () => {
 
               {/* Reset Filter Button - Updated styling */}
               <Button
-                className="border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
+                className="border-2 border-gray-400 bg-white text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
                 onClick={handleResetFilter}
               >
                 <svg
@@ -1509,11 +1502,10 @@ const StudentDashboard = () => {
                   />
                 </svg>
                 <span
-                  className={`text-sm font-semibold ${
-                    feedbackCounts[ticket.id]?.unread > 0
-                      ? 'text-white'
-                      : 'text-gray-700'
-                  }`}
+                  className={`text-sm font-semibold ${feedbackCounts[ticket.id]?.unread > 0
+                    ? 'text-white'
+                    : 'text-gray-700'
+                    }`}
                 >
                   Feedback ({feedbackCounts[ticket.id]?.total || 0}
                   {feedbackCounts[ticket.id]?.unread > 0
@@ -1661,11 +1653,10 @@ const StudentDashboard = () => {
                       <Button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-1 text-sm font-medium rounded-md ${
-                          pageNum === currentPage
-                            ? 'text-white bg-blue-600 border border-blue-600'
-                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                        }`}
+                        className={`px-3 py-1 text-sm font-medium rounded-md ${pageNum === currentPage
+                          ? 'text-white bg-blue-600 border border-blue-600'
+                          : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                          }`}
                       >
                         {pageNum}
                       </Button>
