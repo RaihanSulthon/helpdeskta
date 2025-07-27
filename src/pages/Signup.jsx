@@ -6,6 +6,17 @@ import { signUpAPI } from '../services/api';
 function SignUp() {
   const navigate = useNavigate();
 
+  const prodiOptions = [
+    "S1 Teknologi Informasi",
+    "S1 Rekayasa Perangkat Lunak",
+    "S1 Informatika",
+    "S1 PJJ Informatika",
+    "S1 Sains Data",
+    "S2 Informatika",
+    "S2 Ilmu Forensik",
+    "S3 Informatika"
+  ];
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -86,7 +97,7 @@ function SignUp() {
     try {
       const response = await signUpAPI(payload);
       setSuccess(response.message || 'Registrasi berhasil! Silakan login.');
-      
+
       // Kosongkan form setelah berhasil
       setFormData({
         name: '', email: '', password: '', password_confirmation: '',
@@ -151,7 +162,22 @@ function SignUp() {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="prodi" className="block text-gray-700 text-sm font-medium mb-2">Program Studi</label>
-                  <input id="prodi" name="prodi" type="text" value={formData.prodi} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Contoh: S1 Rekayasa Perangkat Lunak" required />
+                  <select
+                    id="prodi"
+                    name="prodi"
+                    value={formData.prodi}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white"
+                    required
+                  >
+                    {/* Opsi default yang tidak bisa dipilih */}
+                    <option value="" disabled>Pilih Program Studi</option>
+
+                    {/* Mapping dari array prodiOptions untuk membuat setiap pilihan */}
+                    {prodiOptions.map((prodi, index) => (
+                      <option key={index} value={prodi}>{prodi}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="mb-4">
                   <label htmlFor="no_hp" className="block text-gray-700 text-sm font-medium mb-2">No. Handphone</label>
@@ -174,11 +200,11 @@ function SignUp() {
             <button type="submit" className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50" disabled={isLoading}>
               {isLoading ? 'Mendaftarkan...' : 'Sign Up'}
             </button>
-             <p className="text-center text-sm text-gray-600 mt-4">
-                Sudah punya akun?{' '}
-                <a onClick={() => navigate('/login')} className="font-medium text-red-600 hover:text-red-500 cursor-pointer">
-                    Login di sini
-                </a>
+            <p className="text-center text-sm text-gray-600 mt-4">
+              Sudah punya akun?{' '}
+              <a onClick={() => navigate('/login')} className="font-medium text-red-600 hover:text-red-500 cursor-pointer">
+                Login di sini
+              </a>
             </p>
           </form>
         </div>
