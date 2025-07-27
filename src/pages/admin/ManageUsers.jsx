@@ -12,7 +12,7 @@ const ManageUsers = () => {
   const navigate = useNavigate();
 
   const handleViewDetail = (userId) => {
-    navigate(`/student/detailmanage/${userId}`);
+    navigate(`/admin/detailmanage/${userId}`);
   };
 
   const saveFiltersToStorage = (filters) => {

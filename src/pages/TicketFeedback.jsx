@@ -390,36 +390,39 @@ const TicketFeedback = () => {
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
-
+  
     if (!file) {
       setSelectedFile(null);
       setFilePreview(null);
       return;
     }
-
+  
     // Validasi file
     const allowedTypes = [
       'image/png',
-      'image/jpeg',
-      'image/jpg',
+      'image/jpeg',  // MIME type yang benar untuk file .jpg/.jpeg
       'application/pdf',
     ];
-    const maxSize = 10 * 1024 * 1024; // 10MB
-
+    const maxSize = 5 * 1024 * 1024; // 5MB
+  
     if (!allowedTypes.includes(file.type)) {
-      setError('Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.');
+      const errorMsg = 'Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.';
+      setError(errorMsg);
+      addToast(errorMsg, 'error', 4000);
       event.target.value = '';
       return;
     }
-
+    
     if (file.size > maxSize) {
-      setError('Ukuran file terlalu besar. Maksimal 10MB.');
+      const errorMsg = 'Ukuran file terlalu besar. Maksimal 5MB.';
+      setError(errorMsg);
+      addToast(errorMsg, 'error', 4000);
       event.target.value = '';
       return;
     }
-
+  
     setSelectedFile(file);
-
+  
     // Create preview untuk image
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
@@ -428,7 +431,7 @@ const TicketFeedback = () => {
     } else {
       setFilePreview(null);
     }
-
+  
     setError(''); // Clear any previous error
   };
 

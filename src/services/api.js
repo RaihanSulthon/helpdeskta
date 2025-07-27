@@ -96,7 +96,10 @@ export const getFAQsAPI = async (filters = {}) => {
     const queryParams = new URLSearchParams();
     if (filters.category_id)
       queryParams.append('category_id', filters.category_id);
-    if (filters.search) queryParams.append('search', filters.search);
+      if (filters.search) {
+        queryParams.append('search', filters.search);
+        queryParams.append('search_field', 'question'); // Hanya cari di field question
+      }
     queryParams.append('per_page', filters.per_page || '10');
     queryParams.append('page', filters.page || '1');
 
@@ -160,7 +163,10 @@ export const getFAQsAdminAPI = async (filters = {}) => {
     const queryParams = new URLSearchParams();
     if (filters.category_id)
       queryParams.append('category_id', filters.category_id);
-    if (filters.search) queryParams.append('search', filters.search);
+      if (filters.search) {
+        queryParams.append('search', filters.search);
+        queryParams.append('search_field', 'question'); // Hanya cari di field question
+      }
     queryParams.append('per_page', '100');
     queryParams.append('page', '1');
 
@@ -820,7 +826,6 @@ export const submitTicketAPI = async (formData, file = null) => {
       const allowedTypes = [
         'image/png',
         'image/jpeg',
-        'image/jpg',
         'application/pdf',
       ];
       const maxSize = 5 * 1024 * 1024; // 5MB
@@ -1378,7 +1383,6 @@ export const getChatMessagesAPI = async (ticketId) => {
     }
 
     const result = await response.json();
-    console.log('Get Chat Messages API response:', result);
 
     // Extract messages from response
     let messages = [];
@@ -1415,11 +1419,10 @@ export const sendChatMessageAPI = async (ticketId, message, file = null) => {
     if (file) {
       const allowedTypes = [
         'image/png',
-        'image/jpeg',
-        'image/jpg',
+        'image/jpeg',  // MIME type yang benar untuk file .jpg/.jpeg
         'application/pdf',
       ];
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      const maxSize = 5 * 1024 * 1024; // 5MB
 
       if (!allowedTypes.includes(file.type)) {
         throw new Error(
@@ -1428,7 +1431,7 @@ export const sendChatMessageAPI = async (ticketId, message, file = null) => {
       }
 
       if (file.size > maxSize) {
-        throw new Error('Ukuran file terlalu besar. Maksimal 10MB.');
+        throw new Error('Ukuran file terlalu besar. Maksimal 5MB.');
       }
     }
 
@@ -1957,7 +1960,6 @@ export const uploadAttachmentAPI = async (ticketId, message, file) => {
     const allowedTypes = [
       'image/png',
       'image/jpeg',
-      'image/jpg',
       'application/pdf',
     ];
     const maxSize = 5 * 1024 * 1024; // 5MB

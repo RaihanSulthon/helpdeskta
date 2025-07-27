@@ -236,15 +236,14 @@ function Form() {
       // Validate file type
       const allowedTypes = [
         'image/png',
-        'image/jpeg',
-        'image/jpg',
+        'image/jpeg',  // MIME type yang benar untuk file .jpg/.jpeg
         'application/pdf',
       ];
       if (!allowedTypes.includes(file.type)) {
         const errorMsg =
           'Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.';
         setError(errorMsg);
-        showToast(errorMsg, 'error', 4000); // UBAH INI
+        showToast(errorMsg, 'error', 4000);
         e.target.value = '';
         return;
       }
@@ -254,7 +253,7 @@ function Form() {
       if (file.size > maxSize) {
         const errorMsg = 'Ukuran file terlalu besar. Maksimal 5MB.';
         setError(errorMsg);
-        showToast(errorMsg, 'error', 4000); // UBAH INI
+        showToast(errorMsg, 'error', 4000);
         e.target.value = '';
         return;
       }
