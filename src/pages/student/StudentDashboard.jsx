@@ -273,6 +273,9 @@ const StudentDashboard = () => {
     if (readFilter !== 'Semua') {
       if (readFilter === 'Sudah Dibaca') {
         filtered = filtered.filter((ticket) => {
+          // ✅ KHUSUS Tiket Baru selalu ditampilkan (anggap selalu dibaca)
+          if (ticket.category === 'Tiket Baru') return true;
+
           const isUnreadFromAPI = !(
             ticket.read_by_student === true ||
             ticket.read_by_student === 1 ||
@@ -283,10 +286,11 @@ const StudentDashboard = () => {
           ]?.has(ticket.id);
           const isUnreadForThisStatus =
             isUnreadFromAPI && notClickedForThisStatus;
-          return !isUnreadForThisStatus; // Sudah dibaca = NOT unread
+          return !isUnreadForThisStatus;
         });
       } else if (readFilter === 'Belum Dibaca') {
         filtered = filtered.filter((ticket) => {
+          if (ticket.category === 'Tiket Baru') return false; // ✅ Jangan ikutkan
           const isUnreadFromAPI = !(
             ticket.read_by_student === true ||
             ticket.read_by_student === 1 ||
@@ -297,7 +301,7 @@ const StudentDashboard = () => {
           ]?.has(ticket.id);
           const isUnreadForThisStatus =
             isUnreadFromAPI && notClickedForThisStatus;
-          return isUnreadForThisStatus; // Belum dibaca = unread
+          return isUnreadForThisStatus;
         });
       }
     }
@@ -305,12 +309,17 @@ const StudentDashboard = () => {
     // Date range filter
     if (dateRangeFilter.startDate && dateRangeFilter.endDate) {
       const startDate = new Date(dateRangeFilter.startDate);
+      startDate.setHours(0, 0, 0, 0); // 🔧 atur jadi jam 00:00
+
       const endDate = new Date(dateRangeFilter.endDate);
-      endDate.setHours(23, 59, 59, 999);
+      endDate.setHours(23, 59, 59, 999); // 🔧 atur sampai jam 23:59
 
       filtered = filtered.filter((ticket) => {
         if (!ticket.originalDate) return false;
+
         const ticketDate = new Date(ticket.originalDate);
+        if (isNaN(ticketDate.getTime())) return false;
+
         return ticketDate >= startDate && ticketDate <= endDate;
       });
     }
@@ -1205,21 +1214,37 @@ const StudentDashboard = () => {
 
                   {/* Badge untuk belum dibaca */}
                   {(() => {
-                    const unreadCount = tickets.filter((ticket) => {
-                      const isUnreadFromAPI = !(
-                        ticket.read_by_student === true ||
-                        ticket.read_by_student === 1 ||
-                        ticket.read_by_student === '1'
-                      );
-                      const notClickedForThisStatus = !clickedTicketsByStatus[
-                        ticket.category
-                      ]?.has(ticket.id);
-                      return isUnreadFromAPI && notClickedForThisStatus;
+                    const count = tickets.filter((ticket) => {
+                      const isUnread =
+                        !(
+                          ticket.read_by_student === true ||
+                          ticket.read_by_student === 1 ||
+                          ticket.read_by_student === '1'
+                        ) &&
+                        !clickedTicketsByStatus[ticket.category]?.has(
+                          ticket.id
+                        );
+                      if (readFilter === 'Semua') {
+                        return true; // hitung semua tiket
+                      }
+                      if (readFilter === 'Belum Dibaca') {
+                        if (ticket.category === 'Tiket Baru') return false;
+                        return isUnread;
+                      }
+
+                      if (readFilter === 'Sudah Dibaca') {
+                        if (ticket.category === 'Tiket Baru') return true;
+                        return !isUnread;
+                      }
+
+                      // Default = 'Semua'
+                      if (ticket.category === 'Tiket Baru') return false;
+                      return isUnread;
                     }).length;
 
-                    return unreadCount > 0 && readFilter === 'Semua' ? (
+                    return count > 0 ? (
                       <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-1">
-                        {unreadCount}
+                        {count}
                       </span>
                     ) : null;
                   })()}
@@ -1228,43 +1253,65 @@ const StudentDashboard = () => {
                 {/* Dropdown Menu */}
                 {showReadDropdown && (
                   <div className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-20 transform transition-all duration-300 ease-out origin-top opacity-100 scale-100 translate-y-0">
-                    {['Semua', 'Sudah Dibaca', 'Belum Dibaca'].map((option) => (
-                      <Button
-                        key={option}
-                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
-                          readFilter === option
-                            ? 'bg-blue-50 text-blue-700'
-                            : 'text-gray-700'
-                        }`}
-                        onClick={() => {
-                          setReadFilter(option);
-                          setShowReadDropdown(false);
-                        }}
-                      >
-                        {option}
-                        {option === 'Belum Dibaca' &&
-                          (() => {
-                            const unreadCount = tickets.filter((ticket) => {
-                              const isUnreadFromAPI = !(
-                                ticket.read_by_student === true ||
-                                ticket.read_by_student === 1 ||
-                                ticket.read_by_student === '1'
-                              );
-                              const notClickedForThisStatus =
-                                !clickedTicketsByStatus[ticket.category]?.has(
-                                  ticket.id
-                                );
-                              return isUnreadFromAPI && notClickedForThisStatus;
-                            }).length;
+                    {['Semua', 'Sudah Dibaca', 'Belum Dibaca'].map((option) => {
+                      let count = 0;
 
-                            return unreadCount > 0 ? (
-                              <span className="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                                {unreadCount}
-                              </span>
-                            ) : null;
-                          })()}
-                      </Button>
-                    ))}
+                      if (option === 'Belum Dibaca') {
+                        count = tickets.filter((ticket) => {
+                          if (ticket.category === 'Tiket Baru') return false;
+                          const isUnread = !(
+                            ticket.read_by_student === true ||
+                            ticket.read_by_student === 1 ||
+                            ticket.read_by_student === '1'
+                          );
+                          const notClicked = !clickedTicketsByStatus[
+                            ticket.category
+                          ]?.has(ticket.id);
+                          return isUnread && notClicked;
+                        }).length;
+                      }
+
+                      if (option === 'Sudah Dibaca') {
+                        count = tickets.filter((ticket) => {
+                          if (ticket.category === 'Tiket Baru') return true;
+                          const isUnread = !(
+                            ticket.read_by_student === true ||
+                            ticket.read_by_student === 1 ||
+                            ticket.read_by_student === '1'
+                          );
+                          const notClicked = !clickedTicketsByStatus[
+                            ticket.category
+                          ]?.has(ticket.id);
+                          return !(isUnread && notClicked);
+                        }).length;
+                      }
+
+                      if (option === 'Semua') {
+                        count = tickets.length;
+                      }
+
+                      return (
+                        <Button
+                          key={option}
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
+                            readFilter === option
+                              ? 'bg-blue-50 text-blue-700'
+                              : 'text-gray-700'
+                          }`}
+                          onClick={() => {
+                            setReadFilter(option);
+                            setShowReadDropdown(false);
+                          }}
+                        >
+                          {option}
+                          {count > 0 && (
+                            <span className="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                              {count}
+                            </span>
+                          )}
+                        </Button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
