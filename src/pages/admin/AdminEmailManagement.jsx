@@ -599,7 +599,7 @@ const AdminEmailManagement = () => {
                   value={emailForm.to_email}
                   onChange={handleEmailFormChange}
                   required
-                  placeholder="contoh@telkomuniversity.ac.id"
+                  placeholder="contoh@telkomuniversity.ac.id/@adminhelpdesk.ac.id"
                   className="w-full px-3 py-2 border-2 border-gray-500 rounded-lg"
                 />
               </div>

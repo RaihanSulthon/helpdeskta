@@ -153,19 +153,13 @@ function LandingPage() {
               onClick={() => scrollToSection('about-section')}
               className="text-white hover:text-gray-200 font-medium"
             >
-              AboutUs
+              About-Us
             </button>
             <button
               onClick={() => scrollToSection('asked-section')}
               className="text-white hover:text-gray-200 font-medium"
             >
-              AskedUs
-            </button>
-            <button
-              onClick={() => scrollToSection('reach-us-section')}
-              className="text-white hover:text-gray-200 font-medium"
-            >
-              ReachUs
+              Asked-Us
             </button>
           </nav>
 
@@ -234,9 +228,9 @@ function LandingPage() {
             </h2>
             <p className="text-lg opacity-90 mb-8 leading-relaxed">
               Tell-Us adalah platform komprehensif yang dirancang untuk
-              mempermudah mahasiswa dan dosen Telkom University dalam
-              menyampaikan pertanyaan, laporan, maupun permintaan bantuan
-              terkait layanan akademik dan non-akademik.
+              mempermudah mahasiswa Telkom University dalam menyampaikan
+              pertanyaan, laporan, maupun permintaan bantuan terkait layanan
+              akademik dan non-akademik.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               {!isLoggedIn ? (
@@ -650,7 +644,7 @@ function LandingPage() {
                   <button
                     onClick={confirmLogout}
                     className="px-4 py-3 bg-red-600 text-white rounded-md hover:bg-white hover:text-red-600 hover:scale-105 duration-300 transition-all hover:shadow-lg hover:border-2 hover:border-red-600 font-medium"
-                    >
+                  >
                     Logout
                   </button>
                 </div>

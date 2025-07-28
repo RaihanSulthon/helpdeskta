@@ -483,7 +483,7 @@ const AdminAskedUs = () => {
           <div className="flex items-center gap-4 pt-6">
             <div className="w-80 shadow-md shadow-gray-300">
               <SearchBar
-                placeholder="Telusuri FAQ"
+                placeholder="Cari Judul/Deskripsi FAQ"
                 onSearch={handleSearch}
                 onClear={handleClearSearch}
                 disabled={loading}

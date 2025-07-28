@@ -515,7 +515,7 @@ const ManageUsers = () => {
             {/* Search Bar - Left Side */}
             <div className="w-80 shadow-md shadow-gray-300">
               <SearchBar
-                placeholder="Cari nim / nama mahasiswa"
+                placeholder="Cari nim/nama pengguna mahasiswa"
                 onSearch={handleSearch}
                 onClear={handleClearSearch}
                 disabled={loading}

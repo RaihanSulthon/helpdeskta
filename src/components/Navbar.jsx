@@ -53,11 +53,17 @@ const Navbar = ({
     const handleNotificationUpdate = () => {
       fetchUnreadCount();
     };
-  
-    window.addEventListener('feedbackNotificationsRead', handleNotificationUpdate);
-    
+
+    window.addEventListener(
+      'feedbackNotificationsRead',
+      handleNotificationUpdate
+    );
+
     return () => {
-      window.removeEventListener('feedbackNotificationsRead', handleNotificationUpdate);
+      window.removeEventListener(
+        'feedbackNotificationsRead',
+        handleNotificationUpdate
+      );
     };
   }, []);
 
@@ -93,7 +99,7 @@ const Navbar = ({
     // Fetch user data dari API atau context
     if (user) {
       setUserInfo({
-        email: user.email || 'user@telkomuniversity.ac.id',
+        email: user.email,
         registeredDate:
           user.registeredDate ||
           new Date().toLocaleDateString('id-ID', {
