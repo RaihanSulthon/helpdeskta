@@ -550,7 +550,7 @@ const StudentAskedUs = () => {
         </div>
 
         {/* Expand/Collapse All - only show if there are FAQs */}
-        {filteredFAQs.length > 1 ? (
+        {filteredFAQs.length > 1 && (
           <div className="mt-6 text-center">
             <button
               onClick={() => {
@@ -569,19 +569,18 @@ const StudentAskedUs = () => {
                 : 'Buka Semua'}
             </button>
           </div>
-        ) : (
-          filteredFAQs.length > 0 && (
-            <div className="mt-8">
-              <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Tidak menemukan jawaban yang Anda cari?
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Silakan hubungi support tiket
-                </p>
-              </div>
+        )}
+        {filteredFAQs.length > 0 && (
+          <div className="mt-8">
+            <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Tidak menemukan jawaban yang Anda cari?
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Silakan hubungi support tiket
+              </p>
             </div>
-          )
+          </div>
         )}
       </div>
     </div>
