@@ -6,6 +6,17 @@ import { signUpAPI } from '../services/api';
 function SignUp() {
   const navigate = useNavigate();
 
+  const prodiOptions = [
+    "S1 Teknologi Informasi",
+    "S1 Rekayasa Perangkat Lunak",
+    "S1 Informatika",
+    "S1 PJJ Informatika",
+    "S1 Sains Data",
+    "S2 Informatika",
+    "S2 Ilmu Forensik",
+    "S3 Informatika"
+  ];
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -88,6 +99,7 @@ function SignUp() {
     try {
       const response = await signUpAPI(payload);
       setSuccess(response.message || 'Registrasi berhasil! Silakan login.');
+
 
       // Kosongkan form setelah berhasil
       setFormData({
@@ -218,22 +230,23 @@ function SignUp() {
                   />
                 </div>
                 <div className="mb-4">
-                  <label
-                    htmlFor="prodi"
-                    className="block text-gray-700 text-sm font-medium mb-2"
-                  >
-                    Program Studi
-                  </label>
-                  <input
+                  <label htmlFor="prodi" className="block text-gray-700 text-sm font-medium mb-2">Program Studi</label>
+                  <select
                     id="prodi"
                     name="prodi"
-                    type="text"
                     value={formData.prodi}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                    placeholder="Contoh: S1 Rekayasa Perangkat Lunak"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white"
                     required
-                  />
+                  >
+                    {/* Opsi default yang tidak bisa dipilih */}
+                    <option value="" disabled>Pilih Program Studi</option>
+
+                    {/* Mapping dari array prodiOptions untuk membuat setiap pilihan */}
+                    {prodiOptions.map((prodi, index) => (
+                      <option key={index} value={prodi}>{prodi}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="mb-4">
                   <label
