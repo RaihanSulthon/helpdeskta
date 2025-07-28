@@ -2181,3 +2181,36 @@ export const showAnonymousTokenAPI = async (ticketId, password) => {
     );
   }
 };
+
+// Update User Role API
+export const updateUserRoleAPI = async (userId, newRole) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login ulang.');
+    }
+
+    const response = await fetch(`${BASE_URL}/users/${userId}/role`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        role: newRole
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Update user role error:', error);
+    throw error;
+  }
+};

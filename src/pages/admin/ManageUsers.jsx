@@ -6,6 +6,7 @@ import {
   makeAPICall,
   getUserStatisticsAPI,
   getAllUsersAPI,
+  updateUserRoleAPI,
 } from '../../services/api';
 
 const ManageUsers = () => {
@@ -90,6 +91,12 @@ const ManageUsers = () => {
   const [customDateRange, setCustomDateRange] = useState(
     initialFilters.customDateRange
   );
+  const [showSetAdminModal, setShowSetAdminModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
+  const [toasts, setToasts] = useState([]);
+  const [buttonTimer, setButtonTimer] = useState(5);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
   const BASE_URL = 'https://apibackendtio.mynextskill.com/api';
   // Add this at the top after BASE_URL constant
@@ -335,6 +342,28 @@ const ManageUsers = () => {
     saveFiltersToStorage(currentFilters);
   }, [statusFilter, roleFilter, selectedDateRange, customDateRange]);
 
+  useEffect(() => {
+    let interval = null;
+
+    if (showSetAdminModal && isButtonDisabled && buttonTimer > 0) {
+      interval = setInterval(() => {
+        setButtonTimer((prevTimer) => {
+          if (prevTimer <= 1) {
+            setIsButtonDisabled(false);
+            return 0;
+          }
+          return prevTimer - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [showSetAdminModal, isButtonDisabled, buttonTimer]);
+
   const calculateFavoriteCategory = (userTickets) => {
     if (!userTickets || userTickets.length === 0) {
       return { favorite_category: null, favorite_category_count: 0 };
@@ -470,6 +499,72 @@ const ManageUsers = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSetAdminClick = (user) => {
+    setSelectedUser(user);
+    setShowSetAdminModal(true);
+    // Reset timer dan disabled state
+    setButtonTimer(10);
+    setIsButtonDisabled(true);
+  };
+
+  const handleConfirmSetAdmin = async () => {
+    if (!selectedUser) return;
+
+    try {
+      setIsUpdatingRole(true);
+
+      await updateUserRoleAPI(selectedUser.id, 'admin');
+
+      // Tampilkan toast sukses
+      const successToast = {
+        id: Date.now(),
+        type: 'success',
+        message: `Berhasil mengubah role ${selectedUser.name} menjadi admin`,
+      };
+      setToasts((prev) => [...prev, successToast]);
+
+      // Auto remove toast setelah 3 detik
+      setTimeout(() => {
+        setToasts((prev) =>
+          prev.filter((toast) => toast.id !== successToast.id)
+        );
+      }, 3000);
+
+      // Tutup modal
+      setShowSetAdminModal(false);
+      setSelectedUser(null);
+
+      // Refresh data users
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error setting admin role:', error);
+
+      // Tampilkan toast error
+      const errorToast = {
+        id: Date.now(),
+        type: 'error',
+        message: `Gagal mengubah role: ${error.message}`,
+      };
+      setToasts((prev) => [...prev, errorToast]);
+
+      // Auto remove toast setelah 3 detik
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((toast) => toast.id !== errorToast.id));
+      }, 3000);
+    } finally {
+      setIsUpdatingRole(false);
+    }
+  };
+
+  // Function untuk menutup modal
+  const handleCancelSetAdmin = () => {
+    setShowSetAdminModal(false);
+    setSelectedUser(null);
+    // Reset timer dan disabled state
+    setButtonTimer(10);
+    setIsButtonDisabled(true);
   };
 
   if (loading) {
@@ -792,24 +887,50 @@ const ManageUsers = () => {
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => handleViewDetail(user.id)}
-                        className="mt-4 border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-lg rounded-lg flex items-center space-x-2  hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
-                      >
-                        <svg
-                          width="20"
-                          height="20"
-                          viewBox="0 0 20 20"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          onClick={() => handleViewDetail(user.id)}
+                          className="border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-lg rounded-lg flex items-center space-x-2  hover:bg-red-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform"
                         >
-                          <path
-                            d="M2.22222 20C1.61111 20 1.08815 19.7826 0.653333 19.3478C0.218519 18.913 0.000740741 18.3896 0 17.7778V2.22222C0 1.61111 0.217778 1.08815 0.653333 0.653333C1.08889 0.218519 1.61185 0.000740741 2.22222 0H17.7778C18.3889 0 18.9122 0.217778 19.3478 0.653333C19.7833 1.08889 20.0007 1.61185 20 2.22222V17.7778C20 18.3889 19.7826 18.9122 19.3478 19.3478C18.913 19.7833 18.3896 20.0007 17.7778 20H2.22222ZM10 14.4444C10.5926 14.4444 11.1389 14.2915 11.6389 13.9856C12.1389 13.6796 12.5463 13.277 12.8611 12.7778C12.9722 12.6111 13.1111 12.4767 13.2778 12.3744C13.4444 12.2722 13.6296 12.2215 13.8333 12.2222H17.7778V2.22222H2.22222V12.2222H6.16667C6.37037 12.2222 6.55556 12.2733 6.72222 12.3756C6.88889 12.4778 7.02778 12.6119 7.13889 12.7778C7.4537 13.2778 7.86111 13.6807 8.36111 13.9867C8.86111 14.2926 9.40741 14.4452 10 14.4444Z"
-                            fill="#ED1C24"
-                          />
-                        </svg>
-                        <span>Lihat Semua</span>
-                      </button>
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M2.22222 20C1.61111 20 1.08815 19.7826 0.653333 19.3478C0.218519 18.913 0.000740741 18.3896 0 17.7778V2.22222C0 1.61111 0.217778 1.08815 0.653333 0.653333C1.08889 0.218519 1.61185 0.000740741 2.22222 0H17.7778C18.3889 0 18.9122 0.217778 19.3478 0.653333C19.7833 1.08889 20.0007 1.61185 20 2.22222V17.7778C20 18.3889 19.7826 18.9122 19.3478 19.3478C18.913 19.7833 18.3896 20.0007 17.7778 20H2.22222ZM10 14.4444C10.5926 14.4444 11.1389 14.2915 11.6389 13.9856C12.1389 13.6796 12.5463 13.277 12.8611 12.7778C12.9722 12.6111 13.1111 12.4767 13.2778 12.3744C13.4444 12.2722 13.6296 12.2215 13.8333 12.2222H17.7778V2.22222H2.22222V12.2222H6.16667C6.37037 12.2222 6.55556 12.2733 6.72222 12.3756C6.88889 12.4778 7.02778 12.6119 7.13889 12.7778C7.4537 13.2778 7.86111 13.6807 8.36111 13.9867C8.86111 14.2926 9.40741 14.4452 10 14.4444Z"
+                              fill="#ED1C24"
+                            />
+                          </svg>
+                          <span>Lihat Semua</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleSetAdminClick(user)}
+                          className="border-2 border-blue-400 text-sm px-3 py-2 shadow-blue-300 shadow-lg rounded-lg flex items-center space-x-2 hover:bg-blue-100 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-out transform text-blue-600"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-blue-600"
+                          >
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <line x1="19" x2="19" y1="8" y2="14" />
+                            <line x1="22" x2="16" y1="11" y2="11" />
+                          </svg>
+                          <span>Set Admin</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -818,6 +939,104 @@ const ManageUsers = () => {
           </div>
         </div>
       </div>
+      {/* Modal Konfirmasi Set Admin */}
+      {showSetAdminModal && (
+        <div className="fixed inset-0 z-[9999] overflow-y-auto">
+          <div
+            className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm transition-opacity"
+            onClick={handleCancelSetAdmin}
+          />
+
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div
+              className="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header dengan icon dan background navy */}
+              <div className="bg-gray-800 px-6 py-4 flex items-center">
+                <div className="flex items-center justify-center w-8 h-8 bg-white rounded mr-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    className="text-gray-800"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="m15 12l5-4l-5-4v2.999H2v2h13zm7 3H9v-3l-5 4l5 4v-3h13z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-white text-lg font-semibold">
+                  Konfirmasi Perubahan Role
+                </h3>
+              </div>
+
+              {/* Content */}
+              <div className="px-6 py-6">
+                <p className="text-gray-700 font-semibold text-base mb-6">
+                  Apakah Anda yakin akan mengubah pengguna dengan:
+                  <br />
+                  <strong>Nama:</strong> {selectedUser?.name}
+                  <br />
+                  <strong>Email:</strong> {selectedUser?.email}
+                  <br />
+                  <span className="font-bold text-red-600">Menjadi Admin?</span>
+                </p>
+
+                {/* Buttons */}
+                <div className="flex space-x-3 justify-end">
+                  <button
+                    onClick={handleCancelSetAdmin}
+                    disabled={isUpdatingRole}
+                    className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={handleConfirmSetAdmin}
+                    disabled={isUpdatingRole || isButtonDisabled}
+                    className={`px-6 py-3 font-semibold rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                      isButtonDisabled
+                        ? 'bg-gray-500 text-white cursor-not-allowed'
+                        : 'bg-red-600 text-white hover:bg-white hover:text-red-600 hover:border-red-600 border-2 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed'
+                    }`}
+                  >
+                    {isUpdatingRole && (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    )}
+                    <span>
+                      {isButtonDisabled
+                        ? `Set Admin (${buttonTimer})`
+                        : 'Set Admin'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notifications */}
+      {toasts.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 space-y-2">
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className={`px-4 py-3 rounded-lg shadow-lg ${
+                toast.type === 'success'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-red-500 text-white'
+              }`}
+            >
+              {toast.message}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
