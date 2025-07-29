@@ -12,6 +12,7 @@ import {
   Cell,
 } from 'recharts';
 import Navigation from '../../components/Navigation';
+import { ToastContainer } from '../../components/Toast';
 
 const AdminTicketStatistics = () => {
   const [statistics, setStatistics] = useState({
@@ -27,6 +28,7 @@ const AdminTicketStatistics = () => {
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [toasts, setToasts] = useState([]);
   const [error, setError] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState('minggu_ini');
   const [dateRange, setDateRange] = useState({
@@ -247,6 +249,16 @@ const AdminTicketStatistics = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const addToast = (message, type = 'info', duration = 3000) => {
+    const id = Date.now() + Math.random();
+    const newToast = { id, message, type, duration };
+    setToasts((prev) => [...prev, newToast]);
+  };
+
+  const removeToast = (id) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
   // Helper function to generate trend data from tickets
@@ -529,11 +541,13 @@ const AdminTicketStatistics = () => {
         URL.revokeObjectURL(url);
 
         // Show success message (you can replace this with a toast notification)
-        alert(
-          `Data berhasil diekspor! ${tickets.length} tiket telah disimpan ke file CSV.`
+        addToast(
+          `Data berhasil diekspor! ${tickets.length} tiket telah disimpan ke file CSV.`,
+          'success',
+          4000
         );
       } else {
-        alert('Tidak ada data untuk diekspor.');
+        addToast('Tidak ada data untuk diekspor.', 'warning', 3000);
       }
     } catch (error) {
       console.error('Error exporting data:', error);
@@ -1171,6 +1185,7 @@ const AdminTicketStatistics = () => {
           </div>
         </div>
       </div>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };
