@@ -277,52 +277,27 @@ const ManageUsers = () => {
   // Tambahkan function getLastTicketDate sebelum fetchUsers
   const getLastTicketDate = async (userId) => {
     try {
-      let result;
-      try {
-        result = await makeAPICall(`/users/${userId}/tickets`);
-      } catch (error) {
-        try {
-          result = await makeAPICall(`/tickets?user_id=${userId}`);
-        } catch (error2) {
-          const allTicketsResult = await makeAPICall('/tickets');
-          if (allTicketsResult.status === 'success') {
-            const allTickets =
-              allTicketsResult.data?.tickets || allTicketsResult.data || [];
-            result = {
-              status: 'success',
-              data: {
-                tickets: allTickets.filter(
-                  (ticket) => ticket.user_id === userId
-                ),
-              },
-            };
-          } else {
-            throw new Error('Could not fetch tickets');
-          }
-        }
-      }
-
+      const result = await makeAPICall(`/tickets?user_id=${userId}`);
       let ticketsData = [];
+
       if (result.status === 'success' && result.data?.tickets) {
         ticketsData = result.data.tickets;
-      } else if (result.status === 'success' && Array.isArray(result.data)) {
+      } else if (Array.isArray(result.data)) {
         ticketsData = result.data;
-      } else if (Array.isArray(result)) {
-        ticketsData = result;
       }
 
       if (ticketsData.length === 0) {
         return null;
       }
 
-      // Sort tickets by created_at descending (latest first)
-      const sortedTickets = ticketsData.sort(
+      // Urutkan berdasarkan tanggal paling baru
+      const sorted = ticketsData.sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
 
-      return sortedTickets[0].created_at;
+      return sorted[0].created_at;
     } catch (error) {
-      console.error('Error fetching last ticket date for user:', userId, error);
+      console.error(`Gagal ambil tiket terakhir user ${userId}:`, error);
       return null;
     }
   };
@@ -463,24 +438,16 @@ const ManageUsers = () => {
       // Process each user with async operations for last ticket date AND favorite category
       const usersWithLastTicketDate = await Promise.all(
         nonAdminUsers.map(async (user) => {
-          // Get last ticket date for this specific user
-          const userLastTicketDate = await getLastTicketDate(user.id);
-
-          // Get user tickets to calculate favorite category
-          const userTickets = await getUserTickets(user.id);
-          const favoriteData = calculateFavoriteCategory(userTickets);
-
+          const lastTicketDate = await getLastTicketDate(user.id);
           return {
             ...user,
-            // Get ticket counts from ticket_statistics
-            totalTickets: user.ticket_statistics?.total || 0,
-            newTickets: user.ticket_statistics?.open || 0,
-            inProgressTickets: user.ticket_statistics?.in_progress || 0,
-            closedTickets: user.ticket_statistics?.closed || 0,
-            lastTicketDate: userLastTicketDate,
-            // Add favorite category data
-            favorite_category: favoriteData.favorite_category,
-            favorite_category_count: favoriteData.favorite_category_count,
+            totalTickets: user.tickets_statistics?.total || 0,
+            newTickets: user.tickets_statistics?.open || 0,
+            inProgressTickets: user.tickets_statistics?.in_progress || 0,
+            closedTickets: user.tickets_statistics?.closed || 0,
+            lastTicketDate: lastTicketDate,
+            favorite_category: null,
+            favorite_category_count: 0,
           };
         })
       );

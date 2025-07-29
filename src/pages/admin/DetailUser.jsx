@@ -131,32 +131,7 @@ const DetailManage = () => {
   // Fetch user tickets
   const fetchUserTickets = async () => {
     try {
-      let result;
-      // Try multiple endpoints to find the correct one
-      try {
-        result = await makeAPICall(`/users/${userId}/tickets`);
-      } catch (error) {
-        try {
-          result = await makeAPICall(`/tickets?user_id=${userId}`);
-        } catch (error2) {
-          // If specific user endpoints don't work, get all tickets and filter
-          const allTicketsResult = await makeAPICall('/tickets');
-          if (allTicketsResult.status === 'success') {
-            const allTickets =
-              allTicketsResult.data?.tickets || allTicketsResult.data || [];
-            result = {
-              status: 'success',
-              data: {
-                tickets: allTickets.filter(
-                  (ticket) => ticket.user_id === userId
-                ),
-              },
-            };
-          } else {
-            throw new Error('Could not fetch tickets');
-          }
-        }
-      }
+      const result = await makeAPICall(`/tickets?user_id=${userId}`);
 
       let ticketsData = [];
       if (result.status === 'success' && result.data?.tickets) {
@@ -167,7 +142,7 @@ const DetailManage = () => {
         ticketsData = result;
       }
 
-      // Transform tickets data
+      // Transformasi & set state
       const transformedTickets = ticketsData.map((ticket) => ({
         id: ticket.id,
         title: ticket.judul || ticket.title || 'Tidak ada judul',
@@ -184,7 +159,6 @@ const DetailManage = () => {
 
       setTickets(transformedTickets);
 
-      // Hitung kategori favorit setelah tickets diset
       const favoriteData = calculateFavoriteCategory(transformedTickets);
       setFavoriteCategory(favoriteData);
     } catch (error) {
