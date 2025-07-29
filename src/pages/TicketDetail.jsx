@@ -476,10 +476,10 @@ const DetailTicket = () => {
 
     try {
       const userRole = localStorage.getItem('userRole');
+
       const result = await showAnonymousTokenAPI(ticketId, tokenPassword);
       const token = result.token || 'Token tidak tersedia';
-
-      setRevealedToken(token);
+      setRevealedToken(String(token));
 
       if (userRole === 'student') {
         // Set timer 10 detik untuk mahasiswa
@@ -513,15 +513,20 @@ const DetailTicket = () => {
   // Update handler untuk copy token (support both student dan admin)
   const handleCopyToken = async (tokenValue = null) => {
     const tokenToCopy = tokenValue || revealedToken;
+
+    // Pastikan tokenToCopy adalah string, bukan object
+    const finalToken =
+      typeof tokenToCopy === 'string' ? tokenToCopy : String(tokenToCopy);
+
     try {
-      await navigator.clipboard.writeText(tokenToCopy);
+      await navigator.clipboard.writeText(finalToken);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (error) {
       console.error('Failed to copy token:', error);
       // Fallback untuk browser yang tidak support clipboard API
       const textArea = document.createElement('textarea');
-      textArea.value = tokenToCopy;
+      textArea.value = finalToken;
       document.body.appendChild(textArea);
       textArea.select();
       document.execCommand('copy');
@@ -1090,7 +1095,7 @@ const DetailTicket = () => {
 
                             {/* Copy Button */}
                             <button
-                              onClick={handleCopyToken}
+                              onClick={() => handleCopyToken(revealedToken)}
                               className={`px-2 py-1 rounded text-xs transition-all ${
                                 copySuccess
                                   ? 'bg-green-100 text-green-700 border border-green-300'
