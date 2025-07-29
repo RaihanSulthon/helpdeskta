@@ -66,7 +66,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("userRole");
     setUser(null);
-    console.log("User logged out successfully");
   };
 
   const isAuthenticated = () => {
@@ -127,6 +126,38 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Tambahkan di akhir file AuthContext.jsx sebelum export
+export const useRouteProtection = () => {
+  const { getUserRole, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkRoute = () => {
+      if (!isAuthenticated()) return;
+      
+      const userRole = getUserRole();
+      const currentPath = location.pathname;
+      
+      // Log untuk debugging
+      console.log('Route Protection Check:', { userRole, currentPath });
+      
+      if (currentPath.startsWith('/admin/') && userRole !== 'admin') {
+        console.warn('⛔ Unauthorized admin access attempt by:', userRole);
+        navigate('/student/tickets', { replace: true });
+      }
+      
+      if (currentPath.startsWith('/student/') && userRole !== 'student') {
+        console.warn('⛔ Unauthorized student access attempt by:', userRole);
+        navigate('/admin/tickets', { replace: true });
+      }
+    };
+
+    // Check immediately and on route changes
+    checkRoute();
+  }, [location.pathname, getUserRole, isAuthenticated, navigate]);
 };
 
 export const useAuth = () => {

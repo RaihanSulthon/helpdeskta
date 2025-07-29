@@ -120,7 +120,6 @@ const TicketFeedback = () => {
     if (!ticketData?.id || isDeleting) return;
     try {
       setIsDeleting(true);
-      console.log('Deleting ticket:', ticketData.id);
       const result = await deleteTicketAPI(ticketData.id);
       console.log('Delete result:', result);
       if (result.success || result.status === 'success' || result) {
@@ -152,7 +151,6 @@ const TicketFeedback = () => {
     if (!ticketData?.id || isUpdatingStatus) return;
     try {
       setIsUpdatingStatus(true);
-      console.log(`Updating ticket ${ticketData.id} status to:`, newStatus);
       await updateTicketStatusAPI(ticketData.id, newStatus);
       setTicketData((prev) => ({
         ...prev,
@@ -392,36 +390,39 @@ const TicketFeedback = () => {
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
-
+  
     if (!file) {
       setSelectedFile(null);
       setFilePreview(null);
       return;
     }
-
+  
     // Validasi file
     const allowedTypes = [
       'image/png',
-      'image/jpeg',
-      'image/jpg',
+      'image/jpeg',  // MIME type yang benar untuk file .jpg/.jpeg
       'application/pdf',
     ];
-    const maxSize = 10 * 1024 * 1024; // 10MB
-
+    const maxSize = 5 * 1024 * 1024; // 5MB
+  
     if (!allowedTypes.includes(file.type)) {
-      setError('Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.');
+      const errorMsg = 'Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.';
+      setError(errorMsg);
+      addToast(errorMsg, 'error', 4000);
       event.target.value = '';
       return;
     }
-
+    
     if (file.size > maxSize) {
-      setError('Ukuran file terlalu besar. Maksimal 10MB.');
+      const errorMsg = 'Ukuran file terlalu besar. Maksimal 5MB.';
+      setError(errorMsg);
+      addToast(errorMsg, 'error', 4000);
       event.target.value = '';
       return;
     }
-
+  
     setSelectedFile(file);
-
+  
     // Create preview untuk image
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
@@ -430,7 +431,7 @@ const TicketFeedback = () => {
     } else {
       setFilePreview(null);
     }
-
+  
     setError(''); // Clear any previous error
   };
 
@@ -462,10 +463,6 @@ const TicketFeedback = () => {
         subject: 'Custom Notification',
         content: 'This is a custom notification.',
       });
-
-      console.log(
-        `Chat notification sent to ${recipientRole} (${recipientId})`
-      );
     } catch (error) {
       console.error('Failed to create chat notification:', error);
       // Jangan throw error, biarkan proses kirim chat tetap berhasil
@@ -515,24 +512,9 @@ const TicketFeedback = () => {
             });
         }
       }
-
-      // ✅ DEBUG: Cek struktur message yang baru dibuat
-      if (sendResponse.chatMessage || sendResponse.message) {
-        console.log(
-          'New message created:',
-          sendResponse.chatMessage || sendResponse.message
-        );
-        if (sendResponse.attachment) {
-          console.log('Message attachment:', sendResponse.attachment);
-        }
-      }
-
       // Clear input and reload messages
       setNewFeedback('');
       handleRemoveFile();
-
-      // ✅ TAMBAHKAN DEBUG: Log reload messages
-      console.log('=== RELOADING MESSAGES ===');
       await loadChatMessages();
 
       console.log('Feedback sent successfully!');
@@ -586,15 +568,12 @@ const TicketFeedback = () => {
       for (const notification of feedbackNotifications) {
         try {
           await markNotificationAsReadAPI(notification.id);
-          console.log(`✅ Marked feedback notification ${notification.id} as read`);
         } catch (err) {
           console.error('Error marking feedback notification as read:', err);
         }
       }
       
       if (feedbackNotifications.length > 0) {
-        console.log(`✅ Marked ${feedbackNotifications.length} feedback notifications as read for ticket ${ticketId}`);
-        
         // Emit event untuk memberitahu komponen lain
         window.dispatchEvent(new CustomEvent('feedbackNotificationsRead', {
           detail: { ticketId: parseInt(ticketId) }
@@ -1205,14 +1184,14 @@ const TicketFeedback = () => {
                 <button
                   onClick={cancelDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 border-2 border-[#E01A3F] text-[#E01A3F] rounded-lg hover:bg-[#E01A3F] hover:text-white transition-colors disabled:opacity-50 font-medium"
+                  className="px-6 py-2 bg-gray-300 text-white rounded-lg hover:bg-white hover:text-gray-600 border-2 border-gray-300 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
                 >
                   Batal
                 </button>
                 <button
                   onClick={confirmDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 bg-[#E01A3F] text-white rounded-lg hover:bg-[#C41E3A] transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium"
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-white hover:text-red-600 border-2 border-red-600 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
                 >
                   {isDeleting ? (
                     <>

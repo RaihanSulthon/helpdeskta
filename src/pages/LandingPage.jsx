@@ -109,8 +109,6 @@ function LandingPage() {
 
   const handleDashboardClick = () => {
     const currentRole = getUserRole();
-    console.log('Dashboard click - Current role:', currentRole);
-
     switch (currentRole) {
       case 'admin':
         navigate('/admin/tickets');
@@ -155,19 +153,13 @@ function LandingPage() {
               onClick={() => scrollToSection('about-section')}
               className="text-white hover:text-gray-200 font-medium"
             >
-              AboutUs
+              About-Us
             </button>
             <button
               onClick={() => scrollToSection('asked-section')}
               className="text-white hover:text-gray-200 font-medium"
             >
-              AskedUs
-            </button>
-            <button
-              onClick={() => scrollToSection('reach-us-section')}
-              className="text-white hover:text-gray-200 font-medium"
-            >
-              ReachUs
+              Asked-Us
             </button>
           </nav>
 
@@ -236,9 +228,9 @@ function LandingPage() {
             </h2>
             <p className="text-lg opacity-90 mb-8 leading-relaxed">
               Tell-Us adalah platform komprehensif yang dirancang untuk
-              mempermudah mahasiswa dan dosen Telkom University dalam
-              menyampaikan pertanyaan, laporan, maupun permintaan bantuan
-              terkait layanan akademik dan non-akademik.
+              mempermudah mahasiswa Telkom University dalam menyampaikan
+              pertanyaan, laporan, maupun permintaan bantuan terkait layanan
+              akademik dan non-akademik.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               {!isLoggedIn ? (
@@ -249,26 +241,29 @@ function LandingPage() {
                   >
                     Get Started
                   </Button>
-                  <Button className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium">
-                    Learn More
+                  <Button
+                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
+                    onClick={() => navigate('/laak-info')}
+                  >
+                    LAAK Info Portal
                   </Button>
                 </>
               ) : (
                 <>
                   <Button
-                    className="bg-red-600 text-white hover:bg-white hover:text-red-600 border-2 border-white transition-all duration-300 hover:scale-105 hover:shadow-xl  px-8 py-3 text-lg font-medium"
+                    className="bg-white text-red-600 hover:bg-gray-100 px-8 py-3 text-lg font-medium"
                     onClick={handleDashboardClick}
                   >
                     Go to Dashboard
                   </Button>
                   <Button
-                    className="border-2 border-white text-white transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
+                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
                     onClick={() => navigate('/laak-info')}
                   >
                     LAAK Info Portal
                   </Button>
                   <Button
-                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                    className="border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium"
                     onClick={() =>
                       navigate(
                         userRole === 'student'
@@ -642,13 +637,13 @@ function LandingPage() {
                 <div className="flex justify-end space-x-3">
                   <button
                     onClick={cancelLogout}
-                    className="px-6 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-300 hover:scale-105 duration-300 transition-all hover:shadow-lg font-medium"
+                    className="px-6 py-2 text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300 hover:scale-105 duration-300 transition-all hover:shadow-lg font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={confirmLogout}
-                    className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 hover:scale-105 duration-300 transition-all hover:shadow-lg font-medium"
+                    className="px-4 py-3 bg-red-600 text-white rounded-md hover:bg-white hover:text-red-600 hover:scale-105 duration-300 transition-all hover:shadow-lg hover:border-2 hover:border-red-600 font-medium"
                   >
                     Logout
                   </button>

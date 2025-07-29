@@ -375,17 +375,14 @@ const AdminDashboard = () => {
 
     switch (columnKey) {
       case 'tiket-baru':
-        // Badge muncul jika ada tiket baru hari ini yang belum dibaca admin
         shouldShowBadge = hasNewTicketsToday || hasNewFeedback;
         break;
 
       case 'diproses':
-        // Badge muncul jika ada feedback/chat baru dari user
         shouldShowBadge = hasNewFeedback;
         break;
 
       case 'selesai':
-        // Badge muncul jika ada feedback/chat baru dari user (rating, komplain, dll)
         shouldShowBadge = hasNewFeedback;
         break;
 
@@ -680,7 +677,7 @@ const AdminDashboard = () => {
       setError('');
 
       const ticketsData = await getAdminTicketsAPI();
-      // console.log('Received tickets data:', ticketsData);
+      console.log('Received tickets data:', ticketsData);
 
       // Group tickets by status
       const groupedTickets = {
@@ -908,8 +905,6 @@ const AdminDashboard = () => {
 
         return newTickets;
       });
-
-      console.log('✅ Ticket status updated successfully to:', newStatus);
 
       // Show success toast
       const statusMessage =
@@ -1584,14 +1579,14 @@ const AdminDashboard = () => {
                 <Button
                   onClick={cancelDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 border-2 rounded-lg hover:bg-gray-500 hover:text-white transition-all duration-300 hover:scale-105 font-medium"
+                  className="px-6 py-2 bg-gray-300 text-white rounded-lg hover:bg-white hover:text-gray-600 border-2 border-gray-300 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
                 >
                   Batal
                 </Button>
                 <Button
                   onClick={confirmDeleteTicket}
                   disabled={isDeleting}
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-white hover:text-red-600 border-2 border-red-600 transition-all duration-300 hover:scale-105 flex items-center space-x-2 font-medium"
                 >
                   {isDeleting ? (
                     <>

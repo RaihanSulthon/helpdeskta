@@ -15,9 +15,9 @@ import { SPLManager } from './config/splConfig';
 import AdminEmailManagement from './pages/admin/AdminEmailManagement';
 import AdminTicketStatistics from './pages/admin/AdminTicketStatistics';
 import BaseLayout from './components/BaseLayout';
+import PrivateRoute from './components/PrivateRoute'; // TAMBAH INI
 import './index.css';
 import DetailUser from './pages/admin/DetailUser';
-// Import AskedUs components
 import StudentAskedUs from './pages/student/StudentAskedUs';
 import AdminAskedUs from './pages/admin/AdminAskedUs';
 import ManageUsers from './pages/admin/ManageUsers';
@@ -28,7 +28,6 @@ const RoleBasedRedirect = () => {
   const userRole = localStorage.getItem('userRole');
   const config = SPLManager.getCurrentConfig();
 
-  // Validate if user has access to requested features
   const getRedirectPath = () => {
     switch (userRole) {
       case 'student':
@@ -51,160 +50,191 @@ createRoot(document.getElementById('root')).render(
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/Signup" element={<Signup />} />
-        {/* SPL-aware role-based redirect */}
         <Route path="/dashboard" element={<RoleBasedRedirect />} />
         <Route path="/laak-info" element={<LAAKInfoPortal />} />
-        {/* Student routes dengan SPL validation */}
+
+        {/* Student routes - SEMUA DILINDUNGI */}
         <Route
           path="/student"
           element={<Navigate to="/student/tickets" replace />}
         />
+
         <Route
           path="/student/sampaikan"
           element={
-            <BaseLayout>
-              <Layout>
-                <Form />
-              </Layout>
-            </BaseLayout>
-          }
-        />
-        <Route
-          path="/student/detailmanage/:userId"
-          element={
-            <BaseLayout>
-              <Layout>
-                <DetailUser />
-              </Layout>
-            </BaseLayout>
-          }
-        />
-        {/* Student Tickets Dashboard */}
-        <Route
-          path="/student/tickets"
-          element={
-            <BaseLayout>
-              <Layout>
-                <StudentDashboard />
-              </Layout>
-            </BaseLayout>
-          }
-        />
-        {/* Student AskedUs - bisa mengakses FAQ atau help */}
-        <Route
-          path="/student/askedus"
-          element={
-            <BaseLayout>
-              <Layout>
-                <StudentAskedUs />
-              </Layout>
-            </BaseLayout>
+            <PrivateRoute allowedRoles={['student']}>
+              <BaseLayout>
+                <Layout>
+                  <Form />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
           }
         />
 
-        {/* Student Detail */}
         <Route
-          path="/ticket/:ticketId"
+          path="/student/detailmanage/:userId"
           element={
-            <BaseLayout>
-              <Layout>
-                <DetailTicket />
-              </Layout>
-            </BaseLayout>
+            <PrivateRoute allowedRoles={['student']}>
+              <BaseLayout>
+                <Layout>
+                  <DetailUser />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
           }
         />
+
         <Route
-          path="/ticket/:ticketId/feedback"
+          path="/student/tickets"
           element={
-            <BaseLayout>
-              <Layout>
-                <TicketFeedback />
-              </Layout>
-            </BaseLayout>
+            <PrivateRoute allowedRoles={['student']}>
+              <BaseLayout>
+                <Layout>
+                  <StudentDashboard />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
           }
         />
-        {/* Student ReachUs */}
+
+        <Route
+          path="/student/askedus"
+          element={
+            <PrivateRoute allowedRoles={['student']}>
+              <BaseLayout>
+                <Layout>
+                  <StudentAskedUs />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
+          }
+        />
+
         <Route
           path="/student/reachus"
           element={
-            <BaseLayout>
-              <Layout>
-                <StudentAskedUs />
-              </Layout>
-            </BaseLayout>
+            <PrivateRoute allowedRoles={['student']}>
+              <BaseLayout>
+                <Layout>
+                  <StudentAskedUs />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
           }
         />
-        {/* Admin routes dengan SPL validation */}
+
+        {/* Admin routes - SEMUA DILINDUNGI */}
         <Route
           path="/admin"
           element={<Navigate to="/admin/tickets" replace />}
         />
-        {/* Admin Tickets Dashboard */}
+
         <Route
           path="/admin/tickets"
           element={
-            <BaseLayout>
-              <Layout>
-                <AdminDashboard />
-              </Layout>
-            </BaseLayout>
+            <PrivateRoute allowedRoles={['admin']}>
+              <BaseLayout>
+                <Layout>
+                  <AdminDashboard />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
           }
         />
-        {/* Admin Ticket Statistics */}
+
         <Route
           path="/admin/statistics"
           element={
-            <BaseLayout>
-              <Layout>
-                <AdminTicketStatistics />
-              </Layout>
-            </BaseLayout>
+            <PrivateRoute allowedRoles={['admin']}>
+              <BaseLayout>
+                <Layout>
+                  <AdminTicketStatistics />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
           }
         />
-        {/* Admin AskedUs - untuk mengelola FAQ */}
+
         <Route
           path="/admin/askedus"
           element={
-            <BaseLayout>
-              <Layout>
-                <AdminAskedUs />
-              </Layout>
-            </BaseLayout>
+            <PrivateRoute allowedRoles={['admin']}>
+              <BaseLayout>
+                <Layout>
+                  <AdminAskedUs />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
           }
         />
-        {/* Admin Users - untuk mengelola users */}
+
         <Route
           path="/admin/users"
           element={
-            <BaseLayout>
-              <Layout>
-                <ManageUsers />
-              </Layout>
-            </BaseLayout>
+            <PrivateRoute allowedRoles={['admin']}>
+              <BaseLayout>
+                <Layout>
+                  <ManageUsers />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
           }
         />
 
-        {/* Admin email management */}
+        <Route
+          path="/admin/detailmanage/:userId"
+          element={
+            <PrivateRoute allowedRoles={['admin']}>
+              <BaseLayout>
+                <Layout>
+                  <DetailUser />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
+          }
+        />
+
         <Route
           path="/admin/emails"
           element={
-            <BaseLayout>
-              <Layout>
-                <AdminEmailManagement />
-              </Layout>
-            </BaseLayout>
+            <PrivateRoute allowedRoles={['admin']}>
+              <BaseLayout>
+                <Layout>
+                  <AdminEmailManagement />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
           }
         />
 
-        {/* Admin ReachUs - untuk mengelola kontak */}
-        {/* <Route
-          path="/admin/reachus"
+        {/* Shared routes - accessible by both roles */}
+        <Route
+          path="/ticket/:ticketId"
           element={
-            <Layout>
-              <AdminReachUs />
-            </Layout>
+            <PrivateRoute>
+              <BaseLayout>
+                <Layout>
+                  <DetailTicket />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
           }
-        /> */}
+        />
+
+        <Route
+          path="/ticket/:ticketId/feedback"
+          element={
+            <PrivateRoute>
+              <BaseLayout>
+                <Layout>
+                  <TicketFeedback />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
+          }
+        />
+
         {/* Access denied route */}
         <Route
           path="/access-denied"
@@ -215,7 +245,7 @@ createRoot(document.getElementById('root')).render(
                   Access Denied
                 </h1>
                 <p className="text-gray-600">
-                  Feature not available for your role
+                  You don't have permission to access this page
                 </p>
                 <button
                   onClick={() => window.history.back()}
@@ -227,6 +257,7 @@ createRoot(document.getElementById('root')).render(
             </div>
           }
         />
+
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

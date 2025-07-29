@@ -360,10 +360,6 @@ const NotificationModal = ({ isOpen, onClose }) => {
           console.error('Error marking feedback notification as read:', err);
         }
       }
-
-      console.log(
-        `✅ Marked ${feedbackNotifications.length} feedback notifications as read for ticket ${ticketId}`
-      );
     } catch (error) {
       console.error('Error marking all feedback notifications as read:', error);
     }
