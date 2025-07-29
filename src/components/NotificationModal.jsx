@@ -4,7 +4,6 @@ import {
   getNotificationsAPI,
   markNotificationAsReadAPI,
   markAllNotificationsAsReadAPI,
-  getTicketDetailAPI,
 } from '../services/api';
 import { getUserDisplayName } from '../utils/userUtils';
 
@@ -13,7 +12,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [ticketTitles, setTicketTitles] = useState({});
+  // const [ticketTitles, setTicketTitles] = useState({});
   const [userNames, setUserNames] = useState({});
   const modalRef = useRef(null);
 
@@ -33,12 +32,9 @@ const NotificationModal = ({ isOpen, onClose }) => {
 
       setNotifications(notificationList);
 
-      // Fetch ticket titles dan user names secara parallel
+      // Fetch user names secara parallel
       if (notificationList.length > 0) {
-        await Promise.all([
-          fetchTicketTitles(notificationList),
-          fetchUserNames(notificationList),
-        ]);
+        await fetchUserNames(notificationList);
       }
     } catch (err) {
       console.error('Error fetching notifications:', err);
@@ -77,39 +73,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
     setUserNames((prev) => ({ ...prev, ...names }));
   };
 
-  // Fetch ticket titles secara terpisah dan parallel
-  const fetchTicketTitles = async (notifications) => {
-    const titles = {};
-
-    // Batch process ticket titles
-    const ticketPromises = notifications
-      .filter((notif) => notif.ticket_id && !ticketTitles[notif.ticket_id])
-      .slice(0, 10) // Limit hanya 10 first untuk avoid too many requests
-      .map(async (notification) => {
-        try {
-          const ticketDetail = await getTicketDetailAPI(notification.ticket_id);
-          return {
-            ticketId: notification.ticket_id,
-            title: ticketDetail.judul || ticketDetail.title || 'Untitled',
-          };
-        } catch (error) {
-          return {
-            ticketId: notification.ticket_id,
-            title: 'Untitled',
-          };
-        }
-      });
-
-    // Wait for all promises
-    const results = await Promise.all(ticketPromises);
-
-    // Update titles state
-    results.forEach((result) => {
-      titles[result.ticketId] = result.title;
-    });
-
-    setTicketTitles((prev) => ({ ...prev, ...titles }));
-  };
+  // REMOVED fetchTicketTitles, now ticket title is taken directly from notification.ticket.judul
 
   // Mark notification as read and redirect based on notification type
   const handleNotificationClick = async (notification) => {
@@ -219,8 +183,9 @@ const NotificationModal = ({ isOpen, onClose }) => {
 
   // Get notification content with colored text and ticket title
   const getNotificationContent = (notification) => {
-    const { type, message, ticket_id } = notification;
-    const ticketTitle = ticketTitles[ticket_id] || 'Loading...';
+    const { type, message, ticket_id, ticket } = notification;
+    // Get title from notification.ticket.judul or .title, fallback to 'Untitled'
+    const ticketTitle = ticket?.judul || ticket?.title || 'Untitled';
 
     if (type === 'new_ticket' || message.includes('Tiket baru telah dibuat')) {
       return (
@@ -271,7 +236,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
     }
 
     // Fallback dengan ticket title jika ada
-    if (ticket_id && ticketTitle !== 'Loading...') {
+    if (ticket_id && ticketTitle !== 'Untitled') {
       // Check if message contains status-related text and replace it
       let processedMessage = message;
 
