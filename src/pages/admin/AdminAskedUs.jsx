@@ -8,6 +8,7 @@ import {
 } from '../../services/api';
 import SearchBar from '../../components/SearchBar';
 import Navigation from '../../components/Navigation';
+import { ToastContainer } from '../../components/Toast';
 
 const useDebounce = (value, delay) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -58,6 +59,7 @@ const AdminAskedUs = () => {
   const [statusFilter, setStatusFilter] = useState('Semua Status');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectAll, setSelectAll] = useState(false);
+  const [toasts, setToasts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -276,6 +278,7 @@ const AdminAskedUs = () => {
       if (result.success) {
         setShowAddModal(false);
         resetForm();
+        addToast('FAQ berhasil dibuat', 'success', 3000);
         setTimeout(() => {
           loadFAQs();
         }, 500);
@@ -326,6 +329,7 @@ const AdminAskedUs = () => {
         setShowEditModal(false);
         setEditingFAQ(null);
         resetForm();
+        addToast('FAQ berhasil diupdate', 'success', 3000);
         await loadFAQs();
       } else {
         setError(
@@ -358,15 +362,24 @@ const AdminAskedUs = () => {
     );
   };
 
+  const addToast = (message, type = 'info', duration = 3000) => {
+    const id = Date.now() + Math.random();
+    const newToast = { id, message, type, duration };
+    setToasts((prev) => [...prev, newToast]);
+  };
+
+  const removeToast = (id) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
+
   // Handle delete selected FAQs
   const handleDeleteSelected = async () => {
     const selectedFAQs = faqData.filter((item) => item.isChecked);
 
     if (selectedFAQs.length === 0) {
-      alert('Pilih FAQ yang ingin dihapus');
+      addToast('Pilih FAQ yang ingin dihapus', 'warning', 3000);
       return;
     }
-
     if (
       !window.confirm(
         `Apakah Anda yakin ingin menghapus ${selectedFAQs.length} FAQ?`
@@ -384,6 +397,7 @@ const AdminAskedUs = () => {
 
       await loadFAQs();
       setSelectAll(false);
+      addToast(`${selectedFAQs.length} FAQ berhasil dihapus`, 'success', 3000);
     } catch (error) {
       console.error('Error deleting FAQs:', error);
       setError('Gagal menghapus FAQ: ' + error.message);
@@ -399,8 +413,10 @@ const AdminAskedUs = () => {
       await loadFAQs();
       setShowDeleteModal(false);
       setFAQToDelete(null);
+      addToast('FAQ berhasil dihapus', 'success', 3000);
     } catch (error) {
       setError('Gagal menghapus FAQ: ' + error.message);
+      addToast('Gagal menghapus FAQ: ' + error.message, 'error', 4000);
     }
   };
 
@@ -1338,6 +1354,7 @@ const AdminAskedUs = () => {
           </div>
         </div>
       )}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };
