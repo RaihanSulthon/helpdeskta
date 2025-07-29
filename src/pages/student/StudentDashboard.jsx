@@ -1218,14 +1218,14 @@ const StudentDashboard = () => {
                         ticket.category
                       ]?.has(ticket.id);
 
-                      const isProcessedOrCompleted =
+                      const notNewStatus =
                         ticket.category === 'Sedang Diproses' ||
                         ticket.category === 'Selesai';
 
                       return (
-                        isProcessedOrCompleted &&
                         isUnreadFromAPI &&
-                        notClickedForThisStatus
+                        notClickedForThisStatus &&
+                        notNewStatus
                       );
                     }).length;
 
@@ -1264,14 +1264,14 @@ const StudentDashboard = () => {
                                   ticket.id
                                 );
 
-                              const isProcessedOrCompleted =
+                              const notNewStatus =
                                 ticket.category === 'Sedang Diproses' ||
                                 ticket.category === 'Selesai';
 
                               return (
-                                isProcessedOrCompleted &&
                                 isUnreadFromAPI &&
-                                notClickedForThisStatus
+                                notClickedForThisStatus &&
+                                notNewStatus
                               );
                             }).length;
 
