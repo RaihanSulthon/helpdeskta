@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import {
   getTicketsAPI,
   getCategoriesAPI,
-  getTicketDetailAPI,
 } from '../../services/api';
 import {
   FilterButton,
@@ -472,25 +471,15 @@ const StudentDashboard = () => {
   };
 
   const loadFeedbackCounts = async (tickets) => {
+    setLoadingFeedbackCounts(true);
     try {
-      setLoadingFeedbackCounts(true);
       const counts = {};
-
       for (const ticket of tickets) {
-        try {
-          const data = await getTicketDetailAPI(ticket.id);
-
-          // 🔍 DEBUG: Cek data yang diterima dari API
-
-          counts[ticket.id] = {
-            total: data.chat_count || 0,
-            unread: data.unread_chat_count || 0,
-          };
-        } catch (error) {
-          counts[ticket.id] = { total: 0, unread: 0 };
-        }
+        counts[ticket.id] = {
+          total: ticket.chat_count || 0,
+          unread: ticket.unread_chat_count || 0,
+        };
       }
-
       setFeedbackCounts(counts);
     } catch (error) {
       console.error('Error loading feedback counts:', error);

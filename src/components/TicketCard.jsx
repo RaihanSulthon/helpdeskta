@@ -74,7 +74,7 @@ const TicketCard = ({
       setLoading(true);
       setError('');
 
-      const data = await getTicketDetailAPI(ticket.id);
+      const data = ticket.rawTicket;
 
       const transformedData = {
         id: data.id || 'Tidak tersedia',
