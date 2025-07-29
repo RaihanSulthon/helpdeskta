@@ -100,7 +100,6 @@ const TicketCard = ({
       setTotalFeedbackCount(transformedData.read || 0);
       setNewFeedbackCount(transformedData.unread || 0);
     } catch (error) {
-      console.error('Error loading ticket detail:', error);
       setError(error.message || 'Gagal memuat detail tiket');
     } finally {
       setLoading(false);

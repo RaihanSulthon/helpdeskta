@@ -79,10 +79,8 @@ function LandingPage() {
     if (isAuthenticated() && user) {
       const role = getUserRole();
       setUserRole(role);
-      console.log('Landing page - User authenticated:', { user, role });
     } else {
       setUserRole(null);
-      console.log('Landing page - User not authenticated');
     }
 
     // Load FAQs

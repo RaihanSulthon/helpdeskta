@@ -123,7 +123,6 @@ const DetailManage = () => {
         setUserDetail(result.data);
       }
     } catch (error) {
-      console.error('Error fetching user detail:', error);
       setError('Gagal memuat detail user: ' + error.message);
     }
   };

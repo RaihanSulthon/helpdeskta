@@ -37,7 +37,6 @@ const NotificationModal = ({ isOpen, onClose }) => {
         await fetchUserNames(notificationList);
       }
     } catch (err) {
-      console.error('Error fetching notifications:', err);
       setError('Gagal memuat notifikasi');
     } finally {
       setLoading(false);
@@ -59,7 +58,6 @@ const NotificationModal = ({ isOpen, onClose }) => {
         const userName = await getUserDisplayName(senderId);
         return { senderId, userName };
       } catch (error) {
-        console.error(`Error fetching name for user ${senderId}:`, error);
         return { senderId, userName: `User-${senderId.slice(-6)}` };
       }
     });
@@ -148,7 +146,6 @@ const NotificationModal = ({ isOpen, onClose }) => {
       await markAllNotificationsAsReadAPI();
       setNotifications([]);
     } catch (err) {
-      console.error('Error marking all as read:', err);
       setError('Gagal menandai semua sebagai dibaca');
     }
   };

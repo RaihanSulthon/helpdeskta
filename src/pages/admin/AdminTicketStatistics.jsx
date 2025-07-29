@@ -214,7 +214,6 @@ const AdminTicketStatistics = () => {
       const endpoint = `/tickets${queryString ? `?${queryString}` : ''}`;
 
       const result = await makeAPICall(endpoint);
-      console.log('Tickets API response:', result);
 
       if (result.status === 'success' && result.data && result.data.tickets) {
         const tickets = result.data.tickets;

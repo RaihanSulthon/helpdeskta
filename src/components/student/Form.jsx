@@ -108,8 +108,6 @@ function Form() {
             noHp: userProfile.no_hp || prev.noHp,
           }));
         } catch (error) {
-          console.error('Error loading user profile:', error);
-          // Fallback to user data from auth context if API fails
           setFormData((prev) => ({
             ...prev,
             email: user.email || prev.email,
@@ -536,7 +534,6 @@ function Form() {
         }
       }, 3000);
     } catch (error) {
-      console.error('Submit Error Details:', error);
       setIsLoading(false);
 
       // Enhanced error handling

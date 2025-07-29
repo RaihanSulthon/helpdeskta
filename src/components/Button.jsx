@@ -19,9 +19,6 @@ function Button({
 
     // Validate and adjust type based on user role
     if (!config.allowedTypes.includes(type)) {
-      console.warn(
-        `Button type "${type}" not allowed for current role. Using default.`
-      );
       finalType = config.defaultType;
     }
 

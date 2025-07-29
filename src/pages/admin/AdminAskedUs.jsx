@@ -286,7 +286,6 @@ const AdminAskedUs = () => {
         setError('Gagal menambah FAQ: ' + (result.message || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Error creating FAQ:', error);
       setError('Gagal menambah FAQ: ' + error.message);
     } finally {
       setIsSubmitting(false);
@@ -337,7 +336,6 @@ const AdminAskedUs = () => {
         );
       }
     } catch (error) {
-      console.error('Error updating FAQ:', error);
       setError('Gagal mengupdate FAQ: ' + error.message);
     } finally {
       setIsSubmitting(false);
@@ -399,7 +397,6 @@ const AdminAskedUs = () => {
       setSelectAll(false);
       addToast(`${selectedFAQs.length} FAQ berhasil dihapus`, 'success', 3000);
     } catch (error) {
-      console.error('Error deleting FAQs:', error);
       setError('Gagal menghapus FAQ: ' + error.message);
     }
   };

@@ -516,8 +516,6 @@ const TicketFeedback = () => {
       setNewFeedback('');
       handleRemoveFile();
       await loadChatMessages();
-
-      console.log('Feedback sent successfully!');
     } catch (error) {
       console.error('Error sending feedback:', error);
       setError(error.message || 'Gagal mengirim feedback. Silakan coba lagi.');

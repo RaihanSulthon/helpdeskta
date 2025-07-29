@@ -20,13 +20,11 @@ const BaseLayout = ({ children }) => {
 
     // Check for role mismatch
     if (currentPath.startsWith('/admin/') && userRole !== 'admin') {
-      console.warn('Student trying to access admin route, redirecting...');
       navigate('/student/tickets', { replace: true });
       return;
     }
 
     if (currentPath.startsWith('/student/') && userRole !== 'student') {
-      console.warn('Admin trying to access student route, redirecting...');
       navigate('/admin/tickets', { replace: true });
       return;
     }

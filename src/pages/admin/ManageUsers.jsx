@@ -461,7 +461,6 @@ const ManageUsers = () => {
         total_pages: filteredTotalPages,
       }));
     } catch (error) {
-      console.error('Error fetching users:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -506,8 +505,6 @@ const ManageUsers = () => {
       // Refresh data users
       await fetchUsers();
     } catch (error) {
-      console.error('Error setting admin role:', error);
-
       // Tampilkan toast error
       const errorToast = {
         id: Date.now(),

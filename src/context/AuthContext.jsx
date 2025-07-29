@@ -23,7 +23,6 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem("userRole", parsedUser.role);
         }
       } catch (error) {
-        console.error("Gagal memuat userData:", error);
         localStorage.removeItem("userData");
         localStorage.removeItem("token");
         localStorage.removeItem("userRole");
@@ -141,16 +140,11 @@ export const useRouteProtection = () => {
       const userRole = getUserRole();
       const currentPath = location.pathname;
       
-      // Log untuk debugging
-      console.log('Route Protection Check:', { userRole, currentPath });
-      
       if (currentPath.startsWith('/admin/') && userRole !== 'admin') {
-        console.warn('⛔ Unauthorized admin access attempt by:', userRole);
         navigate('/student/tickets', { replace: true });
       }
       
       if (currentPath.startsWith('/student/') && userRole !== 'student') {
-        console.warn('⛔ Unauthorized student access attempt by:', userRole);
         navigate('/admin/tickets', { replace: true });
       }
     };

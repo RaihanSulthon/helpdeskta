@@ -36,7 +36,6 @@ function Login() {
       setIsLoading(true);
 
       const userData = await login(credentials.email, credentials.password);
-      console.log('Login successful:', userData);
 
       // Navigate berdasarkan role
       switch (userData.role) {

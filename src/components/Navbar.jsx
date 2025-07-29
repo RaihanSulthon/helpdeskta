@@ -32,7 +32,6 @@ const Navbar = ({
         setUnreadCount(0);
       }
     } catch (error) {
-      console.error('Error fetching unread count:', error);
       setUnreadCount(0);
     }
   };

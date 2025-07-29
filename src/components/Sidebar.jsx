@@ -67,7 +67,6 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
         }
         setTicketCount(ticketsData?.length || 0);
       } catch (error) {
-        console.error('Error loading ticket count:', error);
         setTicketCount(0);
       } finally {
         setLoadingCount(false);

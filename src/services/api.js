@@ -297,8 +297,6 @@ export const getFAQByIdAPI = async (faqId) => {
       throw new Error('ID FAQ tidak valid');
     }
 
-    console.log('Fetching FAQ by ID:', faqId);
-
     const response = await retryFetch(`${BASE_URL}/faqs/${faqId}`, {
       method: 'GET',
       headers: {
@@ -322,7 +320,6 @@ export const getFAQByIdAPI = async (faqId) => {
     }
 
     const result = await response.json();
-    console.log('Get FAQ By ID API response:', result);
 
     // Extract FAQ from response
     if (result?.data) {
@@ -347,8 +344,6 @@ export const getFAQByIdAdminAPI = async (faqId) => {
       throw new Error('ID FAQ tidak valid');
     }
 
-    console.log('Fetching FAQ by ID (Admin):', faqId);
-
     const response = await retryFetch(`${BASE_URL}/admin/faqs/${faqId}`, {
       method: 'GET',
       headers: {
@@ -372,7 +367,6 @@ export const getFAQByIdAdminAPI = async (faqId) => {
     }
 
     const result = await response.json();
-    console.log('Get FAQ By ID Admin API response:', result);
 
     // Extract FAQ from response
     if (result?.data) {
@@ -411,8 +405,6 @@ export const createFAQAPI = async (faqData) => {
       is_public: Boolean(faqData.is_public !== false),
     };
 
-    console.log('Creating FAQ with data:', requestBody);
-
     // Configure request options
     const options = {
       method: 'POST',
@@ -440,7 +432,6 @@ export const createFAQAPI = async (faqData) => {
     }
 
     const result = await response.json();
-    console.log('Create FAQ response:', result);
 
     return {
       success: true,
@@ -473,8 +464,6 @@ export const updateFAQAPI = async (faqId, faqData) => {
     if (faqData.hasOwnProperty('is_public'))
       requestBody.is_public = Boolean(faqData.is_public);
 
-    console.log('Updating FAQ:', { faqId, requestBody });
-
     const options = {
       method: 'PATCH',
       headers: {
@@ -501,7 +490,6 @@ export const updateFAQAPI = async (faqId, faqData) => {
     }
 
     const result = await response.json();
-    console.log('Update FAQ response:', result);
 
     return {
       success: true,
@@ -525,8 +513,6 @@ export const deleteFAQAPI = async (faqId) => {
     if (!faqId) {
       throw new Error('ID FAQ tidak valid');
     }
-
-    console.log('Deleting FAQ:', faqId);
 
     const options = {
       method: 'DELETE',
@@ -553,7 +539,6 @@ export const deleteFAQAPI = async (faqId) => {
     }
 
     const result = await response.json();
-    console.log('Delete FAQ response:', result);
 
     return {
       success: true,
@@ -1151,8 +1136,6 @@ export const getFAQCategoriesAPI = async () => {
       throw new Error('Token tidak ditemukan. Silakan login ulang.');
     }
 
-    console.log('Fetching FAQ categories...');
-
     const response = await retryFetch(`${BASE_URL}/faqs/categories`, {
       method: 'GET',
       headers: {
@@ -1176,7 +1159,6 @@ export const getFAQCategoriesAPI = async () => {
     }
 
     const result = await response.json();
-    // console.log('Get FAQ Categories API response:', result);
 
     // Extract categories from response
     if (result?.data && Array.isArray(result.data)) {
@@ -1578,8 +1560,6 @@ export const deleteTicketAPI = async (ticketId) => {
       throw new Error('ID tiket tidak valid');
     }
 
-    console.log('Deleting ticket:', ticketId);
-
     const options = {
       method: 'DELETE',
       headers: {
@@ -1608,8 +1588,6 @@ export const deleteTicketAPI = async (ticketId) => {
     }
 
     const result = await response.json();
-    console.log('Delete ticket response:', result);
-
     return {
       success: true,
       message: result.message || 'Tiket berhasil dihapus',
@@ -2262,17 +2240,19 @@ export const updateUserRoleAPI = async (userId, newRole) => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        role: newRole
+        role: newRole,
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      throw new Error(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`
+      );
     }
 
     const result = await response.json();

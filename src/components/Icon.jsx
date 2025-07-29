@@ -150,7 +150,6 @@ const icons = {
 
 function Icon({ name, className = "" }) {
   if (!icons[name]) {
-    console.warn(`Icon "${name}" not found`);
     return null;
   }
 
