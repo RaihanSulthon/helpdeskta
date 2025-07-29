@@ -906,7 +906,7 @@ const StudentDashboard = () => {
             {/* 🔧 SEARCH BOX - Tetap di Kiri */}
             <div className="relative flex-1 min-w-[250px] max-w-[400px]">
               <SearchBar
-                placeholder="Cari id / judul / nama mahasiswa"
+                placeholder="Cari id / judul"
                 onSearch={handleSearch}
                 onClear={handleClearSearch}
                 disabled={loading}
