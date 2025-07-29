@@ -32,8 +32,9 @@ export const getTicketStatisticsAPI = async (filters = {}) => {
     if (filters.period) queryParams.append('period', filters.period);
 
     const queryString = queryParams.toString();
-    const url = `${BASE_URL}/tickets/statistics${queryString ? `?${queryString}` : ''
-      }`;
+    const url = `${BASE_URL}/tickets/statistics${
+      queryString ? `?${queryString}` : ''
+    }`;
 
     console.log('Fetching ticket statistics from:', url);
 
@@ -89,17 +90,17 @@ export const getTicketStatisticsAPI = async (filters = {}) => {
 export const getFAQsAPI = async (filters = {}) => {
   try {
     const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('Token tidak ditemukan. Silakan login ulang.');
-    }
+    // if (!token) {
+    //   throw new Error('Token tidak ditemukan. Silakan login ulang.');
+    // }
 
     const queryParams = new URLSearchParams();
     if (filters.category_id)
       queryParams.append('category_id', filters.category_id);
-      if (filters.search) {
-        queryParams.append('search', filters.search);
-        queryParams.append('search_field', 'question'); // Hanya cari di field question
-      }
+    if (filters.search) {
+      queryParams.append('search', filters.search);
+      queryParams.append('search_field', 'question'); // Hanya cari di field question
+    }
     queryParams.append('per_page', filters.per_page || '10');
     queryParams.append('page', filters.page || '1');
 
@@ -152,6 +153,73 @@ export const getFAQsAPI = async (filters = {}) => {
     );
   }
 };
+//   try {
+//     const token = localStorage.getItem('token');
+
+//     const queryParams = new URLSearchParams();
+//     if (filters.category_id)
+//       queryParams.append('category_id', filters.category_id);
+//     if (filters.search) {
+//       queryParams.append('search', filters.search);
+//       queryParams.append('search_field', 'question'); // Hanya cari di field question
+//     }
+//     queryParams.append('per_page', filters.per_page || '10');
+//     queryParams.append('page', filters.page || '1');
+
+//     const queryString = queryParams.toString();
+//     const url = `${BASE_URL}/faqs${queryString ? `?${queryString}` : ''}`;
+
+//     console.log('Fetching FAQs from:', url);
+
+//     const headers = {
+//       'Content-Type': 'application/json',
+//       Accept: 'application/json',
+//     };
+
+//     if (token) {
+//       headers['Authorization'] = `Bearer ${token}`;
+//     }
+
+//     const response = await retryFetch(url, {
+//       method: 'GET',
+//       headers,
+//       mode: 'cors',
+//       credentials: 'omit',
+//     });
+
+//     if (!response.ok) {
+//       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+//       try {
+//         const errorResult = await response.json();
+//         errorMessage = errorResult.message || errorMessage;
+//       } catch (parseError) {
+//         console.warn('Could not parse error response:', parseError);
+//       }
+//       throw new Error(errorMessage);
+//     }
+
+//     const result = await response.json();
+//     console.log('Get FAQs API response:', result);
+
+//     // Handle berbagai bentuk response
+//     if (result?.data?.data) {
+//       return result.data.data;
+//     }
+//     if (result?.data && Array.isArray(result.data)) {
+//       return result.data;
+//     }
+//     if (Array.isArray(result)) {
+//       return result;
+//     }
+
+//     return [];
+//   } catch (error) {
+//     console.error('Get FAQs API Error:', error);
+//     throw new Error(
+//       error.message || 'Terjadi kesalahan saat mengambil data FAQ'
+//     );
+//   }
+// };
 
 export const getFAQsAdminAPI = async (filters = {}) => {
   try {
@@ -163,10 +231,10 @@ export const getFAQsAdminAPI = async (filters = {}) => {
     const queryParams = new URLSearchParams();
     if (filters.category_id)
       queryParams.append('category_id', filters.category_id);
-      if (filters.search) {
-        queryParams.append('search', filters.search);
-        queryParams.append('search_field', 'question'); // Hanya cari di field question
-      }
+    if (filters.search) {
+      queryParams.append('search', filters.search);
+      queryParams.append('search_field', 'question'); // Hanya cari di field question
+    }
     queryParams.append('per_page', '100');
     queryParams.append('page', '1');
 
@@ -379,7 +447,6 @@ export const createFAQAPI = async (faqData) => {
       message: result.message || 'FAQ berhasil dibuat',
       data: result.data || result,
     };
-
   } catch (error) {
     console.error('Create FAQ API Error:', error);
     throw new Error(error.message || 'Gagal membuat FAQ');
@@ -652,7 +719,9 @@ export const signUpAPI = async (userData) => {
         const errorMessages = Object.values(result.errors).flat().join(', ');
         throw new Error(`Registrasi gagal: ${errorMessages}`);
       }
-      throw new Error(result.message || 'Registrasi gagal. Terjadi kesalahan pada server.');
+      throw new Error(
+        result.message || 'Registrasi gagal. Terjadi kesalahan pada server.'
+      );
     }
 
     // Jika berhasil, backend biasanya mengembalikan data user yang baru dibuat
@@ -663,7 +732,9 @@ export const signUpAPI = async (userData) => {
     };
   } catch (error) {
     console.error('Sign Up API Error:', error);
-    throw new Error(error.message || 'Tidak dapat terhubung ke server. Silakan coba lagi.');
+    throw new Error(
+      error.message || 'Tidak dapat terhubung ke server. Silakan coba lagi.'
+    );
   }
 };
 
@@ -739,7 +810,9 @@ export const getUserProfileAPI = async () => {
         'Tidak dapat terhubung ke server. Pastikan server berjalan dan coba lagi.'
       );
     }
-    throw new Error(error.message || 'Terjadi kesalahan saat mengambil profil user');
+    throw new Error(
+      error.message || 'Terjadi kesalahan saat mengambil profil user'
+    );
   }
 };
 
@@ -823,11 +896,7 @@ export const submitTicketAPI = async (formData, file = null) => {
 
     // Validate file if provided
     if (file) {
-      const allowedTypes = [
-        'image/png',
-        'image/jpeg',
-        'application/pdf',
-      ];
+      const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
       const maxSize = 5 * 1024 * 1024; // 5MB
 
       if (!allowedTypes.includes(file.type)) {
@@ -1419,7 +1488,7 @@ export const sendChatMessageAPI = async (ticketId, message, file = null) => {
     if (file) {
       const allowedTypes = [
         'image/png',
-        'image/jpeg',  // MIME type yang benar untuk file .jpg/.jpeg
+        'image/jpeg', // MIME type yang benar untuk file .jpg/.jpeg
         'application/pdf',
       ];
       const maxSize = 5 * 1024 * 1024; // 5MB
@@ -1718,8 +1787,9 @@ export const getEmailLogsAPI = async (filters = {}) => {
     if (!filters.page) queryParams.append('page', '1');
 
     const queryString = queryParams.toString();
-    const url = `${BASE_URL}/emails/logs${queryString ? `?${queryString}` : ''
-      }`;
+    const url = `${BASE_URL}/emails/logs${
+      queryString ? `?${queryString}` : ''
+    }`;
 
     const response = await retryFetch(url, {
       method: 'GET',
@@ -1855,7 +1925,7 @@ export const markNotificationAsReadAPI = async (notificationId) => {
     console.error('Mark Notification as Read API Error:', error);
     throw new Error(
       error.message ||
-      'Terjadi kesalahan saat menandai notifikasi sebagai dibaca'
+        'Terjadi kesalahan saat menandai notifikasi sebagai dibaca'
     );
   }
 };
@@ -1895,7 +1965,7 @@ export const markAllNotificationsAsReadAPI = async () => {
     console.error('Mark All Notifications as Read API Error:', error);
     throw new Error(
       error.message ||
-      'Terjadi kesalahan saat menandai semua notifikasi sebagai dibaca'
+        'Terjadi kesalahan saat menandai semua notifikasi sebagai dibaca'
     );
   }
 };
@@ -1957,17 +2027,11 @@ export const uploadAttachmentAPI = async (ticketId, message, file) => {
     }
 
     // Validasi file
-    const allowedTypes = [
-      'image/png',
-      'image/jpeg',
-      'application/pdf',
-    ];
+    const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
     const maxSize = 5 * 1024 * 1024; // 5MB
 
     if (!allowedTypes.includes(file.type)) {
-      throw new Error(
-        'Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.'
-      );
+      throw new Error('Tipe file tidak diizinkan. Gunakan PNG, JPG, atau PDF.');
     }
 
     if (file.size > maxSize) {
@@ -1975,7 +2039,8 @@ export const uploadAttachmentAPI = async (ticketId, message, file) => {
     }
 
     // FIXED: Berikan default message jika kosong, seperti yang dilakukan backend
-    const finalMessage = message && message.trim() !== '' ? message.trim() : 'Sent an attachment';
+    const finalMessage =
+      message && message.trim() !== '' ? message.trim() : 'Sent an attachment';
 
     const formData = new FormData();
     formData.append('message', finalMessage);
@@ -1988,16 +2053,19 @@ export const uploadAttachmentAPI = async (ticketId, message, file) => {
       fileSize: file.size,
     });
 
-    const response = await retryFetch(`${BASE_URL}/tickets/${ticketId}/chat/attachment`, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      mode: 'cors',
-      credentials: 'omit',
-      body: formData,
-    });
+    const response = await retryFetch(
+      `${BASE_URL}/tickets/${ticketId}/chat/attachment`,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        mode: 'cors',
+        credentials: 'omit',
+        body: formData,
+      }
+    );
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -2139,7 +2207,7 @@ export const showAnonymousTokenAPI = async (ticketId, password) => {
       mode: 'cors',
       credentials: 'omit',
       body: JSON.stringify({
-        password: password
+        password: password,
       }),
     };
 
@@ -2160,7 +2228,7 @@ export const showAnonymousTokenAPI = async (ticketId, password) => {
     }
 
     const result = await response.json();
-    
+
     // Handle the response structure based on the Postman response
     if (result.status === 'success' && result.data) {
       return result.data;
@@ -2169,7 +2237,7 @@ export const showAnonymousTokenAPI = async (ticketId, password) => {
     }
   } catch (error) {
     console.error('Show Anonymous Token API Error:', error);
-    
+
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       throw new Error(
         'Koneksi ke server gagal. Pastikan server berjalan dan coba lagi.'

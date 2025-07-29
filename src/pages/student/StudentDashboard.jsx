@@ -644,7 +644,10 @@ const StudentDashboard = () => {
         setShowCategoryDropdown(false);
       }
       // Logika yang sudah diperbaiki untuk dropdown status baca
-      if (showReadDropdown && !event.target.closest('[data-dropdown="read-status"]')) {
+      if (
+        showReadDropdown &&
+        !event.target.closest('[data-dropdown="read-status"]')
+      ) {
         setShowReadDropdown(false);
       }
     };
@@ -920,10 +923,11 @@ const StudentDashboard = () => {
               <div className="relative category-dropdown">
                 <Button
                   onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg shadow-gray-300 bg shadow-md flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${categoryFilter !== 'Semua Kategori'
-                    ? 'bg-red-200 font-semibold'
-                    : 'bg-white hover:bg-red-100'
-                    }`}
+                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg shadow-gray-300 bg shadow-md flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
+                    categoryFilter !== 'Semua Kategori'
+                      ? 'bg-red-200 font-semibold'
+                      : 'bg-white hover:bg-red-100'
+                  }`}
                 >
                   {/* Bookmark/Category Icon */}
                   <svg
@@ -985,10 +989,11 @@ const StudentDashboard = () => {
               <div className="relative date-picker-container">
                 <Button
                   onClick={() => setShowDatePicker(!showDatePicker)}
-                  className={`border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${dateRangeFilter.startDate && dateRangeFilter.endDate
-                    ? 'bg-red-200 font-semibold'
-                    : 'bg-white hover:bg-red-100'
-                    }`}
+                  className={`border-2 border-gray-400 text-sm px-3 py-2 shadow-gray-300 shadow-md rounded-lg flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
+                    dateRangeFilter.startDate && dateRangeFilter.endDate
+                      ? 'bg-red-200 font-semibold'
+                      : 'bg-white hover:bg-red-100'
+                  }`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1173,10 +1178,11 @@ const StudentDashboard = () => {
               {/* Read Status Filter - Updated styling */}
               <div className="relative" data-dropdown="read-status">
                 <Button
-                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg  shadow-gray-300 shadow-md flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${readFilter === 'Sudah Dibaca'
-                    ? 'bg-red-200 font-semibold'
-                    : 'bg-white hover:bg-red-100'
-                    }`}
+                  className={`border-2 border-gray-400 text-sm px-3 py-2 rounded-lg  shadow-gray-300 shadow-md flex items-center space-x-2 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg ${
+                    readFilter === 'Sudah Dibaca'
+                      ? 'bg-red-200 font-semibold'
+                      : 'bg-white hover:bg-red-100'
+                  }`}
                   onClick={() => setShowReadDropdown(!showReadDropdown)}
                 >
                   <svg
@@ -1553,10 +1559,11 @@ const StudentDashboard = () => {
                   />
                 </svg>
                 <span
-                  className={`text-sm font-semibold ${feedbackCounts[ticket.id]?.unread > 0
-                    ? 'text-white'
-                    : 'text-gray-700'
-                    }`}
+                  className={`text-sm font-semibold ${
+                    feedbackCounts[ticket.id]?.unread > 0
+                      ? 'text-white'
+                      : 'text-gray-700'
+                  }`}
                 >
                   Feedback ({feedbackCounts[ticket.id]?.total || 0}
                   {feedbackCounts[ticket.id]?.unread > 0
@@ -1704,10 +1711,11 @@ const StudentDashboard = () => {
                       <Button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-1 text-sm font-medium rounded-md ${pageNum === currentPage
-                          ? 'text-white bg-blue-600 border border-blue-600'
-                          : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                          }`}
+                        className={`px-3 py-1 text-sm font-medium rounded-md ${
+                          pageNum === currentPage
+                            ? 'text-white bg-blue-600 border border-blue-600'
+                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                        }`}
                       >
                         {pageNum}
                       </Button>

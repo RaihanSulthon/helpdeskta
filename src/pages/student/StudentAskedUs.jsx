@@ -570,8 +570,6 @@ const StudentAskedUs = () => {
             </button>
           </div>
         )}
-
-        {/* Help Section */}
         {filteredFAQs.length > 0 && (
           <div className="mt-8">
             <div className="bg-white rounded-lg shadow-sm p-6 text-center">
