@@ -31,10 +31,38 @@ const AdminTicketStatistics = () => {
   const [toasts, setToasts] = useState([]);
   const [error, setError] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState('minggu_ini');
-  const [dateRange, setDateRange] = useState({
-    date_from: '',
-    date_to: '',
-  });
+  // Helper to get default date range for a period
+  const getDefaultDateRange = (period) => {
+    const now = new Date();
+    let startDate, endDate;
+    switch (period) {
+      case 'hari_ini':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'minggu_ini':
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - 7);
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        break;
+      case 'bulan_ini':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'tahun_ini':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      default:
+        startDate = endDate = now;
+    }
+    return {
+      date_from: startDate.toISOString().split('T')[0],
+      date_to: endDate.toISOString().split('T')[0],
+    };
+  };
+
+  const [dateRange, setDateRange] = useState(getDefaultDateRange('minggu_ini'));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
@@ -124,23 +152,18 @@ const AdminTicketStatistics = () => {
               59
             );
             break;
-          case 'minggu_ini':
-            const weekStart = new Date(now);
-            weekStart.setDate(now.getDate() - now.getDay());
-            startDate = new Date(
-              weekStart.getFullYear(),
-              weekStart.getMonth(),
-              weekStart.getDate()
-            );
-            endDate = new Date(
-              now.getFullYear(),
-              now.getMonth(),
-              now.getDate(),
-              23,
-              59,
-              59
-            );
-            break;
+        case 'minggu_ini':
+  startDate = new Date(now);
+  startDate.setDate(now.getDate() - 7); // 7 hari ke belakang termasuk hari ini
+  endDate = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+    23,
+    59,
+    59
+  );
+  break;
           case 'bulan_ini':
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
             endDate = new Date(
@@ -893,6 +916,7 @@ const AdminTicketStatistics = () => {
                             <input
                               type="date"
                               value={dateRange.date_to}
+                              min={dateRange.date_from}
                               onChange={(e) =>
                                 setDateRange((prev) => ({
                                   ...prev,
