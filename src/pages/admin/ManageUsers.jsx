@@ -439,6 +439,9 @@ const ManageUsers = () => {
       const usersWithLastTicketDate = await Promise.all(
         nonAdminUsers.map(async (user) => {
           const lastTicketDate = await getLastTicketDate(user.id);
+
+          const userTickets = await getUserTickets(user.id);
+          const favoriteData = calculateFavoriteCategory(userTickets);
           return {
             ...user,
             totalTickets: user.tickets_statistics?.total || 0,
@@ -446,8 +449,8 @@ const ManageUsers = () => {
             inProgressTickets: user.tickets_statistics?.in_progress || 0,
             closedTickets: user.tickets_statistics?.closed || 0,
             lastTicketDate: lastTicketDate,
-            favorite_category: null,
-            favorite_category_count: 0,
+            favorite_category: favoriteData.favorite_category,
+            favorite_category_count: favoriteData.favorite_category_count,
           };
         })
       );
