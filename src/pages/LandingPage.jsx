@@ -546,47 +546,201 @@ function LandingPage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8 mt-auto">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-wrap">
-            <div className="w-full md:w-1/3 mb-6 md:mb-0">
-              <h3 className="text-lg font-semibold mb-4">Link Cepat</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Beranda
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Tentang Kami
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Program Studi
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Fasilitas
-                  </a>
-                </li>
-              </ul>
+      <footer className="bg-[#9f1521] text-white py-10 px-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+          {/* Kolom 1 - Kontak */}
+          <div>
+            <h3 className="text-xl font-semibold mb-3">Kontak</h3>
+            <div className="flex items-center gap-4 mb-4">
+              <img
+                src="https://b856188.smushcdn.com/856188/wp-content/uploads/2025/07/Kampus-Berdampak_.png?lossy=2&strip=1&avif=1"
+                alt="Kampus Berdampak"
+                className="max-w-[140px] h-auto"
+              />
             </div>
-            <div className="w-full md:w-1/3">
-              <h3 className="text-lg font-semibold mb-4">Kontak Kami</h3>
-              <ul className="text-sm text-gray-300">
-                <li>Telp: +62 (022) 123-4567</li>
-                <li>Email: info@example.ac.id</li>
-                <li>Alamat: Jl. Contoh No. 123, Bandung</li>
-              </ul>
+
+            <h4 className="font-medium mb-2">Contact</h4>
+            <ul className="text-sm space-y-2">
+              <li className="flex items-start gap-2">
+                <i className="fas fa-map-marker-alt mt-1"></i>
+                <span>
+                  Gedung Bangkit Telkom University Jl. Telekomunikasi, Terusan
+                  Buah Batu Indonesia 40257, Bandung, Indonesia
+                </span>
+              </li>
+              <li className="flex items-center gap-2">
+                <i className="fas fa-phone-alt"></i>
+                <a href="tel:(022) 7566456">(022) 7566456</a>
+              </li>
+              <li className="flex items-center gap-2">
+                <i className="fas fa-envelope"></i>
+                <a href="mailto:info@telkomuniversity.ac.id">
+                  info@telkomuniversity.ac.id
+                </a>
+              </li>
+            </ul>
+
+            {/* Sosial Media */}
+            <div className="flex gap-3 mt-4 text-xl">
+              <a
+                href="https://www.instagram.com/telkomuniversity"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i className="fab fa-instagram"></i>
+              </a>
+              <a
+                href="https://www.youtube.com/@TelkomUniversityOfficial"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i className="fab fa-youtube"></i>
+              </a>
+              <a
+                href="https://www.linkedin.com/company/telkom-university"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i className="fab fa-linkedin"></i>
+              </a>
+              <a
+                href="https://www.facebook.com/telkomuniversity/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i className="fab fa-facebook"></i>
+              </a>
+              <a
+                href="https://www.tiktok.com/@universitastelkom"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i className="fab fa-tiktok"></i>
+              </a>
+              <a
+                href="https://twitter.com/TelUniversity"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i className="fab fa-x-twitter"></i>
+              </a>
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-gray-700 text-sm text-center text-gray-400">
-            © {new Date().getFullYear()} Universitas Example. Hak Cipta
-            Dilindungi.
+
+          {/* Kolom 2 - Kerjasama & Riset */}
+          <div>
+            <h3 className="text-xl font-semibold mb-3">Kerjasama</h3>
+            <ul className="text-sm space-y-1 mb-4">
+              <li>
+                <a href="https://partnership.telkomuniversity.ac.id/">
+                  Bagian Kerjasama
+                </a>
+              </li>
+              <li>
+                <a href="https://alumni.telkomuniversity.ac.id">
+                  Bagian Karier dan Alumni
+                </a>
+              </li>
+              <li>
+                <a href="https://io.telkomuniversity.ac.id/id/">
+                  Bagian Kantor Internasional
+                </a>
+              </li>
+            </ul>
+
+            <h4 className="font-semibold mt-4 mb-2">Riset dan Inovasi</h4>
+            <ul className="text-sm space-y-1 mb-4">
+              <li>
+                <a href="https://ppm.telkomuniversity.ac.id">
+                  Bagian Penelitian dan Pengabdian Masyarakat
+                </a>
+              </li>
+              <li>
+                <a href="https://btp.telkomuniversity.ac.id/">
+                  Bandung Techno Park
+                </a>
+              </li>
+              <li>
+                <a href="https://sdgs.telkomuniversity.ac.id/">SDG’s Center</a>
+              </li>
+            </ul>
+
+            <h4 className="font-semibold mt-4 mb-2">Lainnya</h4>
+            <ul className="text-sm space-y-1">
+              <li>
+                <a href="https://telkomuniversity.ac.id/berita-terkini/">
+                  Berita Terkini
+                </a>
+              </li>
+              <li>
+                <a href="https://telkomuniversity.ac.id/download/">Unduh</a>
+              </li>
+              <li>
+                <a href="https://telkomuniversity.ac.id/buletin/">Buletin</a>
+              </li>
+              <li>
+                <a href="https://telkomuniversity.ac.id/direktori/">
+                  Direktori
+                </a>
+              </li>
+            </ul>
           </div>
+
+          {/* Kolom 3 - Akademik */}
+          <div>
+            <h3 className="text-xl font-semibold mb-3">Akademik</h3>
+            <ul className="text-sm space-y-1">
+              <li>
+                <a href="https://baa.telkomuniversity.ac.id">
+                  Bagian Standar Layanan Akademik
+                </a>
+              </li>
+              <li>
+                <a href="https://openlibrary.telkomuniversity.ac.id/">
+                  Open Library
+                </a>
+              </li>
+              <li>
+                <a href="https://igracias.telkomuniversity.ac.id/">iGracias</a>
+              </li>
+              <li>
+                <a href="https://lms.telkomuniversity.ac.id/">
+                  Learn Management System
+                </a>
+              </li>
+              <li>
+                <a href="https://lac.telkomuniversity.ac.id">Pusat Bahasa</a>
+              </li>
+              <li>
+                <a href="https://ocw.telkomuniversity.ac.id/">
+                  Open CourseWare
+                </a>
+              </li>
+              <li>
+                <a href="https://telkomuniversity.ac.id/merdeka-belajar-kampus-merdeka-dan-kedaireka/">
+                  MBKM & Kedaireka
+                </a>
+              </li>
+              <li>
+                <a href="https://telkomuniversity.ac.id/akreditasi/">
+                  Akreditasi
+                </a>
+              </li>
+              <li>
+                <a href="https://telkomuniversity.ac.id/download-my-telu/">
+                  myTelU Mobile
+                </a>
+              </li>
+              <li>
+                <a href="https://telkomuniversity.ac.id/wisuda/">Wisuda</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom footer */}
+        <div className="mt-8 text-center text-sm text-white/80">
+          © Telkom University | Universitas Swasta Terbaik
         </div>
       </footer>
       {/* Logout Confirmation Modal */}

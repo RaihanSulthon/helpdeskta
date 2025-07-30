@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   getTicketsAPI,
   getCategoriesAPI,
+  getTicketDetailAPI,
 } from '../../services/api';
 import {
   FilterButton,
@@ -40,7 +41,7 @@ const StudentDashboard = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [categories, setCategories] = useState([]);
-  const [readFilter, setReadFilter] = useState('Semua');
+  const [readFilter, setReadFilter] = useState('Semua Tiket');
   const [showReadDropdown, setShowReadDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [lastStatusCheck, setLastStatusCheck] = useState(new Map());
@@ -269,7 +270,7 @@ const StudentDashboard = () => {
     }
 
     // Read filter
-    if (readFilter !== 'Semua') {
+    if (readFilter !== 'Semua Tiket') {
       if (readFilter === 'Sudah Dibaca') {
         filtered = filtered.filter((ticket) => {
           // ✅ KHUSUS Tiket Baru selalu ditampilkan (anggap selalu dibaca)
@@ -471,15 +472,25 @@ const StudentDashboard = () => {
   };
 
   const loadFeedbackCounts = async (tickets) => {
-    setLoadingFeedbackCounts(true);
     try {
+      setLoadingFeedbackCounts(true);
       const counts = {};
+
       for (const ticket of tickets) {
-        counts[ticket.id] = {
-          total: ticket.chat_count || 0,
-          unread: ticket.unread_chat_count || 0,
-        };
+        try {
+          const data = await getTicketDetailAPI(ticket.id);
+
+          // 🔍 DEBUG: Cek data yang diterima dari API
+
+          counts[ticket.id] = {
+            total: data.chat_count || 0,
+            unread: data.unread_chat_count || 0,
+          };
+        } catch (error) {
+          counts[ticket.id] = { total: 0, unread: 0 };
+        }
       }
+
       setFeedbackCounts(counts);
     } catch (error) {
       console.error('Error loading feedback counts:', error);
@@ -891,7 +902,7 @@ const StudentDashboard = () => {
       {/* Main Container */}
       <div className="bg-white rounded-lg shadow min-h-[600px]">
         <Navigation topOffset="">
-          <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
+          <div className="flex flex-wrap items-center justify-between mb-4 gap-4 ">
             {/* 🔧 SEARCH BOX - Tetap di Kiri */}
             <div className="relative flex-1 min-w-[250px] max-w-[400px]">
               <SearchBar
@@ -906,9 +917,6 @@ const StudentDashboard = () => {
             </div>
 
             <div className="flex items-center space-x-3">
-              {/* Search Bar - Updated styling */}
-
-              {/* Kategori Dropdown - Updated styling */}
               <div className="relative category-dropdown">
                 <Button
                   onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
@@ -1017,7 +1025,7 @@ const StudentDashboard = () => {
 
                 {/* Date Picker Dropdown - Enhanced styling */}
                 {showDatePicker && (
-                  <div className="absolute top-full left-0 mt-2 w-[500px] bg-white rounded-lg shadow-xl z-50 transform transition-all duration-300 ease-out origin-top-left opacity-100 scale-100 translate-y-0">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[500px] bg-white rounded-lg shadow-xl z-50 transform transition-all duration-300 ease-out origin-top-left opacity-100 scale-100 translate-y-0">
                     {/* Header with close Button */}
                     <div className="bg-[#101B33] text-white p-4 rounded-t-lg flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -1077,19 +1085,8 @@ const StudentDashboard = () => {
                                   startDate: e.target.value,
                                 }))
                               }
-                              className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
-                            <svg
-                              className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none"
-                              viewBox="0 0 21 20"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M0.5 18.125C0.5 19.1602 1.45982 20 2.64286 20H18.3571C19.5402 20 20.5 19.1602 20.5 18.125V7.5H0.5V18.125Z..."
-                                fill="#444746"
-                              />
-                            </svg>
                           </div>
                         </div>
                         <div>
@@ -1107,19 +1104,8 @@ const StudentDashboard = () => {
                                   endDate: e.target.value,
                                 }))
                               }
-                              className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
-                            <svg
-                              className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none"
-                              viewBox="0 0 21 20"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M0.5 18.125C0.5 19.1602 1.45982 20 2.64286 20H18.3571C19.5402 20 20.5 19.1602 20.5 18.125V7.5H0.5V18.125Z..."
-                                fill="#444746"
-                              />
-                            </svg>
                           </div>
                         </div>
                       </div>
@@ -1216,7 +1202,7 @@ const StudentDashboard = () => {
                         !clickedTicketsByStatus[ticket.category]?.has(
                           ticket.id
                         );
-                      if (readFilter === 'Semua') {
+                      if (readFilter === 'Semua Tiket') {
                         return true; // hitung semua tiket
                       }
                       if (readFilter === 'Belum Dibaca') {
@@ -1245,65 +1231,67 @@ const StudentDashboard = () => {
                 {/* Dropdown Menu */}
                 {showReadDropdown && (
                   <div className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-20 transform transition-all duration-300 ease-out origin-top opacity-100 scale-100 translate-y-0">
-                    {['Semua', 'Sudah Dibaca', 'Belum Dibaca'].map((option) => {
-                      let count = 0;
+                    {['Semua Tiket', 'Sudah Dibaca', 'Belum Dibaca'].map(
+                      (option) => {
+                        let count = 0;
 
-                      if (option === 'Belum Dibaca') {
-                        count = tickets.filter((ticket) => {
-                          if (ticket.category === 'Tiket Baru') return false;
-                          const isUnread = !(
-                            ticket.read_by_student === true ||
-                            ticket.read_by_student === 1 ||
-                            ticket.read_by_student === '1'
-                          );
-                          const notClicked = !clickedTicketsByStatus[
-                            ticket.category
-                          ]?.has(ticket.id);
-                          return isUnread && notClicked;
-                        }).length;
+                        if (option === 'Belum Dibaca') {
+                          count = tickets.filter((ticket) => {
+                            if (ticket.category === 'Tiket Baru') return false;
+                            const isUnread = !(
+                              ticket.read_by_student === true ||
+                              ticket.read_by_student === 1 ||
+                              ticket.read_by_student === '1'
+                            );
+                            const notClicked = !clickedTicketsByStatus[
+                              ticket.category
+                            ]?.has(ticket.id);
+                            return isUnread && notClicked;
+                          }).length;
+                        }
+
+                        if (option === 'Sudah Dibaca') {
+                          count = tickets.filter((ticket) => {
+                            if (ticket.category === 'Tiket Baru') return true;
+                            const isUnread = !(
+                              ticket.read_by_student === true ||
+                              ticket.read_by_student === 1 ||
+                              ticket.read_by_student === '1'
+                            );
+                            const notClicked = !clickedTicketsByStatus[
+                              ticket.category
+                            ]?.has(ticket.id);
+                            return !(isUnread && notClicked);
+                          }).length;
+                        }
+
+                        if (option === 'Semua') {
+                          count = tickets.length;
+                        }
+
+                        return (
+                          <Button
+                            key={option}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
+                              readFilter === option
+                                ? 'bg-blue-50 text-blue-700'
+                                : 'text-gray-700'
+                            }`}
+                            onClick={() => {
+                              setReadFilter(option);
+                              setShowReadDropdown(false);
+                            }}
+                          >
+                            {option}
+                            {count > 0 && (
+                              <span className="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                {count}
+                              </span>
+                            )}
+                          </Button>
+                        );
                       }
-
-                      if (option === 'Sudah Dibaca') {
-                        count = tickets.filter((ticket) => {
-                          if (ticket.category === 'Tiket Baru') return true;
-                          const isUnread = !(
-                            ticket.read_by_student === true ||
-                            ticket.read_by_student === 1 ||
-                            ticket.read_by_student === '1'
-                          );
-                          const notClicked = !clickedTicketsByStatus[
-                            ticket.category
-                          ]?.has(ticket.id);
-                          return !(isUnread && notClicked);
-                        }).length;
-                      }
-
-                      if (option === 'Semua') {
-                        count = tickets.length;
-                      }
-
-                      return (
-                        <Button
-                          key={option}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
-                            readFilter === option
-                              ? 'bg-blue-50 text-blue-700'
-                              : 'text-gray-700'
-                          }`}
-                          onClick={() => {
-                            setReadFilter(option);
-                            setShowReadDropdown(false);
-                          }}
-                        >
-                          {option}
-                          {count > 0 && (
-                            <span className="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                              {count}
-                            </span>
-                          )}
-                        </Button>
-                      );
-                    })}
+                    )}
                   </div>
                 )}
               </div>
@@ -1333,73 +1321,76 @@ const StudentDashboard = () => {
               </Button>
             </div>
           </div>
-
-          {/* Status Tabs - Layout Grid */}
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-            <Button
-              onClick={handleRefresh}
-              disabled={refreshLoading}
-              className="flex items-center space-x-2 px-8 py-2 bg-white text-black rounded-lg transition-colors   "
-            >
-              <svg
-                className={`w-6 h-6 ${refreshLoading ? 'animate-spin' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <div className="flex items-center gap-2 ">
+            <div className="flex-shrink-0">
+              <Button
+                onClick={handleRefresh}
+                disabled={refreshLoading}
+                className="flex items-center grid grid-cols-2  bg-white text-black rounded-lg transition-colors"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-              <span>{refreshLoading}</span>
-            </Button>
-            <FilterButton
-              label="Semua Tiket"
-              count={ticketCounts.total}
-              active={statusFilter === 'Semua'}
-              onClick={() => handleStatusFilterClick('Semua')}
-              statusType="Semua"
-              hasNew={false} // Semua tiket tidak perlu badge
-            />
-            <FilterButton
-              label="Tiket Baru"
-              count={ticketCounts.new}
-              active={statusFilter === 'Tiket Baru'}
-              onClick={() => handleStatusFilterClick('Tiket Baru')}
-              statusType="Tiket Baru"
-              hasNew={shouldShowBadge(
-                'Tiket Baru',
-                tickets,
-                clickedTicketsByStatus
-              )} // ✅ Pass clickedTicketsByStatus
-            />
-            <FilterButton
-              label="Sedang Diproses"
-              count={ticketCounts.processing}
-              active={statusFilter === 'Sedang Diproses'}
-              onClick={() => handleStatusFilterClick('Sedang Diproses')}
-              statusType="Sedang Diproses"
-              hasNew={shouldShowBadge(
-                'Sedang Diproses',
-                tickets,
-                clickedTicketsByStatus
-              )} // ✅ Pass clickedTicketsByStatus
-            />
-            <FilterButton
-              label="Selesai"
-              count={ticketCounts.completed}
-              active={statusFilter === 'Selesai'}
-              onClick={() => handleStatusFilterClick('Selesai')}
-              statusType="Selesai"
-              hasNew={shouldShowBadge(
-                'Selesai',
-                tickets,
-                clickedTicketsByStatus
-              )} // ✅ Pass clickedTicketsByStatus
-            />
+                <svg
+                  className={`w-6 h-6 ${refreshLoading ? 'animate-spin' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                <span>{refreshLoading}</span>
+              </Button>
+            </div>
+            {/* Status Tabs - Layout Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 flex-1">
+              <FilterButton
+                label="Semua Tiket"
+                count={ticketCounts.total}
+                active={statusFilter === 'Semua'}
+                onClick={() => handleStatusFilterClick('Semua')}
+                statusType="Semua"
+                hasNew={false} // Semua tiket tidak perlu badge
+              />
+              <FilterButton
+                label="Tiket Baru"
+                count={ticketCounts.new}
+                active={statusFilter === 'Tiket Baru'}
+                onClick={() => handleStatusFilterClick('Tiket Baru')}
+                statusType="Tiket Baru"
+                hasNew={shouldShowBadge(
+                  'Tiket Baru',
+                  tickets,
+                  clickedTicketsByStatus
+                )} // ✅ Pass clickedTicketsByStatus
+              />
+              <FilterButton
+                label="Sedang Diproses"
+                count={ticketCounts.processing}
+                active={statusFilter === 'Sedang Diproses'}
+                onClick={() => handleStatusFilterClick('Sedang Diproses')}
+                statusType="Sedang Diproses"
+                hasNew={shouldShowBadge(
+                  'Sedang Diproses',
+                  tickets,
+                  clickedTicketsByStatus
+                )} // ✅ Pass clickedTicketsByStatus
+              />
+              <FilterButton
+                label="Selesai"
+                count={ticketCounts.completed}
+                active={statusFilter === 'Selesai'}
+                onClick={() => handleStatusFilterClick('Selesai')}
+                statusType="Selesai"
+                hasNew={shouldShowBadge(
+                  'Selesai',
+                  tickets,
+                  clickedTicketsByStatus
+                )} // ✅ Pass clickedTicketsByStatus
+              />
+            </div>
           </div>
         </Navigation>
         {/* Filter Section */}
