@@ -1972,7 +1972,14 @@ export const createNotificationAPI = async (notificationData) => {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       try {
         const errorResult = await response.json();
-        errorMessage = errorResult.message || errorMessage;
+        if (response.status === 422 && errorResult.errors) {
+          const validationErrors = Object.entries(errorResult.errors)
+            .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+            .join('; ');
+          errorMessage = `Validation failed - ${validationErrors}`;
+        } else if (errorResult.message) {
+          errorMessage = errorResult.message;
+        }
       } catch (parseError) {
         console.warn('Could not parse error response:', parseError);
       }

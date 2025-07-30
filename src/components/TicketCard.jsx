@@ -39,22 +39,18 @@ const TicketCard = ({
     }
   };
 
-  const getStatusBorderColor = (status) => {
-    switch (status) {
+  const getStatusBorderColor = () => {
+    // PERBAIKAN: Gunakan columnKey sebagai sumber utama status
+    // columnKey menunjukkan posisi aktual ticket di kanban board
+    switch (columnKey) {
       case 'tiket-baru':
-      case 'open':
-      case 'new':
-        return 'border-l-[#607D8B]';
+        return 'border-l-[#607D8B]'; // Abu-abu
       case 'diproses':
-      case 'in_progress':
-      case 'processing':
-        return 'border-l-[#FFBA57]';
-      case 'closed':
-      case 'resolved':
-      case 'completed':
-        return 'border-l-[#28A745]';
+        return 'border-l-[#FFBA57]'; // Kuning/Orange
+      case 'selesai':
+        return 'border-l-[#28A745]'; // Hijau
       default:
-        return 'border-l-[#607D8B]';
+        return 'border-l-[#607D8B]'; // Default abu-abu
     }
   };
 
@@ -224,8 +220,8 @@ const TicketCard = ({
           ? 'opacity-50 cursor-wait'
           : isDragging
             ? 'opacity-60 cursor-grabbing transform scale-95'
-            : `cursor-grab hover:shadow-lg hover:scale-105 transition-all duration-300 hover:${getStatusBorderColor(ticketData.status).replace('border-l-', 'border-')}`
-      } relative overflow-hidden ${getStatusBorderColor(ticketData.status)} border-l-8`}
+            : `cursor-grab hover:shadow-lg hover:scale-105 transition-all duration-300 hover:${getStatusBorderColor().replace('border-l-', 'border-')}`
+      } relative overflow-hidden ${getStatusBorderColor()} border-l-8`}
     >
       {/* Ticket Header */}
       <div className="flex justify-between items-start mb-2">
