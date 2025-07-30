@@ -542,6 +542,12 @@ const AdminDashboard = () => {
 
         // Refresh tickets
         await loadAdminTickets();
+        if (window.refreshSidebarTicketCount) {
+          window.refreshSidebarTicketCount();
+        }
+
+        // Dispatch custom event sebagai backup
+        window.dispatchEvent(new CustomEvent('ticketCountUpdate'));
       }
     } catch (error) {
       console.error('Error deleting ticket:', error);

@@ -74,6 +74,15 @@ const Sidebar = ({ onMenuClick, forceExpanded = false }) => {
     };
 
     loadTicketCount();
+    window.refreshSidebarTicketCount = loadTicketCount;
+    const handleTicketCountUpdate = () => {
+      loadTicketCount();
+    };
+    window.addEventListener('ticketCountUpdate', handleTicketCountUpdate);
+    return () => {
+      window.removeEventListener('ticketCountUpdate', handleTicketCountUpdate);
+      delete window.refreshSidebarTicketCount;
+    };
   }, [userRole]);
 
   // Handle menu click with navigation
