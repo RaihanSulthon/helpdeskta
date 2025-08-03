@@ -288,14 +288,15 @@ const AdminTicketStatistics = () => {
     const dateGroups = {};
 
     tickets.forEach((ticket) => {
-      const date = new Date(ticket.created_at).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-      });
-
-      if (!dateGroups[date]) {
-        dateGroups[date] = {
-          date,
+      // Use ISO date for sorting
+      const isoDate = ticket.created_at.split('T')[0];
+      if (!dateGroups[isoDate]) {
+        dateGroups[isoDate] = {
+          isoDate,
+          date: new Date(isoDate).toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+          }),
           total: 0,
           new: 0,
           in_progress: 0,
@@ -304,25 +305,24 @@ const AdminTicketStatistics = () => {
         };
       }
 
-      dateGroups[date].total++;
+      dateGroups[isoDate].total++;
 
       switch (ticket.status) {
         case 'open':
-          dateGroups[date].new++;
+          dateGroups[isoDate].new++;
           break;
         case 'in_progress':
-          dateGroups[date].in_progress++;
+          dateGroups[isoDate].in_progress++;
           break;
-
         case 'closed':
-          dateGroups[date].closed++;
+          dateGroups[isoDate].closed++;
           break;
       }
     });
 
-    // Convert to array and sort by date
+    // Convert to array and sort by isoDate
     return Object.values(dateGroups)
-      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .sort((a, b) => new Date(a.isoDate) - new Date(b.isoDate))
       .slice(-7); // Show last 7 days
   };
   // Initial data fetch
