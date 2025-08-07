@@ -1,3 +1,21 @@
+// Komponen untuk mencegah akses login/signup jika sudah login
+const PublicRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+  if (token && userRole) {
+    // Sudah login, redirect sesuai role
+    switch (userRole) {
+      case 'student':
+        return <Navigate to="/student/tickets" replace />;
+      case 'admin':
+        return <Navigate to="/admin/tickets" replace />;
+      default:
+        return <Navigate to="/" replace />;
+    }
+  }
+  // Belum login, tampilkan halaman
+  return children;
+};
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -48,8 +66,8 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/Signup" element={<Signup />} />
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/Signup" element={<PublicRoute><Signup /></PublicRoute>} />
         <Route path="/dashboard" element={<RoleBasedRedirect />} />
         <Route path="/laak-info" element={<LAAKInfoPortal />} />
 
