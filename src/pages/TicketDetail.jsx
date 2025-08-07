@@ -717,6 +717,19 @@ const DetailTicket = () => {
               <span>Ticket Detail</span>
             </button>
 
+            {/* Export Ticket Button */}
+            <a
+              href={`/ticket/${ticketId}/export`}
+              className="flex items-center gap-2 px-4 py-2 hover:scale-105 transition-all duration-300 bg-[#c7e6fa] text-[#333333] border border-gray-500 rounded-md shadow-xl text-sm font-medium"
+              title="Export Ticket"
+            >
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 2V16M11 16L6 11M11 16L16 11" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="2" y="18" width="18" height="2" rx="1" fill="#333" />
+              </svg>
+              <span>Export</span>
+            </a>
+
             {/* Feedback Button */}
             <button
               onClick={handleFeedback}

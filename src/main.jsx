@@ -40,6 +40,7 @@ import StudentAskedUs from './pages/student/StudentAskedUs';
 import AdminAskedUs from './pages/admin/AdminAskedUs';
 import ManageUsers from './pages/admin/ManageUsers';
 import LAAKInfoPortal from './pages/LAAKInfoPortal';
+import TicketExport from './pages/TicketExport';
 
 // SPL-aware Role-based redirect component
 const RoleBasedRedirect = () => {
@@ -227,6 +228,18 @@ createRoot(document.getElementById('root')).render(
         />
 
         {/* Shared routes - accessible by both roles */}
+        <Route
+          path="/ticket/:ticketId/export"
+          element={
+            <PrivateRoute>
+              <BaseLayout>
+                <Layout>
+                  <TicketExport />
+                </Layout>
+              </BaseLayout>
+            </PrivateRoute>
+          }
+        />
         <Route
           path="/ticket/:ticketId"
           element={
