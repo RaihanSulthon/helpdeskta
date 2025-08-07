@@ -94,6 +94,45 @@ function Form() {
     anonymous: false,
   });
 
+  // Fungsi untuk menentukan semester dari NIM dan tanggal saat ini
+  const getSemesterFromNIM = (nim, dateNow = new Date()) => {
+    let tahunMasuk = null;
+    if (/^\d{10}$/.test(nim)) {
+      // Tipe 1: 10 digit, tahun masuk di posisi 5-6
+      tahunMasuk = parseInt('20' + nim.substring(4, 6));
+    } else if (/^\d{12}$/.test(nim)) {
+      // Tipe 2: 12 digit, tahun masuk di posisi 7-8
+      tahunMasuk = parseInt('20' + nim.substring(6, 8));
+    }
+    if (!tahunMasuk || isNaN(tahunMasuk)) return '';
+
+    // Hitung semester aktif
+    const now = dateNow;
+    const tahunSekarang = now.getFullYear();
+    const bulanSekarang = now.getMonth() + 1; // Januari = 1
+    let semester = 1;
+    // Semester 1: September tahun masuk
+    // Semester 2: Februari tahun berikutnya
+    // dst
+    // Hitung jumlah semester sejak tahun masuk
+    // Setiap September dan Februari bertambah semester
+    let semesterCount = 1;
+    let tahun = tahunMasuk;
+    let bulan = 9; // Mulai September
+    while (tahun < tahunSekarang || (tahun === tahunSekarang && bulan <= bulanSekarang)) {
+      if (tahun === tahunSekarang && bulan > bulanSekarang) break;
+      semesterCount++;
+      // Ganjil: September, Genap: Februari
+      if (bulan === 9) {
+        bulan = 2;
+        tahun++;
+      } else {
+        bulan = 9;
+      }
+    }
+    return semesterCount - 1;
+  };
+
   useEffect(() => {
     const loadUserProfile = async () => {
       if (user && !formData.anonymous) {
@@ -119,6 +158,23 @@ function Form() {
 
     loadUserProfile();
   }, [user, formData.anonymous]);
+
+  // Otomatis isi semester jika NIM sudah ada dan semester belum diisi
+  useEffect(() => {
+    if (
+      formData.nim &&
+      /^[0-9]{10,12}$/.test(formData.nim.trim()) &&
+      (!formData.semester || formData.semester === '')
+    ) {
+      const semesterAuto = getSemesterFromNIM(formData.nim);
+      if (semesterAuto) {
+        setFormData((prev) => ({
+          ...prev,
+          semester: semesterAuto.toString(),
+        }));
+      }
+    }
+  }, [formData.nim]);
 
   useEffect(() => {
     if (user && !formData.anonymous) {
@@ -290,7 +346,6 @@ function Form() {
 
       // Reset identity fields jika switch ke anonim
       if (name === 'anonymous' && checked) {
-        // Clear semua field errors untuk identity fields
         setFieldErrors((prev) => {
           const newErrors = { ...prev };
           delete newErrors.nama;
@@ -317,6 +372,18 @@ function Form() {
         clearFieldError(name);
       }
 
+      // Jika field NIM diubah, update semester otomatis
+      if (name === 'nim') {
+        const semesterAuto = getSemesterFromNIM(value);
+        setFormData({
+          ...formData,
+          nim: value,
+          semester: semesterAuto ? semesterAuto.toString() : '',
+        });
+        validateFieldRealTime(name, value);
+        return;
+      }
+
       setFormData({
         ...formData,
         [name]: value,
@@ -328,11 +395,8 @@ function Form() {
           ...prev,
           subKategori: '',
         }));
-        // Clear error untuk subKategori juga
         clearFieldError('subKategori');
       }
-
-      // Clear error untuk subKategori ketika dipilih
       if (name === 'subKategori' && value) {
         clearFieldError('subKategori');
       }
@@ -623,10 +687,8 @@ function Form() {
                 value={formData.nama}
                 onChange={handleChange}
                 placeholder="Masukkan nama lengkap Anda"
-                disabled={formData.anonymous}
-                className={`mt-1 ${
-                  formData.anonymous ? 'bg-gray-100 text-gray-500' : ''
-                } ${fieldErrors.nama ? 'border-red-500 bg-red-50' : ''}`}
+                disabled={true}
+                className={`mt-1 bg-gray-100 text-gray-500 ${fieldErrors.nama ? 'border-red-500 bg-red-50' : ''}`}
                 required={!formData.anonymous}
               />
             </div>
@@ -645,10 +707,8 @@ function Form() {
                 value={formData.nim}
                 onChange={handleChange}
                 placeholder="Masukkan NIM atau NIK Anda"
-                disabled={formData.anonymous}
-                className={`mt-1 ${
-                  formData.anonymous ? 'bg-gray-100 text-gray-500' : ''
-                } ${fieldErrors.nim ? 'border-red-500 bg-red-50' : ''}`}
+                disabled={true}
+                className={`mt-1 bg-gray-100 text-gray-500 ${fieldErrors.nim ? 'border-red-500 bg-red-50' : ''}`}
                 required={!formData.anonymous}
               />
             </div>
@@ -666,10 +726,8 @@ function Form() {
                 value={formData.prodi}
                 onChange={handleChange}
                 placeholder="Masukkan program studi Anda"
-                disabled={formData.anonymous}
-                className={`mt-1 ${
-                  formData.anonymous ? 'bg-gray-100 text-gray-500' : ''
-                } ${fieldErrors.prodi ? 'border-red-500 bg-red-50' : ''}`}
+                disabled={true}
+                className={`mt-1 bg-gray-100 text-gray-500 ${fieldErrors.prodi ? 'border-red-500 bg-red-50' : ''}`}
               />
             </div>
 
@@ -803,7 +861,7 @@ function Form() {
             </div>
           </div>
 
-          <div className="mb-6">
+     
             <Label
               htmlFor="judul"
               required
@@ -841,7 +899,16 @@ function Form() {
               required
             />
           </div>
-
+     {/* Informasi template tanda tangan */}
+          <div className="mb-6">
+            <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+              
+              <p className="text-sm text-yellow-700">
+                Jika Anda ingin mengajukan permohonan tanda tangan melalui form ini, silakan gunakan template yang tersedia melalui link berikut:
+                <br />
+                <a href="https://linktr.ee/laaksoc" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline font-medium">https://linktr.ee/laaksoc</a>
+              </p>
+            </div>
           {/* UPDATED Lampiran Section dengan preview */}
           <div className="mb-6">
             <Label>

@@ -229,8 +229,17 @@ const LAAKInfoPortal = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-red-500 to-red-700 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
+      <div
+        className="relative text-white py-16"
+        style={{
+          backgroundImage: "url('/src/assets/bgdashboard.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Tidak ada overlay, background murni gambar */}
+        <div className="container mx-auto px-4 text-center relative z-10" style={{textShadow: '0 2px 8px rgba(0,0,0,0.25)'}}>
+        {/* ...existing code... */}
           <div className="flex justify-center mb-6">
             <div className="bg-white p-4 rounded-full">
               <svg
